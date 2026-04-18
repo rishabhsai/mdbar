@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>mdbar</title>
+    <meta
+      name="description"
+      content="A fast macOS menu bar markdown notebook with daily notes, plain files, and a live rendered editor."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <div class="wordmark">
+          <span class="wordmark-dot"></span>
+          <span>mdbar</span>
+        </div>
+        <nav class="site-nav">
+          <a href="#story">Story</a>
+          <a href="#features">Features</a>
+          <a href="https://github.com/rishabhsai/mdbar">GitHub</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero" id="story">
+          <div class="hero-copy">
+            <p class="eyebrow">Menu bar markdown for macOS</p>
+            <h1>Open one calm panel. Write today down before it disappears.</h1>
+            <p class="lede">
+              <strong>mdbar</strong> keeps your notes as plain markdown files,
+              opens from the menu bar, and edits markdown as a live rendered
+              surface instead of a dead textarea.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="https://github.com/rishabhsai/mdbar">
+                Explore the repo
+              </a>
+              <a class="button secondary" href="#features">
+                See what it solves
+              </a>
+            </div>
+          </div>
+
+          <div class="mock-scene">
+            <div class="orb orb-one"></div>
+            <div class="orb orb-two"></div>
+            <div class="mock-window">
+              <div class="mock-window-head">
+                <div>
+                  <p class="mini-label">mdbar</p>
+                  <h2>Saturday, April 18</h2>
+                </div>
+                <div class="pill-row">
+                  <span class="pill">Today</span>
+                  <span class="pill muted">Saved</span>
+                </div>
+              </div>
+              <div class="mock-window-body">
+                <aside class="mock-sidebar">
+                  <div class="sidebar-block">
+                    <p class="mini-label">Daily</p>
+                    <button class="sidebar-chip active">Today</button>
+                    <button class="sidebar-chip">Tomorrow</button>
+                    <button class="sidebar-chip">April 22</button>
+                  </div>
+                  <div class="sidebar-block">
+                    <p class="mini-label">Notes</p>
+                    <button class="sidebar-note active">
+                      <span>product brief</span>
+                      <small>2m ago</small>
+                    </button>
+                    <button class="sidebar-note">
+                      <span>launch copy</span>
+                      <small>1h ago</small>
+                    </button>
+                  </div>
+                </aside>
+                <article class="mock-editor">
+                  <p class="mini-label">Live markdown surface</p>
+                  <h3># ship mdbar</h3>
+                  <p class="divider"></p>
+                  <p>### afternoon</p>
+                  <ul>
+                    <li><span class="check checked"></span> build the menu bar shell</li>
+                    <li><span class="check"></span> tune fonts and dark mode</li>
+                    <li><span class="check"></span> make the landing page feel like a real product</li>
+                  </ul>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="feature-grid" id="features">
+          <article>
+            <p class="eyebrow">Plain files</p>
+            <h2>Your notes stay readable without the app.</h2>
+            <p>
+              Daily notes live in a folder you choose. Regular notes are just
+              markdown files too. No account, no hidden database, no export
+              ceremony.
+            </p>
+          </article>
+          <article>
+            <p class="eyebrow">Hybrid editing</p>
+            <h2>Markdown stays markdown, but it doesn’t look raw.</h2>
+            <p>
+              Headings, lists, and checkboxes render in place while you type, so
+              the editor feels close to the final document instead of making you
+              bounce between edit and preview.
+            </p>
+          </article>
+          <article>
+            <p class="eyebrow">Built for muscle memory</p>
+            <h2>Open it with one shortcut and keep moving.</h2>
+            <p>
+              mdbar lives in the menu bar, respects dark mode, supports tab
+              indentation, and gives the small preferences that make daily use
+              feel personal.
+            </p>
+          </article>
+        </section>
+
+        <section class="closing">
+          <p class="eyebrow">Open source</p>
+          <h2>Built in public, with an MIT license and a commit history worth reading.</h2>
+          <a class="button primary" href="https://github.com/rishabhsai/mdbar">
+            View the source
+          </a>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
