@@ -5,7 +5,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{
     include_image,
     menu::{Menu, MenuItem, PredefinedMenuItem, Submenu},
-    tray::{TrayIconBuilder, TrayIconEvent},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     ActivationPolicy, AppHandle, Manager, PhysicalPosition, Runtime, WebviewWindow, WindowEvent,
 };
 
@@ -135,8 +135,13 @@ fn build_tray<R: Runtime>(app: &mut tauri::App<R>) -> tauri::Result<()> {
             }
         })
         .on_tray_icon_event(|tray, event| {
-            if let TrayIconEvent::Click { button, .. } = event {
-                if button == tauri::tray::MouseButton::Left {
+            if let TrayIconEvent::Click {
+                button,
+                button_state,
+                ..
+            } = event
+            {
+                if button == MouseButton::Left && button_state == MouseButtonState::Up {
                     let app = tray.app_handle();
                     if let Ok(window) = get_main_window(app) {
                         if window.is_visible().unwrap_or(false) {
