@@ -184,6 +184,7 @@ pub fn run() {
             notes::list_library_notes,
             notes::open_library_note,
             notes::create_library_note,
+            notes::create_library_folder,
             notes::save_note,
             notes::open_note_in_default_app,
             notes::reveal_note_in_finder

@@ -439,7 +439,7 @@ code {
 
 .note-picker {
   position: relative;
-  width: min(236px, 100%);
+  width: min(188px, 100%);
 }
 
 .note-picker-trigger {
@@ -1038,6 +1038,12 @@ code {
   border: 1px solid var(--panel-border);
   border-radius: 12px;
   background: color-mix(in srgb, var(--accent-soft) 72%, var(--panel) 28%);
+}
+
+.empty-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .onboarding-grid {

@@ -298,6 +298,28 @@ fn unique_library_path(root: &Path, title: &str) -> Result<PathBuf, String> {
     }
 }
 
+fn normalize_library_directory_relative_path(directory: &str) -> Result<PathBuf, String> {
+    let trimmed = directory.trim().trim_matches('/');
+    if trimmed.is_empty() {
+        return Err("Choose a folder name before creating it.".to_string());
+    }
+
+    let mut relative = PathBuf::new();
+
+    for component in Path::new(trimmed).components() {
+        match component {
+            Component::Normal(segment) => relative.push(segment),
+            _ => return Err("That folder path is invalid.".to_string()),
+        }
+    }
+
+    if relative.as_os_str().is_empty() {
+        return Err("That folder path is invalid.".to_string());
+    }
+
+    Ok(relative)
+}
+
 fn normalize_library_note_relative_path(note_id: &str) -> Result<PathBuf, String> {
     let trimmed = note_id.trim().trim_matches('/');
     if trimmed.is_empty() {
@@ -404,6 +426,19 @@ pub fn create_library_note(folder_path: String, title: String) -> Result<NoteDoc
 }
 
 #[tauri::command(rename_all = "camelCase")]
+pub fn create_library_folder(folder_path: String, directory: String) -> Result<String, String> {
+    let root = normalize_notebook_root(&folder_path)?;
+    let notes_root = library_root(&root);
+    ensure_dir(&notes_root)?;
+
+    let relative = normalize_library_directory_relative_path(&directory)?;
+    let path = notes_root.join(&relative);
+
+    ensure_dir(&path)?;
+    Ok(normalize_path_string(&relative))
+}
+
+#[tauri::command(rename_all = "camelCase")]
 pub fn save_note(file_path: String, content: String) -> Result<SaveNoteResult, String> {
     let path = PathBuf::from(file_path);
 
@@ -471,7 +506,10 @@ pub fn open_note_in_default_app(file_path: String) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{list_library_notes, normalize_library_note_relative_path, slugify};
+    use super::{
+        create_library_folder, list_library_notes, normalize_library_directory_relative_path,
+        normalize_library_note_relative_path, slugify,
+    };
     use std::{
         fs,
         path::PathBuf,
@@ -505,6 +543,12 @@ mod tests {
     }
 
     #[test]
+    fn normalize_library_directory_relative_path_rejects_parent_segments() {
+        let result = normalize_library_directory_relative_path("../secrets");
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn list_library_notes_walks_nested_folders() {
         let root = temporary_root("nested");
         let nested_folder = root.join("notes/projects/client");
@@ -518,6 +562,22 @@ mod tests {
         assert_eq!(notes[0].id, "projects/client/roadmap");
         assert_eq!(notes[0].relative_path, "projects/client/roadmap.md");
         assert_eq!(notes[0].directory, "projects/client");
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn create_library_folder_creates_nested_directories() {
+        let root = temporary_root("folder");
+
+        let created = create_library_folder(
+            root.to_string_lossy().into_owned(),
+            "projects/client".to_string(),
+        )
+        .expect("folder should be created");
+
+        assert_eq!(created, "projects/client");
+        assert!(root.join("notes/projects/client").exists());
 
         let _ = fs::remove_dir_all(root);
     }

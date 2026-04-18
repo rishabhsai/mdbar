@@ -10,9 +10,9 @@ import {
 import { tags } from "@lezer/highlight";
 import {
   useEffect,
-  useEffectEvent,
   useRef,
   type CSSProperties,
+  type MutableRefObject,
 } from "react";
 
 import { markdownPresentationExtension } from "../lib/editor-plugins";
@@ -139,7 +139,7 @@ function createPlaceholder(loading: boolean) {
 
 function buildExtensions(
   isLoading: boolean,
-  onChange: (value: string) => void,
+  onChangeRef: MutableRefObject<(value: string) => void>,
 ): Extension[] {
   return [
     keymap.of([...defaultKeymap, ...historyKeymap]),
@@ -155,7 +155,7 @@ function buildExtensions(
     }),
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
-        onChange(update.state.doc.toString());
+        onChangeRef.current(update.state.doc.toString());
       }
     }),
     editableCompartment.of(EditorView.editable.of(!isLoading)),
@@ -173,14 +173,17 @@ export function InkMarkdownEditor({
 }: InkMarkdownEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const editorViewRef = useRef<EditorView | null>(null);
-  const initialLoadingRef = useRef(isLoading);
   const activeDocumentKeyRef = useRef(documentKey);
+  const initialLoadingRef = useRef(isLoading);
   const latestValueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
 
-  const handleChange = useEffectEvent((nextValue: string) => {
-    latestValueRef.current = nextValue;
-    onChange(nextValue);
-  });
+  useEffect(() => {
+    onChangeRef.current = (nextValue: string) => {
+      latestValueRef.current = nextValue;
+      onChange(nextValue);
+    };
+  }, [onChange]);
 
   useEffect(() => {
     latestValueRef.current = value;
@@ -195,7 +198,7 @@ export function InkMarkdownEditor({
 
     const state = EditorState.create({
       doc: latestValueRef.current,
-      extensions: buildExtensions(initialLoadingRef.current, handleChange),
+      extensions: buildExtensions(initialLoadingRef.current, onChangeRef),
     });
 
     const view = new EditorView({
@@ -204,12 +207,13 @@ export function InkMarkdownEditor({
     });
 
     editorViewRef.current = view;
+    activeDocumentKeyRef.current = documentKey;
 
     return () => {
       view.destroy();
       editorViewRef.current = null;
     };
-  }, [handleChange]);
+  }, [documentKey]);
 
   useEffect(() => {
     const view = editorViewRef.current;
@@ -243,8 +247,8 @@ export function InkMarkdownEditor({
 
     const currentValue = view.state.doc.toString();
     if (currentValue !== value) {
-      const hadFocus = view.hasFocus;
       const currentSelection = view.state.selection;
+      const hadFocus = view.hasFocus;
 
       view.dispatch({
         changes: {
@@ -262,7 +266,7 @@ export function InkMarkdownEditor({
 
     activeDocumentKeyRef.current = documentKey;
     latestValueRef.current = value;
-  }, [documentKey, value]);
+  }, [documentKey, isLoading, value]);
 
   return (
     <div

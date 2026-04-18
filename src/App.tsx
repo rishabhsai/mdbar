@@ -11,18 +11,19 @@ import { SettingsSheet } from "./components/SettingsSheet";
 import { formatDateLabel, shiftDateKey, todayKey } from "./lib/dates";
 import { loadSettings, saveSettings } from "./lib/settings";
 import {
+  createLibraryFolder,
   createLibraryNote,
   listLibraryNotes,
   openDailyNote,
   openLibraryNote,
-  openNoteInDefaultApp,
-  revealNoteInFinder,
   saveNote,
   setPanelAutoHide,
   toggleMainWindow,
 } from "./lib/tauri";
 import type { AppSettings, NoteDocument, NoteSummary } from "./lib/types";
 import "./App.css";
+
+type ComposerKind = "note" | "folder";
 
 function resolveInitialSystemTheme() {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -82,15 +83,14 @@ function App() {
   const [shortcutStatus, setShortcutStatus] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
-  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [composerKind, setComposerKind] = useState<ComposerKind>("note");
   const [isNotePickerOpen, setIsNotePickerOpen] = useState(false);
-  const [newNoteTitle, setNewNoteTitle] = useState("");
+  const [newItemName, setNewItemName] = useState("");
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
     resolveInitialSystemTheme,
   );
   const [isLoadingNote, setIsLoadingNote] = useState(false);
   const saveTimerRef = useRef<number | null>(null);
-  const actionMenuRef = useRef<HTMLDivElement | null>(null);
   const notePickerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -116,7 +116,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isActionMenuOpen && !isNotePickerOpen) {
+    if (!isNotePickerOpen) {
       return;
     }
 
@@ -127,17 +127,12 @@ function App() {
         return;
       }
 
-      if (!actionMenuRef.current?.contains(target)) {
-        setIsActionMenuOpen(false);
-      }
-
       if (!notePickerRef.current?.contains(target)) {
         setIsNotePickerOpen(false);
       }
     };
 
     const handleWindowBlur = () => {
-      setIsActionMenuOpen(false);
       setIsNotePickerOpen(false);
     };
 
@@ -148,10 +143,9 @@ function App() {
       window.removeEventListener("pointerdown", handlePointerDown, true);
       window.removeEventListener("blur", handleWindowBlur);
     };
-  }, [isActionMenuOpen, isNotePickerOpen]);
+  }, [isNotePickerOpen]);
 
   useEffect(() => {
-    setIsActionMenuOpen(false);
     setIsNotePickerOpen(false);
   }, [mode, dailyDateKey, selectedLibraryNoteId]);
 
@@ -166,18 +160,11 @@ function App() {
     currentNote?.filePath ??
     `${mode}:${dailyDateKey}:${selectedLibraryNoteId ?? "no-library-note"}`;
   const todayDateKey = todayKey();
-  const selectedLibraryIndex = selectedLibraryNoteId
-    ? libraryNotes.findIndex((note) => note.id === selectedLibraryNoteId)
-    : -1;
-  const title = mode === "daily" ? formatDateLabel(dailyDateKey) : currentNote?.title ?? "Notes";
+  const title = mode === "daily" ? formatDateLabel(dailyDateKey) : "Notes";
   const statusLabel = saveStateLabel(saveState, isLoadingNote, errorMessage);
-  const disablePrevious =
-    !settings.notebookPath || (mode === "library" && selectedLibraryIndex <= 0);
+  const disablePrevious = !settings.notebookPath || mode !== "daily";
   const disableNext =
-    !settings.notebookPath ||
-    (mode === "daily"
-      ? dailyDateKey >= todayDateKey
-      : selectedLibraryIndex === -1 || selectedLibraryIndex >= libraryNotes.length - 1);
+    !settings.notebookPath || mode !== "daily" || dailyDateKey >= todayDateKey;
 
   useEffect(() => {
     if (!settings.notebookPath) {
@@ -368,13 +355,19 @@ function App() {
     }
   }
 
+  function openComposer(kind: ComposerKind) {
+    setComposerKind(kind);
+    setNewItemName("");
+    setIsComposerOpen(true);
+  }
+
   async function handleCreateNote() {
-    if (!settings.notebookPath || !newNoteTitle.trim()) {
+    if (!settings.notebookPath || !newItemName.trim()) {
       return;
     }
 
     try {
-      const note = await createLibraryNote(settings.notebookPath, newNoteTitle.trim());
+      const note = await createLibraryNote(settings.notebookPath, newItemName.trim());
       const notes = await listLibraryNotes(settings.notebookPath);
 
       setLibraryNotes(notes);
@@ -384,7 +377,7 @@ function App() {
       setDraft(note.content);
       setSaveState("idle");
       setErrorMessage(null);
-      setNewNoteTitle("");
+      setNewItemName("");
       setIsComposerOpen(false);
       setIsNotePickerOpen(false);
     } catch (error) {
@@ -392,46 +385,46 @@ function App() {
     }
   }
 
-  async function handleOpenCurrentInDefaultApp() {
-    if (!currentNote) {
+  async function handleCreateFolder() {
+    if (!settings.notebookPath || !newItemName.trim()) {
       return;
     }
 
-    setIsActionMenuOpen(false);
-    await openNoteInDefaultApp(currentNote.filePath);
-  }
+    try {
+      await createLibraryFolder(settings.notebookPath, newItemName.trim());
+      const notes = await listLibraryNotes(settings.notebookPath);
 
-  async function handleRevealCurrentInFinder() {
-    if (!currentNote) {
-      return;
+      setLibraryNotes(notes);
+      setMode("library");
+      setSaveState("idle");
+      setErrorMessage(null);
+      setNewItemName("");
+      setIsComposerOpen(false);
+      setIsNotePickerOpen(false);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
     }
-
-    setIsActionMenuOpen(false);
-    await revealNoteInFinder(currentNote.filePath);
   }
 
   function handlePrevious() {
     if (mode === "daily") {
       setDailyDateKey((current) => shiftDateKey(current, -1));
-      return;
-    }
-
-    if (selectedLibraryIndex > 0) {
-      setSelectedLibraryNoteId(libraryNotes[selectedLibraryIndex - 1].id);
     }
   }
 
   function handleNext() {
-    if (mode === "daily") {
-      if (dailyDateKey < todayDateKey) {
-        setDailyDateKey((current) => shiftDateKey(current, 1));
-      }
+    if (mode === "daily" && dailyDateKey < todayDateKey) {
+      setDailyDateKey((current) => shiftDateKey(current, 1));
+    }
+  }
+
+  function handleComposerSubmit() {
+    if (composerKind === "folder") {
+      void handleCreateFolder();
       return;
     }
 
-    if (selectedLibraryIndex > -1 && selectedLibraryIndex < libraryNotes.length - 1) {
-      setSelectedLibraryNoteId(libraryNotes[selectedLibraryIndex + 1].id);
-    }
+    void handleCreateNote();
   }
 
   return (
@@ -440,7 +433,7 @@ function App() {
         <header className="panel-header">
           <div className="header-side">
             <button
-              aria-label={mode === "daily" ? "Previous day" : "Previous note"}
+              aria-label="Previous day"
               className="header-icon"
               disabled={disablePrevious}
               onClick={handlePrevious}
@@ -459,7 +452,7 @@ function App() {
             </button>
 
             <button
-              aria-label="Jump to today"
+              aria-label="Go to today"
               className={`header-icon${mode === "daily" ? " active" : ""}`}
               onClick={() => {
                 setMode("daily");
@@ -488,7 +481,7 @@ function App() {
             </button>
 
             <button
-              aria-label={mode === "daily" ? "Next day" : "Next note"}
+              aria-label="Next day"
               className="header-icon"
               disabled={disableNext}
               onClick={handleNext}
@@ -512,90 +505,31 @@ function App() {
           </h1>
 
           <div className="header-side header-side-right">
-            <div className="header-menu-wrap" ref={actionMenuRef}>
-              <div className={`header-split-button${isActionMenuOpen ? " active" : ""}`}>
-                <button
-                  aria-label="Open current note"
-                  className="header-split-button-primary"
-                  disabled={!currentNote}
-                  onClick={() => void handleOpenCurrentInDefaultApp()}
-                  type="button"
-                >
-                  <span aria-hidden="true" className="header-split-button-mark">
-                    <svg viewBox="0 0 24 24">
-                      <path
-                        d="M8 5.75h6.4L18.25 9.6V18a1.25 1.25 0 0 1-1.25 1.25H8A1.25 1.25 0 0 1 6.75 18V7A1.25 1.25 0 0 1 8 5.75Z"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.4"
-                      />
-                      <path
-                        d="M14.25 5.75V9.6h3.85"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.4"
-                      />
-                    </svg>
-                  </span>
-                </button>
-                <button
-                  aria-expanded={isActionMenuOpen}
-                  aria-label="Open note actions"
-                  className="header-split-button-toggle"
-                  disabled={!currentNote}
-                  onClick={() => setIsActionMenuOpen((current) => !current)}
-                  type="button"
-                >
-                  <svg aria-hidden="true" viewBox="0 0 24 24">
-                    <path
-                      d="m8 10 4 4 4-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.6"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {isActionMenuOpen ? (
-                <div className="header-menu-dropdown">
-                  <button
-                    className="header-menu-item"
-                    onClick={() => void handleRevealCurrentInFinder()}
-                    type="button"
-                  >
-                    Reveal in Finder
-                  </button>
-                  <button
-                    className="header-menu-item"
-                    onClick={() => {
-                      setIsActionMenuOpen(false);
-                      setMode("daily");
-                      setDailyDateKey(todayDateKey);
-                    }}
-                    type="button"
-                  >
-                    Go to today
-                  </button>
-                  <button
-                    className="header-menu-item"
-                    onClick={() => {
-                      setIsActionMenuOpen(false);
-                      setMode("library");
-                    }}
-                    type="button"
-                  >
-                    Browse notes
-                  </button>
-                </div>
-              ) : null}
-            </div>
+            <button
+              aria-label="Open notes"
+              className={`header-icon${mode === "library" ? " active" : ""}`}
+              onClick={() => setMode("library")}
+              type="button"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path
+                  d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.45"
+                />
+                <path
+                  d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.45"
+                />
+              </svg>
+            </button>
 
             <button
               aria-label="Open settings"
@@ -605,20 +539,20 @@ function App() {
             >
               <svg aria-hidden="true" viewBox="0 0 24 24">
                 <path
-                  d="M10.1 4.6c.2-.8 1.4-.8 1.6 0l.3 1.4a1 1 0 0 0 .8.7l1.4.2c.8.1 1.1 1.1.5 1.6l-1.1 1a1 1 0 0 0-.3 1l.3 1.4c.2.8-.7 1.4-1.4.9l-1.2-.8a1 1 0 0 0-1.1 0l-1.2.8c-.7.5-1.6-.1-1.4-.9l.3-1.4a1 1 0 0 0-.3-1l-1.1-1c-.6-.5-.3-1.5.5-1.6l1.4-.2a1 1 0 0 0 .8-.7l.3-1.4Z"
+                  d="M12 4.8a1 1 0 0 1 1-.96h.22a1 1 0 0 1 .96.78l.28 1.27c.1.43.43.74.84.89.2.08.4.17.6.28.38.2.83.22 1.22.02l1.14-.56a1 1 0 0 1 1.2.22l.16.18a1 1 0 0 1 .08 1.2l-.78 1.04a1.3 1.3 0 0 0-.24 1.18c.04.22.06.45.06.68s-.02.46-.06.68c-.08.42 0 .86.24 1.18l.78 1.04a1 1 0 0 1-.08 1.2l-.16.18a1 1 0 0 1-1.2.22l-1.14-.56a1.3 1.3 0 0 0-1.22.02c-.2.11-.4.2-.6.28-.41.15-.74.46-.84.89l-.28 1.27a1 1 0 0 1-.96.78H13a1 1 0 0 1-1-.96l-.08-1.3a1.3 1.3 0 0 0-.62-1.03 5.6 5.6 0 0 1-.52-.32 1.3 1.3 0 0 0-1.26-.1l-1.2.42a1 1 0 0 1-1.14-.34l-.14-.2a1 1 0 0 1 .06-1.2l.82-.98c.28-.34.4-.8.34-1.24a5.8 5.8 0 0 1 0-1.38c.06-.44-.06-.9-.34-1.24l-.82-.98a1 1 0 0 1-.06-1.2l.14-.2a1 1 0 0 1 1.14-.34l1.2.42c.42.15.88.1 1.26-.1.17-.12.35-.22.52-.32.36-.22.58-.6.62-1.03L12 4.8Z"
                   fill="none"
                   stroke="currentColor"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth="1.35"
+                  strokeWidth="1.15"
                 />
                 <circle
-                  cx="10.9"
-                  cy="10.5"
+                  cx="12"
+                  cy="12"
                   fill="none"
                   r="2.2"
                   stroke="currentColor"
-                  strokeWidth="1.35"
+                  strokeWidth="1.4"
                 />
               </svg>
             </button>
@@ -644,7 +578,7 @@ function App() {
               <article className="onboarding-card">
                 <span className="onboarding-step">2</span>
                 <h3>Daily notes stay dated</h3>
-                <p>Each date maps to its own markdown file inside <code>daily/</code>.</p>
+                <p>Click the calendar to jump back to today. The arrows move between dates.</p>
               </article>
               <article className="onboarding-card">
                 <span className="onboarding-step">3</span>
@@ -740,13 +674,22 @@ function App() {
 
               <div className="panel-toolbar-actions">
                 {mode === "library" ? (
-                  <button
-                    className="toolbar-button"
-                    onClick={() => setIsComposerOpen(true)}
-                    type="button"
-                  >
-                    New
-                  </button>
+                  <>
+                    <button
+                      className="toolbar-button"
+                      onClick={() => openComposer("note")}
+                      type="button"
+                    >
+                      Note
+                    </button>
+                    <button
+                      className="toolbar-button"
+                      onClick={() => openComposer("folder")}
+                      type="button"
+                    >
+                      Folder
+                    </button>
+                  </>
                 ) : null}
                 <p className={`status-pill${statusLabel === "Issue" ? " is-error" : ""}`}>
                   {statusLabel}
@@ -759,14 +702,19 @@ function App() {
             {mode === "library" && libraryNotes.length === 0 ? (
               <div className="editor-empty-state">
                 <p className="empty-kicker">No side notes yet</p>
-                <h2>Create markdown files in <code>notes/</code> and mdbar will pick them up automatically.</h2>
+                <h2>Create markdown files or folders in <code>notes/</code> and mdbar will pick them up automatically.</h2>
                 <p>
-                  You can also create folders inside <code>notes/</code> to organize projects,
-                  areas, or archives.
+                  Use folders for projects, clients, or archives. mdbar will browse through nested
+                  directories and show the relative path in the picker.
                 </p>
-                <button className="primary-button" onClick={() => setIsComposerOpen(true)} type="button">
-                  Create a note
-                </button>
+                <div className="empty-actions">
+                  <button className="primary-button" onClick={() => openComposer("note")} type="button">
+                    Create a note
+                  </button>
+                  <button className="secondary-button" onClick={() => openComposer("folder")} type="button">
+                    Create a folder
+                  </button>
+                </div>
               </div>
             ) : currentNote ? (
               <InkMarkdownEditor
@@ -799,27 +747,34 @@ function App() {
       {isComposerOpen ? (
         <div className="sheet-backdrop" onClick={() => setIsComposerOpen(false)} role="presentation">
           <div className="composer-modal" onClick={(event) => event.stopPropagation()}>
-            <p className="empty-kicker">New note</p>
-            <h2>Create a plain markdown file in your notes folder.</h2>
-            <label className="field-label" htmlFor="new-note-title">
-              Title
+            <p className="empty-kicker">
+              {composerKind === "folder" ? "New folder" : "New note"}
+            </p>
+            <h2>
+              {composerKind === "folder"
+                ? "Create a folder inside notes/."
+                : "Create a plain markdown file in your notes folder."}
+            </h2>
+            <label className="field-label" htmlFor="new-item-name">
+              {composerKind === "folder" ? "Folder name" : "Title"}
             </label>
             <input
               autoFocus
-              id="new-note-title"
-              onChange={(event) => setNewNoteTitle(event.currentTarget.value)}
+              id="new-item-name"
+              onChange={(event) => setNewItemName(event.currentTarget.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
-                  void handleCreateNote();
+                  handleComposerSubmit();
                 }
               }}
-              placeholder="Project brief"
+              placeholder={composerKind === "folder" ? "projects/client" : "Project brief"}
               type="text"
-              value={newNoteTitle}
+              value={newItemName}
             />
             <p className="field-hint">
-              For subfolders, create them directly inside <code>notes/</code> and mdbar will browse
-              them automatically.
+              {composerKind === "folder"
+                ? "Use a path like projects/client to create nested folders inside notes/."
+                : "Create the note here, then move it into folders inside notes/ whenever you want."}
             </p>
             <div className="composer-actions">
               <button
@@ -829,8 +784,8 @@ function App() {
               >
                 Cancel
               </button>
-              <button className="primary-button" onClick={handleCreateNote} type="button">
-                Create note
+              <button className="primary-button" onClick={handleComposerSubmit} type="button">
+                {composerKind === "folder" ? "Create folder" : "Create note"}
               </button>
             </div>
           </div>

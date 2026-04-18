@@ -29,6 +29,13 @@ export function createLibraryNote(folderPath: string, title: string) {
   });
 }
 
+export function createLibraryFolder(folderPath: string, directory: string) {
+  return invoke<string>("create_library_folder", {
+    directory,
+    folderPath,
+  });
+}
+
 export function saveNote(filePath: string, content: string) {
   return invoke<SaveNoteResult>("save_note", {
     filePath,
