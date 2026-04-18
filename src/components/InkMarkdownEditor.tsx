@@ -174,6 +174,7 @@ export function InkMarkdownEditor({
   const hostRef = useRef<HTMLDivElement | null>(null);
   const editorViewRef = useRef<EditorView | null>(null);
   const initialLoadingRef = useRef(isLoading);
+  const activeDocumentKeyRef = useRef(documentKey);
   const latestValueRef = useRef(value);
 
   const handleChange = useEffectEvent((nextValue: string) => {
@@ -234,19 +235,33 @@ export function InkMarkdownEditor({
       return;
     }
 
-    const currentValue = view.state.doc.toString();
+    const isDocumentSwitch = activeDocumentKeyRef.current !== documentKey;
 
-    if (currentValue === value) {
+    if (!isDocumentSwitch && latestValueRef.current === value) {
       return;
     }
 
-    view.dispatch({
-      changes: {
-        from: 0,
-        to: currentValue.length,
-        insert: value,
-      },
-    });
+    const currentValue = view.state.doc.toString();
+    if (currentValue !== value) {
+      const hadFocus = view.hasFocus;
+      const currentSelection = view.state.selection;
+
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: currentValue.length,
+          insert: value,
+        },
+        selection: isDocumentSwitch ? undefined : currentSelection,
+      });
+
+      if (hadFocus && !isLoading) {
+        view.focus();
+      }
+    }
+
+    activeDocumentKeyRef.current = documentKey;
+    latestValueRef.current = value;
   }, [documentKey, value]);
 
   return (
