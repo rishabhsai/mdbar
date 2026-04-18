@@ -13,8 +13,20 @@
     "windows": [
       {
         "title": "mdbar",
-        "width": 800,
-        "height": 600
+        "width": 980,
+        "height": 720,
+        "visible": false,
+        "resizable": true,
+        "fullscreen": false,
+        "maximizable": false,
+        "minimizable": false,
+        "closable": true,
+        "decorations": false,
+        "hiddenTitle": true,
+        "transparent": true,
+        "shadow": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
       }
     ],
     "security": {
