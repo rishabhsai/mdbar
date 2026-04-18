@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "mdbar",
-        "width": 440,
-        "height": 620,
+        "width": 412,
+        "height": 560,
         "visible": false,
         "resizable": false,
         "fullscreen": false,

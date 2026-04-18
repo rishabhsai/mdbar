@@ -1,14 +1,19 @@
-import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
-import { tags } from "@lezer/highlight";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import {
   EditorView,
   keymap,
   placeholder as placeholderExtension,
 } from "@codemirror/view";
-import { useEffect, useEffectEvent, useRef } from "react";
+import { tags } from "@lezer/highlight";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  type CSSProperties,
+} from "react";
 
 import { markdownPresentationExtension } from "../lib/editor-plugins";
 
@@ -17,6 +22,7 @@ type InkMarkdownEditorProps = {
   documentKey: string;
   isLoading: boolean;
   onChange: (value: string) => void;
+  style?: CSSProperties;
   value: string;
 };
 
@@ -86,22 +92,23 @@ const editorTheme = EditorView.theme({
     height: "100%",
     backgroundColor: "transparent",
     color: "var(--ink)",
-    fontFamily: "var(--sans)",
-    fontSize: "12.75px",
+    fontFamily: "var(--editor-font-family, var(--sans))",
+    fontSize: "var(--editor-font-size, 15px)",
   },
   ".cm-scroller": {
     overflow: "auto",
-    padding: "8px 12px 18px",
+    padding: "8px 14px 18px",
   },
   ".cm-content": {
     minHeight: "100%",
     padding: "0",
     whiteSpace: "pre-wrap",
     caretColor: "var(--ink)",
+    lineHeight: "var(--editor-line-height, 1.65)",
   },
   ".cm-line": {
     padding: "0",
-    lineHeight: "1.68",
+    lineHeight: "var(--editor-line-height, 1.65)",
   },
   ".cm-focused": {
     outline: "none",
@@ -124,7 +131,9 @@ const editorTheme = EditorView.theme({
 function createPlaceholder(loading: boolean) {
   const placeholder = document.createElement("div");
   placeholder.className = "daily-editor-placeholder";
-  placeholder.textContent = loading ? "Loading note..." : "whatsup?";
+  placeholder.textContent = loading
+    ? "Loading note..."
+    : "Start with a heading, a checklist, or whatever is on your mind.";
   return placeholder;
 }
 
@@ -159,6 +168,7 @@ export function InkMarkdownEditor({
   documentKey,
   isLoading,
   onChange,
+  style,
   value,
 }: InkMarkdownEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -239,5 +249,14 @@ export function InkMarkdownEditor({
     });
   }, [documentKey, value]);
 
-  return <div className={className} ref={hostRef} />;
+  return (
+    <div
+      className={["ink-editor-shell", isLoading ? "is-loading" : "", className]
+        .filter(Boolean)
+        .join(" ")}
+      style={style}
+    >
+      <div className="ink-editor-host" ref={hostRef} />
+    </div>
+  );
 }

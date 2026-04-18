@@ -4,16 +4,16 @@ import {
   register,
   unregisterAll,
 } from "@tauri-apps/plugin-global-shortcut";
-import { formatDistanceToNowStrict } from "date-fns";
 import {
   useEffect,
   useEffectEvent,
   useRef,
   useState,
   useTransition,
+  type CSSProperties,
 } from "react";
 
-import { HybridEditor } from "./components/HybridEditor";
+import { InkMarkdownEditor } from "./components/InkMarkdownEditor";
 import { SettingsSheet } from "./components/SettingsSheet";
 import { formatDateLabel, shiftDateKey, todayKey } from "./lib/dates";
 import { loadSettings, saveSettings } from "./lib/settings";
@@ -31,6 +31,47 @@ import {
 import type { AppSettings, NoteDocument, NoteSummary } from "./lib/types";
 import "./App.css";
 
+function resolveInitialSystemTheme() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return "light" as const;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function noteFilename(note: NoteDocument | null) {
+  if (!note) {
+    return "No file selected";
+  }
+
+  const segments = note.filePath.split("/");
+  return segments[segments.length - 1] ?? "No file selected";
+}
+
+function saveStateLabel(
+  saveState: "idle" | "saving" | "saved",
+  isPending: boolean,
+  errorMessage: string | null,
+) {
+  if (errorMessage) {
+    return "Issue";
+  }
+
+  if (isPending) {
+    return "Loading";
+  }
+
+  if (saveState === "saving") {
+    return "Saving";
+  }
+
+  if (saveState === "saved") {
+    return "Saved";
+  }
+
+  return "Ready";
+}
+
 function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [mode, setMode] = useState<"daily" | "library">("daily");
@@ -41,22 +82,71 @@ function App() {
   const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
-  const [isEditorReady, setIsEditorReady] = useState(false);
   const [shortcutStatus, setShortcutStatus] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState("");
+  const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
+    resolveInitialSystemTheme,
+  );
   const [isPending, startTransition] = useTransition();
   const saveTimerRef = useRef<number | null>(null);
-  const notePathRef = useRef<string | null>(null);
+  const actionMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
 
-  const appearance =
-    settings.theme === "system" ? "auto" : settings.theme === "dark" ? "dark" : "light";
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
 
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (event: MediaQueryListEvent) => {
+      setSystemTheme(event.matches ? "dark" : "light");
+    };
+
+    setSystemTheme(mediaQuery.matches ? "dark" : "light");
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isActionMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (!actionMenuRef.current?.contains(target)) {
+        setIsActionMenuOpen(false);
+      }
+    };
+
+    const handleWindowBlur = () => {
+      setIsActionMenuOpen(false);
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown, true);
+    window.addEventListener("blur", handleWindowBlur);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown, true);
+      window.removeEventListener("blur", handleWindowBlur);
+    };
+  }, [isActionMenuOpen]);
+
+  const appearance = settings.theme === "system" ? systemTheme : settings.theme;
   const editorFontFamily =
     settings.fontFamily === "editorial"
       ? '"Iowan Old Style", "Palatino Linotype", Georgia, serif'
@@ -66,20 +156,36 @@ function App() {
   const editorDocumentKey =
     currentNote?.filePath ??
     `${mode}:${dailyDateKey}:${selectedLibraryNoteId ?? "no-library-note"}`;
+  const todayDateKey = todayKey();
+  const selectedLibraryIndex = selectedLibraryNoteId
+    ? libraryNotes.findIndex((note) => note.id === selectedLibraryNoteId)
+    : -1;
+  const title = mode === "daily" ? formatDateLabel(dailyDateKey) : currentNote?.title ?? "Notes";
+  const statusLabel = saveStateLabel(saveState, isPending, errorMessage);
+  const disablePrevious =
+    !settings.notebookPath || (mode === "library" && selectedLibraryIndex <= 0);
+  const disableNext =
+    !settings.notebookPath ||
+    (mode === "daily"
+      ? dailyDateKey >= todayDateKey
+      : selectedLibraryIndex === -1 || selectedLibraryIndex >= libraryNotes.length - 1);
 
   const refreshLibrary = useEffectEvent(async (folderPath: string) => {
     const notes = await listLibraryNotes(folderPath);
     startTransition(() => {
       setLibraryNotes(notes);
-      if (!selectedLibraryNoteId && notes[0]) {
-        setSelectedLibraryNoteId(notes[0].id);
-      }
+      setSelectedLibraryNoteId((currentId) => {
+        if (currentId && notes.some((note) => note.id === currentId)) {
+          return currentId;
+        }
+
+        return notes[0]?.id ?? null;
+      });
     });
   });
 
   const loadDaily = useEffectEvent(async (folderPath: string, dateKey: string) => {
     const note = await openDailyNote(folderPath, dateKey);
-    notePathRef.current = note.filePath;
     startTransition(() => {
       setCurrentNote(note);
       setDraft(note.content);
@@ -90,7 +196,6 @@ function App() {
 
   const loadLibrary = useEffectEvent(async (folderPath: string, noteId: string) => {
     const note = await openLibraryNote(folderPath, noteId);
-    notePathRef.current = note.filePath;
     startTransition(() => {
       setCurrentNote(note);
       setDraft(note.content);
@@ -103,6 +208,7 @@ function App() {
     if (!settings.notebookPath) {
       setCurrentNote(null);
       setLibraryNotes([]);
+      setDraft("");
       return;
     }
 
@@ -126,8 +232,12 @@ function App() {
           return;
         }
 
-        setCurrentNote(null);
-        setDraft("");
+        startTransition(() => {
+          setCurrentNote(null);
+          setDraft("");
+          setSaveState("idle");
+          setErrorMessage(null);
+        });
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : String(error));
       }
@@ -147,6 +257,14 @@ function App() {
     selectedLibraryNoteId,
     settings.notebookPath,
   ]);
+
+  useEffect(() => {
+    if (mode !== "library" || selectedLibraryNoteId || !libraryNotes[0]) {
+      return;
+    }
+
+    setSelectedLibraryNoteId(libraryNotes[0].id);
+  }, [libraryNotes, mode, selectedLibraryNoteId]);
 
   useEffect(() => {
     if (!currentNote || draft === currentNote.content) {
@@ -183,12 +301,13 @@ function App() {
             ),
           );
           setSaveState(result.persisted ? "saved" : "idle");
+          setErrorMessage(null);
         });
       } catch (error) {
         setSaveState("idle");
         setErrorMessage(error instanceof Error ? error.message : String(error));
       }
-    }, 420);
+    }, 320);
 
     return () => {
       if (saveTimerRef.current) {
@@ -275,6 +394,7 @@ function App() {
       return;
     }
 
+    setIsActionMenuOpen(false);
     await openNoteInDefaultApp(currentNote.filePath);
   }
 
@@ -283,160 +403,338 @@ function App() {
       return;
     }
 
+    setIsActionMenuOpen(false);
     await revealNoteInFinder(currentNote.filePath);
   }
 
+  function handlePrevious() {
+    if (mode === "daily") {
+      setDailyDateKey((current) => shiftDateKey(current, -1));
+      return;
+    }
+
+    if (selectedLibraryIndex > 0) {
+      setSelectedLibraryNoteId(libraryNotes[selectedLibraryIndex - 1].id);
+    }
+  }
+
+  function handleNext() {
+    if (mode === "daily") {
+      if (dailyDateKey < todayDateKey) {
+        setDailyDateKey((current) => shiftDateKey(current, 1));
+      }
+      return;
+    }
+
+    if (selectedLibraryIndex > -1 && selectedLibraryIndex < libraryNotes.length - 1) {
+      setSelectedLibraryNoteId(libraryNotes[selectedLibraryIndex + 1].id);
+    }
+  }
+
   return (
-    <main className={`app-shell theme-${appearance}`}>
-      <section className="window-frame">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">mdbar</p>
-            <h1>{mode === "daily" ? formatDateLabel(dailyDateKey) : currentNote?.title ?? "Notes"}</h1>
+    <main className={`app-shell ${appearance === "dark" ? "theme-dark" : "theme-light"}`}>
+      <section className="panel-frame">
+        <header className="panel-header">
+          <div className="header-side">
+            <button
+              aria-label={mode === "daily" ? "Previous day" : "Previous note"}
+              className="header-icon"
+              disabled={disablePrevious}
+              onClick={handlePrevious}
+              type="button"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path
+                  d="m14.5 6.5-5 5 5 5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.6"
+                />
+              </svg>
+            </button>
+
+            <button
+              aria-label="Jump to today"
+              className={`header-icon${mode === "daily" ? " active" : ""}`}
+              onClick={() => {
+                setMode("daily");
+                setDailyDateKey(todayDateKey);
+              }}
+              type="button"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path
+                  d="M7 4.5v2.2M17 4.5v2.2M5.5 8.2h13M6.3 6.5h11.4a.8.8 0 0 1 .8.8v10a1.2 1.2 0 0 1-1.2 1.2H6.7a1.2 1.2 0 0 1-1.2-1.2v-10a.8.8 0 0 1 .8-.8Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.45"
+                />
+                <path
+                  d="m10 13 2 2 3.5-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.45"
+                />
+              </svg>
+            </button>
+
+            <button
+              aria-label={mode === "daily" ? "Next day" : "Next note"}
+              className="header-icon"
+              disabled={disableNext}
+              onClick={handleNext}
+              type="button"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path
+                  d="m9.5 6.5 5 5-5 5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.6"
+                />
+              </svg>
+            </button>
           </div>
-          <div className="topbar-actions">
-            <button className="secondary-button" onClick={handleOpenCurrentInDefaultApp} type="button">
-              Open
-            </button>
-            <button className="secondary-button" onClick={handleRevealCurrentInFinder} type="button">
-              Reveal
-            </button>
-            <button className="secondary-button" onClick={() => setIsSettingsOpen(true)} type="button">
-              Settings
+
+          <h1 className="header-title" title={title}>
+            {title}
+          </h1>
+
+          <div className="header-side header-side-right">
+            <div className="header-menu-wrap" ref={actionMenuRef}>
+              <div className={`header-split-button${isActionMenuOpen ? " active" : ""}`}>
+                <button
+                  aria-label="Open current note"
+                  className="header-split-button-primary"
+                  disabled={!currentNote}
+                  onClick={() => void handleOpenCurrentInDefaultApp()}
+                  type="button"
+                >
+                  <span className="header-split-button-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path
+                        d="M8 5.75h6.4L18.25 9.6V18a1.25 1.25 0 0 1-1.25 1.25H8A1.25 1.25 0 0 1 6.75 18V7A1.25 1.25 0 0 1 8 5.75Z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.4"
+                      />
+                      <path
+                        d="M14.25 5.75V9.6h3.85"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.4"
+                      />
+                    </svg>
+                  </span>
+                </button>
+                <button
+                  aria-expanded={isActionMenuOpen}
+                  aria-label="Open note actions"
+                  className="header-split-button-toggle"
+                  disabled={!currentNote}
+                  onClick={() => setIsActionMenuOpen((current) => !current)}
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path
+                      d="m8 10 4 4 4-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.6"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {isActionMenuOpen ? (
+                <div className="header-menu-dropdown">
+                  <button
+                    className="header-menu-item"
+                    onClick={() => void handleRevealCurrentInFinder()}
+                    type="button"
+                  >
+                    Reveal in Finder
+                  </button>
+                  <button
+                    className="header-menu-item"
+                    onClick={() => {
+                      setIsActionMenuOpen(false);
+                      setMode("daily");
+                      setDailyDateKey(todayDateKey);
+                    }}
+                    type="button"
+                  >
+                    Go to today
+                  </button>
+                  <button
+                    className="header-menu-item"
+                    onClick={() => {
+                      setIsActionMenuOpen(false);
+                      setMode("library");
+                    }}
+                    type="button"
+                  >
+                    Browse notes
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <button
+              aria-label="Open settings"
+              className="header-icon"
+              onClick={() => setIsSettingsOpen(true)}
+              type="button"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path
+                  d="M10.1 4.6c.2-.8 1.4-.8 1.6 0l.3 1.4a1 1 0 0 0 .8.7l1.4.2c.8.1 1.1 1.1.5 1.6l-1.1 1a1 1 0 0 0-.3 1l.3 1.4c.2.8-.7 1.4-1.4.9l-1.2-.8a1 1 0 0 0-1.1 0l-1.2.8c-.7.5-1.6-.1-1.4-.9l.3-1.4a1 1 0 0 0-.3-1l-1.1-1c-.6-.5-.3-1.5.5-1.6l1.4-.2a1 1 0 0 0 .8-.7l.3-1.4Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.35"
+                />
+                <circle
+                  cx="10.9"
+                  cy="10.5"
+                  fill="none"
+                  r="2.2"
+                  stroke="currentColor"
+                  strokeWidth="1.35"
+                />
+              </svg>
             </button>
           </div>
         </header>
 
         {!settings.notebookPath ? (
           <section className="empty-state">
-            <p className="eyebrow">Plain files. No lock-in.</p>
-            <h2>Choose one folder and mdbar turns it into your daily notebook.</h2>
+            <p className="empty-kicker">Plain markdown. One folder.</p>
+            <h2>Pick a notebook folder and mdbar turns it into a compact daily notes panel.</h2>
             <p>
-              Daily notes live in <code>daily/</code>. Everything else lives in{" "}
-              <code>notes/</code>.
+              Daily notes live in <code>daily/</code>. Extra notes live in <code>notes/</code>.
             </p>
             <button className="primary-button" onClick={chooseNotebookFolder} type="button">
               Choose notebook folder
             </button>
           </section>
         ) : (
-          <div className="workspace">
-            <aside className="sidebar">
-              <div className="sidebar-group">
-                <div className="sidebar-title-row">
-                  <span className="sidebar-title">Daily</span>
-                  <input
-                    onChange={(event) => {
-                      setMode("daily");
-                      setDailyDateKey(event.currentTarget.value);
-                    }}
-                    type="date"
-                    value={dailyDateKey}
-                  />
-                </div>
-                <div className="daily-nav">
-                  <button
-                    className={mode === "daily" && dailyDateKey === shiftDateKey(todayKey(), -1) ? "is-active" : ""}
-                    onClick={() => {
-                      setMode("daily");
-                      setDailyDateKey(shiftDateKey(todayKey(), -1));
-                    }}
-                    type="button"
-                  >
-                    Yesterday
-                  </button>
-                  <button
-                    className={mode === "daily" && dailyDateKey === todayKey() ? "is-active" : ""}
-                    onClick={() => {
-                      setMode("daily");
-                      setDailyDateKey(todayKey());
-                    }}
-                    type="button"
-                  >
-                    Today
-                  </button>
-                  <button
-                    className={mode === "daily" && dailyDateKey === shiftDateKey(todayKey(), 1) ? "is-active" : ""}
-                    onClick={() => {
-                      setMode("daily");
-                      setDailyDateKey(shiftDateKey(todayKey(), 1));
-                    }}
-                    type="button"
-                  >
-                    Tomorrow
-                  </button>
-                </div>
+          <section className="panel-body">
+            <div className="panel-toolbar">
+              <div className="view-switch">
+                <button
+                  className={mode === "daily" ? "is-active" : ""}
+                  onClick={() => setMode("daily")}
+                  type="button"
+                >
+                  Daily
+                </button>
+                <button
+                  className={mode === "library" ? "is-active" : ""}
+                  onClick={() => setMode("library")}
+                  type="button"
+                >
+                  Notes
+                </button>
               </div>
 
-              <div className="sidebar-group">
-                <div className="sidebar-title-row">
-                  <span className="sidebar-title">Notes</span>
-                  <button className="ghost-button" onClick={() => setIsComposerOpen(true)} type="button">
-                    New
-                  </button>
-                </div>
-                <div className="note-list">
-                  {libraryNotes.length === 0 ? (
-                    <p className="sidebar-empty">No regular notes yet.</p>
-                  ) : (
-                    libraryNotes.map((note) => (
-                      <button
-                        className={`note-list-item${selectedLibraryNoteId === note.id && mode === "library" ? " is-active" : ""}`}
-                        key={note.id}
-                        onClick={() => {
-                          setMode("library");
-                          setSelectedLibraryNoteId(note.id);
-                        }}
-                        type="button"
-                      >
-                        <span>{note.title}</span>
-                        <small>{formatDistanceToNowStrict(note.updatedAtMs, { addSuffix: true })}</small>
-                      </button>
-                    ))
-                  )}
-                </div>
+              <div className="panel-toolbar-center">
+                {mode === "library" ? (
+                  <>
+                    <select
+                      aria-label="Choose library note"
+                      className="note-select"
+                      onChange={(event) => setSelectedLibraryNoteId(event.currentTarget.value)}
+                      value={selectedLibraryNoteId ?? ""}
+                    >
+                      {libraryNotes.length === 0 ? (
+                        <option value="">No notes yet</option>
+                      ) : (
+                        libraryNotes.map((note) => (
+                          <option key={note.id} value={note.id}>
+                            {note.title}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                    <button
+                      className="toolbar-button"
+                      onClick={() => setIsComposerOpen(true)}
+                      type="button"
+                    >
+                      New
+                    </button>
+                  </>
+                ) : (
+                  <p className="note-caption">{noteFilename(currentNote)}</p>
+                )}
               </div>
-            </aside>
 
-            <section className="editor-panel">
-              <div className="editor-meta">
-                <div>
-                  <span className="meta-label">{currentNote?.kind === "daily" ? "Daily note" : "Library note"}</span>
-                  <p className="meta-value">{currentNote?.filePath ?? "No file selected"}</p>
-                </div>
-                <div className="meta-status">
-                  {isPending ? <span>Loading…</span> : null}
-                  {!isEditorReady ? <span>Editor booting…</span> : null}
-                  <span>{saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : "Idle"}</span>
-                </div>
+              <p className={`status-pill${statusLabel === "Issue" ? " is-error" : ""}`}>
+                {statusLabel}
+              </p>
+            </div>
+
+            {errorMessage ? <p className="inline-message error">{errorMessage}</p> : null}
+
+            {mode === "library" && libraryNotes.length === 0 ? (
+              <div className="editor-empty-state">
+                <p className="empty-kicker">No side notes yet</p>
+                <h2>Create one markdown file and it shows up here automatically.</h2>
+                <button className="primary-button" onClick={() => setIsComposerOpen(true)} type="button">
+                  Create a note
+                </button>
               </div>
-              <div className="editor-card">
-                <HybridEditor
-                  appearance={appearance}
-                  documentKey={editorDocumentKey}
-                  fontFamily={editorFontFamily}
-                  fontSize={settings.fontSize}
-                  lineHeight={settings.lineHeight}
-                  onChange={setDraft}
-                  onReadyChange={setIsEditorReady}
-                  placeholder="Start with today's headline, your task list, or a rough thought."
-                  readOnly={!currentNote}
-                  value={draft}
-                />
+            ) : currentNote ? (
+              <InkMarkdownEditor
+                documentKey={editorDocumentKey}
+                isLoading={isPending}
+                onChange={setDraft}
+                style={
+                  {
+                    "--editor-font-family": editorFontFamily,
+                    "--editor-font-size": `${settings.fontSize}px`,
+                    "--editor-line-height": `${settings.lineHeight}`,
+                  } as CSSProperties
+                }
+                value={draft}
+              />
+            ) : (
+              <div className="editor-empty-state">
+                <p className="empty-kicker">Loading note</p>
+                <h2>Preparing your markdown file.</h2>
               </div>
-              {errorMessage ? <p className="inline-error">{errorMessage}</p> : null}
-            </section>
-          </div>
+            )}
+          </section>
         )}
       </section>
 
       {isComposerOpen ? (
         <div className="sheet-backdrop" onClick={() => setIsComposerOpen(false)} role="presentation">
           <div className="composer-modal" onClick={(event) => event.stopPropagation()}>
-            <p className="eyebrow">New note</p>
-            <h2>Name it once. The file stays plain markdown.</h2>
+            <p className="empty-kicker">New note</p>
+            <h2>Create a plain markdown file in your notes folder.</h2>
+            <label className="field-label" htmlFor="new-note-title">
+              Title
+            </label>
             <input
               autoFocus
+              id="new-note-title"
               onChange={(event) => setNewNoteTitle(event.currentTarget.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
@@ -448,7 +746,11 @@ function App() {
               value={newNoteTitle}
             />
             <div className="composer-actions">
-              <button className="secondary-button" onClick={() => setIsComposerOpen(false)} type="button">
+              <button
+                className="secondary-button"
+                onClick={() => setIsComposerOpen(false)}
+                type="button"
+              >
                 Cancel
               </button>
               <button className="primary-button" onClick={handleCreateNote} type="button">
