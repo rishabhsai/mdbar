@@ -256,12 +256,14 @@ code {
 }
 
 .editor-surface {
+  position: relative;
   height: 100%;
   font-family: var(--editor-font-family);
   font-size: var(--editor-font-size);
   line-height: var(--editor-line-height);
 }
 
+.editor-host,
 .editor-surface .ink-mde,
 .editor-surface .cm-editor,
 .editor-surface .cm-scroller {
@@ -293,6 +295,40 @@ code {
 
 .editor-surface .cm-focused {
   outline: none;
+}
+
+.editor-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  padding: 24px;
+  text-align: center;
+  background:
+    linear-gradient(180deg, rgba(255, 252, 247, 0.84), rgba(255, 252, 247, 0.92));
+  color: var(--text-primary);
+}
+
+.theme-dark .editor-overlay {
+  background:
+    linear-gradient(180deg, rgba(19, 22, 24, 0.84), rgba(19, 22, 24, 0.94));
+}
+
+.editor-overlay-title,
+.editor-overlay-copy {
+  margin: 0;
+}
+
+.editor-overlay-title {
+  font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.editor-overlay-copy {
+  max-width: 32ch;
+  color: var(--text-muted);
 }
 
 .empty-state {

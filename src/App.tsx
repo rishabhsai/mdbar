@@ -41,6 +41,7 @@ function App() {
   const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [isEditorReady, setIsEditorReady] = useState(false);
   const [shortcutStatus, setShortcutStatus] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -62,6 +63,9 @@ function App() {
       : settings.fontFamily === "mono"
         ? '"SF Mono", "JetBrains Mono", Menlo, monospace'
         : '"Avenir Next", "Helvetica Neue", sans-serif';
+  const editorDocumentKey =
+    currentNote?.filePath ??
+    `${mode}:${dailyDateKey}:${selectedLibraryNoteId ?? "no-library-note"}`;
 
   const refreshLibrary = useEffectEvent(async (folderPath: string) => {
     const notes = await listLibraryNotes(folderPath);
@@ -402,17 +406,21 @@ function App() {
                 </div>
                 <div className="meta-status">
                   {isPending ? <span>Loading…</span> : null}
+                  {!isEditorReady ? <span>Editor booting…</span> : null}
                   <span>{saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : "Idle"}</span>
                 </div>
               </div>
               <div className="editor-card">
                 <HybridEditor
                   appearance={appearance}
+                  documentKey={editorDocumentKey}
                   fontFamily={editorFontFamily}
                   fontSize={settings.fontSize}
                   lineHeight={settings.lineHeight}
                   onChange={setDraft}
+                  onReadyChange={setIsEditorReady}
                   placeholder="Start with today's headline, your task list, or a rough thought."
+                  readOnly={!currentNote}
                   value={draft}
                 />
               </div>
