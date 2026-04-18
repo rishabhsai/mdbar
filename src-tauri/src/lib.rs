@@ -3,6 +3,7 @@ mod notes;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use tauri::{
+    include_image,
     menu::{Menu, MenuItem, PredefinedMenuItem, Submenu},
     tray::{TrayIconBuilder, TrayIconEvent},
     ActivationPolicy, AppHandle, Manager, PhysicalPosition, Runtime, WebviewWindow, WindowEvent,
@@ -124,7 +125,7 @@ fn build_tray<R: Runtime>(app: &mut tauri::App<R>) -> tauri::Result<()> {
     let quit_item = MenuItem::with_id(app, QUIT_ID, "Quit mdbar", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&quit_item])?;
 
-    TrayIconBuilder::with_id(TRAY_ID)
+    let mut tray_builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
         .tooltip("mdbar")
         .show_menu_on_left_click(false)
@@ -146,8 +147,20 @@ fn build_tray<R: Runtime>(app: &mut tauri::App<R>) -> tauri::Result<()> {
                     }
                 }
             }
-        })
-        .build(app)?;
+        });
+
+    #[cfg(target_os = "macos")]
+    {
+        let tray_icon = include_image!("./icons/tray-template.png");
+        tray_builder = tray_builder.icon(tray_icon).icon_as_template(true);
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    if let Some(icon) = app.default_window_icon().cloned() {
+        tray_builder = tray_builder.icon(icon);
+    }
+
+    tray_builder.build(app)?;
 
     Ok(())
 }
