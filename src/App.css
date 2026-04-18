@@ -287,6 +287,13 @@ code {
   gap: 8px;
 }
 
+.panel-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .view-switch {
   display: inline-flex;
   align-items: center;
@@ -325,13 +332,11 @@ code {
   color: var(--panel);
 }
 
-.note-select,
 .toolbar-button,
 .secondary-button,
 .primary-button,
 .ghost-button,
 .settings-sheet input,
-.settings-sheet select,
 .composer-modal input {
   border: 1px solid var(--panel-border);
   border-radius: 11px;
@@ -339,9 +344,7 @@ code {
   color: var(--ink);
 }
 
-.note-select,
 .settings-sheet input,
-.settings-sheet select,
 .composer-modal input {
   width: 100%;
   min-height: 34px;
@@ -349,9 +352,7 @@ code {
   outline: none;
 }
 
-.note-select:focus,
 .settings-sheet input:focus,
-.settings-sheet select:focus,
 .composer-modal input:focus {
   border-color: color-mix(in srgb, var(--ink) 18%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
@@ -434,6 +435,106 @@ code {
 
 .status-pill.is-error {
   color: var(--danger);
+}
+
+.note-picker {
+  position: relative;
+  width: min(236px, 100%);
+}
+
+.note-picker-trigger {
+  width: 100%;
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--panel) 93%, white 7%);
+  color: var(--ink);
+  text-align: left;
+}
+
+.note-picker-trigger:hover:not(:disabled),
+.note-picker-trigger.is-open {
+  background: color-mix(in srgb, var(--accent-soft) 76%, var(--panel) 24%);
+}
+
+.note-picker-trigger:disabled {
+  opacity: 0.46;
+  cursor: default;
+}
+
+.note-picker-trigger svg {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+}
+
+.note-picker-trigger-label,
+.note-picker-trigger-meta,
+.note-picker-item-title,
+.note-picker-item-meta,
+.option-card-title,
+.option-card-preview,
+.option-card-copy,
+.sheet-subcopy {
+  display: block;
+}
+
+.note-picker-trigger-label,
+.note-picker-item-title {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-picker-trigger-meta,
+.note-picker-item-meta,
+.sheet-subcopy {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-picker-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: 6px;
+  max-height: 280px;
+  padding: 8px;
+  overflow: auto;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--panel) 98%, white 2%);
+  box-shadow: 0 20px 34px rgba(24, 24, 24, 0.16);
+  backdrop-filter: blur(18px);
+}
+
+.note-picker-item {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.note-picker-item:hover,
+.note-picker-item.is-active {
+  background: color-mix(in srgb, var(--accent-soft) 76%, var(--panel) 24%);
+  border-color: color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .inline-message {
@@ -661,6 +762,11 @@ code {
   padding: 26px 22px;
 }
 
+.onboarding-state {
+  justify-content: flex-start;
+  padding-top: 24px;
+}
+
 .empty-state h2,
 .editor-empty-state h2,
 .settings-sheet h2,
@@ -676,7 +782,7 @@ code {
 
 .empty-state p,
 .editor-empty-state p,
-.settings-section p {
+.settings-card p {
   margin: 0;
   color: var(--muted);
   line-height: 1.55;
@@ -684,6 +790,15 @@ code {
 
 .empty-kicker,
 .field-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  margin: 0;
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
@@ -715,7 +830,7 @@ code {
   bottom: 14px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   padding: 18px;
   overflow: auto;
 }
@@ -728,16 +843,51 @@ code {
 .sheet-head,
 .composer-actions,
 .range-row,
-.folder-row {
+.settings-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
-.settings-section {
+.sheet-title-block {
+  display: grid;
+  gap: 8px;
+}
+
+.sheet-subcopy {
+  max-width: 28rem;
+  white-space: normal;
+}
+
+.sheet-close-button {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+}
+
+.sheet-close-button:hover {
+  background: var(--accent-soft);
+}
+
+.sheet-close-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.settings-card {
   display: grid;
   gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--panel) 94%, white 6%);
 }
 
 .segmented-control {
@@ -763,14 +913,9 @@ code {
   color: var(--panel);
 }
 
-.folder-row {
-  align-items: flex-start;
-}
-
 .folder-pill {
   display: block;
-  flex: 1;
-  padding: 10px 12px;
+  padding: 12px 13px;
   border: 1px solid var(--panel-border);
   border-radius: 12px;
   color: var(--muted);
@@ -779,7 +924,156 @@ code {
   word-break: break-word;
 }
 
+.option-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.option-card {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  padding: 12px 13px;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.option-card:hover,
+.option-card.is-active {
+  background: color-mix(in srgb, var(--accent-soft) 76%, var(--panel) 24%);
+  border-color: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.option-card-title {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.option-card-preview {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.option-card-editorial .option-card-preview {
+  font-family: var(--display);
+}
+
+.option-card-sans .option-card-preview {
+  font-family: var(--sans);
+}
+
+.option-card-mono .option-card-preview {
+  font-family: var(--mono);
+}
+
+.option-card-copy {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.settings-value-pill {
+  padding: 4px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.settings-card input[type="range"] {
+  width: 100%;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  appearance: none;
+}
+
+.settings-card input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.settings-card input[type="range"]::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel) 92%, white 8%);
+  box-shadow: 0 4px 12px rgba(24, 24, 24, 0.18);
+  appearance: none;
+}
+
 .field-hint,
 .field-status {
   color: var(--muted);
+}
+
+.field-status {
+  padding: 8px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 72%, var(--panel) 28%);
+}
+
+.onboarding-grid {
+  width: 100%;
+  display: grid;
+  gap: 10px;
+}
+
+.onboarding-card,
+.onboarding-tree-card {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--panel) 94%, white 6%);
+}
+
+.onboarding-card {
+  display: grid;
+  gap: 8px;
+}
+
+.onboarding-card h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.onboarding-step {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.onboarding-tree {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.onboarding-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }

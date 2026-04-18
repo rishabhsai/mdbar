@@ -3,7 +3,7 @@ use serde::Serialize;
 use std::{
     ffi::OsStr,
     fs,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     process::Command,
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -14,6 +14,8 @@ pub struct NoteSummary {
     pub id: String,
     pub title: String,
     pub file_path: String,
+    pub relative_path: String,
+    pub directory: String,
     pub updated_at_ms: u128,
 }
 
@@ -23,6 +25,8 @@ pub struct NoteDocument {
     pub id: String,
     pub title: String,
     pub file_path: String,
+    pub relative_path: String,
+    pub directory: String,
     pub kind: String,
     pub content: String,
     pub updated_at_ms: u128,
@@ -72,10 +76,6 @@ fn updated_at_ms(path: &Path) -> u128 {
 }
 
 fn load_text(path: &Path) -> Result<String, String> {
-    if !path.exists() {
-        return Ok(String::new());
-    }
-
     fs::read_to_string(path).map_err(|error| format!("Couldn't read the note: {error}"))
 }
 
@@ -112,24 +112,112 @@ fn build_daily_path(root: &Path, date_key: &str) -> Result<PathBuf, String> {
     Ok(folder.join(format!("{date_key}.md")))
 }
 
-fn note_id_from_path(path: &Path) -> Result<String, String> {
+fn normalize_path_string(path: &Path) -> String {
+    path.components()
+        .filter_map(|component| match component {
+            Component::Normal(segment) => segment.to_str().map(ToOwned::to_owned),
+            _ => None,
+        })
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+fn strip_markdown_extension(path: &Path) -> PathBuf {
+    if path.extension().and_then(OsStr::to_str) == Some("md") {
+        path.with_extension("")
+    } else {
+        path.to_path_buf()
+    }
+}
+
+fn daily_note_id(path: &Path) -> Result<String, String> {
     path.file_stem()
         .and_then(OsStr::to_str)
         .map(ToOwned::to_owned)
         .ok_or_else(|| "mdbar couldn't read that note name.".to_string())
 }
 
-fn build_document(path: &Path, kind: &str) -> Result<NoteDocument, String> {
-    let content = load_text(path)?;
-    let id = note_id_from_path(path)?;
+fn library_note_id(notes_root: &Path, path: &Path) -> Result<String, String> {
+    let relative = path
+        .strip_prefix(notes_root)
+        .map_err(|_| "mdbar couldn't map that note into your notes folder.".to_string())?;
+    let without_extension = strip_markdown_extension(relative);
+    let id = normalize_path_string(&without_extension);
 
+    if id.is_empty() {
+        Err("mdbar couldn't read that note path.".to_string())
+    } else {
+        Ok(id)
+    }
+}
+
+fn library_relative_path(notes_root: &Path, path: &Path) -> Result<String, String> {
+    let relative = path
+        .strip_prefix(notes_root)
+        .map_err(|_| "mdbar couldn't map that note into your notes folder.".to_string())?;
+    let normalized = normalize_path_string(relative);
+
+    if normalized.is_empty() {
+        Err("mdbar couldn't read that note path.".to_string())
+    } else {
+        Ok(normalized)
+    }
+}
+
+fn library_directory(notes_root: &Path, path: &Path) -> String {
+    let Some(parent) = path.parent() else {
+        return String::new();
+    };
+
+    let Ok(relative) = parent.strip_prefix(notes_root) else {
+        return String::new();
+    };
+
+    normalize_path_string(relative)
+}
+
+fn build_daily_document(path: &Path) -> Result<NoteDocument, String> {
     Ok(NoteDocument {
-        id,
+        id: daily_note_id(path)?,
         title: title_from_path(path),
         file_path: path.to_string_lossy().into_owned(),
-        kind: kind.to_string(),
+        relative_path: path
+            .file_name()
+            .and_then(OsStr::to_str)
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| "Untitled.md".to_string()),
+        directory: "daily".to_string(),
+        kind: "daily".to_string(),
+        content: load_text(path)?,
         updated_at_ms: updated_at_ms(path),
-        content,
+    })
+}
+
+fn build_library_summary(notes_root: &Path, path: &Path) -> Result<NoteSummary, String> {
+    Ok(NoteSummary {
+        id: library_note_id(notes_root, path)?,
+        title: title_from_path(path),
+        file_path: path.to_string_lossy().into_owned(),
+        relative_path: library_relative_path(notes_root, path)?,
+        directory: library_directory(notes_root, path),
+        updated_at_ms: updated_at_ms(path),
+    })
+}
+
+fn build_library_document(notes_root: &Path, path: &Path) -> Result<NoteDocument, String> {
+    if !path.exists() {
+        return Err("That note could not be found. It may have been moved or deleted.".to_string());
+    }
+
+    Ok(NoteDocument {
+        id: library_note_id(notes_root, path)?,
+        title: title_from_path(path),
+        file_path: path.to_string_lossy().into_owned(),
+        relative_path: library_relative_path(notes_root, path)?,
+        directory: library_directory(notes_root, path),
+        kind: "library".to_string(),
+        content: load_text(path)?,
+        updated_at_ms: updated_at_ms(path),
     })
 }
 
@@ -210,11 +298,69 @@ fn unique_library_path(root: &Path, title: &str) -> Result<PathBuf, String> {
     }
 }
 
+fn normalize_library_note_relative_path(note_id: &str) -> Result<PathBuf, String> {
+    let trimmed = note_id.trim().trim_matches('/');
+    if trimmed.is_empty() {
+        return Err("Choose a note before trying to open it.".to_string());
+    }
+
+    let mut relative = PathBuf::new();
+
+    for component in Path::new(trimmed).components() {
+        match component {
+            Component::Normal(segment) => relative.push(segment),
+            _ => return Err("That note path is invalid.".to_string()),
+        }
+    }
+
+    if relative.as_os_str().is_empty() {
+        return Err("That note path is invalid.".to_string());
+    }
+
+    if relative.extension().and_then(OsStr::to_str) != Some("md") {
+        relative.set_extension("md");
+    }
+
+    Ok(relative)
+}
+
+fn collect_library_notes(
+    notes_root: &Path,
+    folder: &Path,
+    notes: &mut Vec<NoteSummary>,
+) -> Result<(), String> {
+    let entries =
+        fs::read_dir(folder).map_err(|error| format!("Couldn't scan notes: {error}"))?;
+
+    for entry in entries {
+        let entry = entry.map_err(|error| format!("Couldn't scan notes: {error}"))?;
+        let path = entry.path();
+
+        if path.is_dir() {
+            collect_library_notes(notes_root, &path, notes)?;
+            continue;
+        }
+
+        if path.extension().and_then(OsStr::to_str) != Some("md") {
+            continue;
+        }
+
+        notes.push(build_library_summary(notes_root, &path)?);
+    }
+
+    Ok(())
+}
+
 #[tauri::command(rename_all = "camelCase")]
 pub fn open_daily_note(folder_path: String, date_key: String) -> Result<NoteDocument, String> {
     let root = normalize_notebook_root(&folder_path)?;
     let path = build_daily_path(&root, &date_key)?;
-    build_document(&path, "daily")
+
+    if !path.exists() {
+        atomic_write(&path, "")?;
+    }
+
+    build_daily_document(&path)
 }
 
 #[tauri::command(rename_all = "camelCase")]
@@ -224,46 +370,37 @@ pub fn list_library_notes(folder_path: String) -> Result<Vec<NoteSummary>, Strin
     ensure_dir(&folder)?;
 
     let mut notes = Vec::new();
-    for entry in fs::read_dir(&folder).map_err(|error| format!("Couldn't scan notes: {error}"))? {
-        let Ok(entry) = entry else {
-            continue;
-        };
-        let path = entry.path();
+    collect_library_notes(&folder, &folder, &mut notes)?;
+    notes.sort_by(|left, right| {
+        right
+            .updated_at_ms
+            .cmp(&left.updated_at_ms)
+            .then_with(|| left.relative_path.cmp(&right.relative_path))
+    });
 
-        if path.extension().and_then(OsStr::to_str) != Some("md") {
-            continue;
-        }
-
-        let id = note_id_from_path(&path)?;
-        notes.push(NoteSummary {
-            id,
-            title: title_from_path(&path),
-            file_path: path.to_string_lossy().into_owned(),
-            updated_at_ms: updated_at_ms(&path),
-        });
-    }
-
-    notes.sort_by(|left, right| right.updated_at_ms.cmp(&left.updated_at_ms));
     Ok(notes)
 }
 
 #[tauri::command(rename_all = "camelCase")]
 pub fn open_library_note(folder_path: String, note_id: String) -> Result<NoteDocument, String> {
     let root = normalize_notebook_root(&folder_path)?;
-    let path = library_root(&root).join(format!("{note_id}.md"));
-    build_document(&path, "library")
+    let notes_root = library_root(&root);
+    let relative = normalize_library_note_relative_path(&note_id)?;
+    let path = notes_root.join(relative);
+    build_library_document(&notes_root, &path)
 }
 
 #[tauri::command(rename_all = "camelCase")]
 pub fn create_library_note(folder_path: String, title: String) -> Result<NoteDocument, String> {
     let root = normalize_notebook_root(&folder_path)?;
+    let notes_root = library_root(&root);
     let path = unique_library_path(&root, &title)?;
 
     if !path.exists() {
         atomic_write(&path, "")?;
     }
 
-    build_document(&path, "library")
+    build_library_document(&notes_root, &path)
 }
 
 #[tauri::command(rename_all = "camelCase")]
@@ -334,7 +471,22 @@ pub fn open_note_in_default_app(file_path: String) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::slugify;
+    use super::{list_library_notes, normalize_library_note_relative_path, slugify};
+    use std::{
+        fs,
+        path::PathBuf,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
+    fn temporary_root(label: &str) -> PathBuf {
+        let nonce = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .unwrap_or(0);
+        let path = std::env::temp_dir().join(format!("mdbar-tests-{label}-{nonce}"));
+        fs::create_dir_all(&path).expect("temporary root should be created");
+        path
+    }
 
     #[test]
     fn slugify_collapses_symbols() {
@@ -344,5 +496,29 @@ mod tests {
     #[test]
     fn slugify_falls_back_when_empty() {
         assert_eq!(slugify("!!!"), "");
+    }
+
+    #[test]
+    fn normalize_library_note_relative_path_rejects_parent_segments() {
+        let result = normalize_library_note_relative_path("../secrets");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn list_library_notes_walks_nested_folders() {
+        let root = temporary_root("nested");
+        let nested_folder = root.join("notes/projects/client");
+        fs::create_dir_all(&nested_folder).expect("nested folder should exist");
+        fs::write(nested_folder.join("roadmap.md"), "# roadmap").expect("note should exist");
+
+        let notes = list_library_notes(root.to_string_lossy().into_owned())
+            .expect("notes should be listed");
+
+        assert_eq!(notes.len(), 1);
+        assert_eq!(notes[0].id, "projects/client/roadmap");
+        assert_eq!(notes[0].relative_path, "projects/client/roadmap.md");
+        assert_eq!(notes[0].directory, "projects/client");
+
+        let _ = fs::remove_dir_all(root);
     }
 }

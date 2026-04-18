@@ -4,14 +4,7 @@ import {
   register,
   unregisterAll,
 } from "@tauri-apps/plugin-global-shortcut";
-import {
-  useEffect,
-  useEffectEvent,
-  useRef,
-  useState,
-  useTransition,
-  type CSSProperties,
-} from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { InkMarkdownEditor } from "./components/InkMarkdownEditor";
 import { SettingsSheet } from "./components/SettingsSheet";
@@ -39,25 +32,20 @@ function resolveInitialSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function noteFilename(note: NoteDocument | null) {
-  if (!note) {
-    return "No file selected";
-  }
-
-  const segments = note.filePath.split("/");
-  return segments[segments.length - 1] ?? "No file selected";
+function noteCaption(note: NoteDocument | null) {
+  return note?.relativePath ?? "No file selected";
 }
 
 function saveStateLabel(
   saveState: "idle" | "saving" | "saved",
-  isPending: boolean,
+  isLoadingNote: boolean,
   errorMessage: string | null,
 ) {
   if (errorMessage) {
     return "Issue";
   }
 
-  if (isPending) {
+  if (isLoadingNote) {
     return "Loading";
   }
 
@@ -71,6 +59,15 @@ function saveStateLabel(
 
   return "Ready";
 }
+
+const onboardingTree = `your-notebook/
+  daily/
+    2026-04-18.md
+    2026-04-19.md
+  notes/
+    ideas.md
+    projects/
+      mdbar-roadmap.md`;
 
 function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
@@ -86,13 +83,15 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+  const [isNotePickerOpen, setIsNotePickerOpen] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState("");
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
     resolveInitialSystemTheme,
   );
-  const [isPending, startTransition] = useTransition();
+  const [isLoadingNote, setIsLoadingNote] = useState(false);
   const saveTimerRef = useRef<number | null>(null);
   const actionMenuRef = useRef<HTMLDivElement | null>(null);
+  const notePickerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     saveSettings(settings);
@@ -117,7 +116,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!isActionMenuOpen) {
+    if (!isActionMenuOpen && !isNotePickerOpen) {
       return;
     }
 
@@ -131,10 +130,15 @@ function App() {
       if (!actionMenuRef.current?.contains(target)) {
         setIsActionMenuOpen(false);
       }
+
+      if (!notePickerRef.current?.contains(target)) {
+        setIsNotePickerOpen(false);
+      }
     };
 
     const handleWindowBlur = () => {
       setIsActionMenuOpen(false);
+      setIsNotePickerOpen(false);
     };
 
     window.addEventListener("pointerdown", handlePointerDown, true);
@@ -144,7 +148,12 @@ function App() {
       window.removeEventListener("pointerdown", handlePointerDown, true);
       window.removeEventListener("blur", handleWindowBlur);
     };
-  }, [isActionMenuOpen]);
+  }, [isActionMenuOpen, isNotePickerOpen]);
+
+  useEffect(() => {
+    setIsActionMenuOpen(false);
+    setIsNotePickerOpen(false);
+  }, [mode, dailyDateKey, selectedLibraryNoteId]);
 
   const appearance = settings.theme === "system" ? systemTheme : settings.theme;
   const editorFontFamily =
@@ -161,7 +170,7 @@ function App() {
     ? libraryNotes.findIndex((note) => note.id === selectedLibraryNoteId)
     : -1;
   const title = mode === "daily" ? formatDateLabel(dailyDateKey) : currentNote?.title ?? "Notes";
-  const statusLabel = saveStateLabel(saveState, isPending, errorMessage);
+  const statusLabel = saveStateLabel(saveState, isLoadingNote, errorMessage);
   const disablePrevious =
     !settings.notebookPath || (mode === "library" && selectedLibraryIndex <= 0);
   const disableNext =
@@ -170,104 +179,93 @@ function App() {
       ? dailyDateKey >= todayDateKey
       : selectedLibraryIndex === -1 || selectedLibraryIndex >= libraryNotes.length - 1);
 
-  const refreshLibrary = useEffectEvent(async (folderPath: string) => {
-    const notes = await listLibraryNotes(folderPath);
-    startTransition(() => {
-      setLibraryNotes(notes);
-      setSelectedLibraryNoteId((currentId) => {
-        if (currentId && notes.some((note) => note.id === currentId)) {
-          return currentId;
-        }
-
-        return notes[0]?.id ?? null;
-      });
-    });
-  });
-
-  const loadDaily = useEffectEvent(async (folderPath: string, dateKey: string) => {
-    const note = await openDailyNote(folderPath, dateKey);
-    startTransition(() => {
-      setCurrentNote(note);
-      setDraft(note.content);
-      setErrorMessage(null);
-      setSaveState("idle");
-    });
-  });
-
-  const loadLibrary = useEffectEvent(async (folderPath: string, noteId: string) => {
-    const note = await openLibraryNote(folderPath, noteId);
-    startTransition(() => {
-      setCurrentNote(note);
-      setDraft(note.content);
-      setErrorMessage(null);
-      setSaveState("idle");
-    });
-  });
-
   useEffect(() => {
     if (!settings.notebookPath) {
-      setCurrentNote(null);
       setLibraryNotes([]);
+      setSelectedLibraryNoteId(null);
+      setCurrentNote(null);
       setDraft("");
+      setErrorMessage(null);
+      setSaveState("idle");
+      setIsLoadingNote(false);
       return;
     }
 
     let cancelled = false;
 
-    const run = async () => {
-      try {
-        await refreshLibrary(settings.notebookPath!);
+    async function syncNotebook() {
+      setIsLoadingNote(true);
+      setErrorMessage(null);
 
+      try {
+        const notes = await listLibraryNotes(settings.notebookPath!);
         if (cancelled) {
           return;
         }
 
-        if (mode === "daily") {
-          await loadDaily(settings.notebookPath!, dailyDateKey);
-          return;
-        }
+        setLibraryNotes(notes);
 
-        if (selectedLibraryNoteId) {
-          await loadLibrary(settings.notebookPath!, selectedLibraryNoteId);
-          return;
-        }
+        if (mode === "library") {
+          const nextLibraryId =
+            selectedLibraryNoteId && notes.some((note) => note.id === selectedLibraryNoteId)
+              ? selectedLibraryNoteId
+              : notes[0]?.id ?? null;
 
-        startTransition(() => {
-          setCurrentNote(null);
-          setDraft("");
+          if (nextLibraryId !== selectedLibraryNoteId) {
+            setSelectedLibraryNoteId(nextLibraryId);
+          }
+
+          if (!nextLibraryId) {
+            setCurrentNote(null);
+            setDraft("");
+            setSaveState("idle");
+            return;
+          }
+
+          const note = await openLibraryNote(settings.notebookPath!, nextLibraryId);
+          if (cancelled) {
+            return;
+          }
+
+          setCurrentNote(note);
+          setDraft(note.content);
           setSaveState("idle");
-          setErrorMessage(null);
-        });
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : String(error));
-      }
-    };
+          return;
+        }
 
-    void run();
+        const note = await openDailyNote(settings.notebookPath!, dailyDateKey);
+        if (cancelled) {
+          return;
+        }
+
+        setCurrentNote(note);
+        setDraft(note.content);
+        setSaveState("idle");
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        setCurrentNote(null);
+        setDraft("");
+        setSaveState("idle");
+        setErrorMessage(error instanceof Error ? error.message : String(error));
+      } finally {
+        if (!cancelled) {
+          setIsLoadingNote(false);
+        }
+      }
+    }
+
+    void syncNotebook();
 
     return () => {
       cancelled = true;
     };
-  }, [
-    dailyDateKey,
-    loadDaily,
-    loadLibrary,
-    mode,
-    refreshLibrary,
-    selectedLibraryNoteId,
-    settings.notebookPath,
-  ]);
+  }, [dailyDateKey, mode, selectedLibraryNoteId, settings.notebookPath]);
 
   useEffect(() => {
-    if (mode !== "library" || selectedLibraryNoteId || !libraryNotes[0]) {
-      return;
-    }
-
-    setSelectedLibraryNoteId(libraryNotes[0].id);
-  }, [libraryNotes, mode, selectedLibraryNoteId]);
-
-  useEffect(() => {
-    if (!currentNote || draft === currentNote.content) {
+    if (isLoadingNote || !currentNote || draft === currentNote.content) {
       return;
     }
 
@@ -280,29 +278,27 @@ function App() {
       try {
         const result = await saveNote(currentNote.filePath, draft);
 
-        startTransition(() => {
-          setCurrentNote((existing) =>
-            existing
+        setCurrentNote((existing) =>
+          existing
+            ? {
+                ...existing,
+                content: draft,
+                updatedAtMs: result.updatedAtMs,
+              }
+            : existing,
+        );
+        setLibraryNotes((existing) =>
+          existing.map((note) =>
+            note.filePath === currentNote.filePath
               ? {
-                  ...existing,
-                  content: draft,
+                  ...note,
                   updatedAtMs: result.updatedAtMs,
                 }
-              : existing,
-          );
-          setLibraryNotes((existing) =>
-            existing.map((note) =>
-              note.filePath === currentNote.filePath
-                ? {
-                    ...note,
-                    updatedAtMs: result.updatedAtMs,
-                  }
-                : note,
-            ),
-          );
-          setSaveState(result.persisted ? "saved" : "idle");
-          setErrorMessage(null);
-        });
+              : note,
+          ),
+        );
+        setSaveState(result.persisted ? "saved" : "idle");
+        setErrorMessage(null);
       } catch (error) {
         setSaveState("idle");
         setErrorMessage(error instanceof Error ? error.message : String(error));
@@ -314,12 +310,12 @@ function App() {
         window.clearTimeout(saveTimerRef.current);
       }
     };
-  }, [currentNote, draft]);
+  }, [currentNote, draft, isLoadingNote]);
 
   useEffect(() => {
     let disposed = false;
 
-    const syncShortcut = async () => {
+    async function syncShortcut() {
       try {
         await unregisterAll();
         await register(settings.shortcut, async () => {
@@ -339,7 +335,7 @@ function App() {
           );
         }
       }
-    };
+    }
 
     void syncShortcut();
 
@@ -364,6 +360,8 @@ function App() {
           notebookPath: selected,
         }));
         setMode("daily");
+        setErrorMessage(null);
+        setIsSettingsOpen(false);
       }
     } finally {
       await setPanelAutoHide(true);
@@ -377,13 +375,18 @@ function App() {
 
     try {
       const note = await createLibraryNote(settings.notebookPath, newNoteTitle.trim());
+      const notes = await listLibraryNotes(settings.notebookPath);
+
+      setLibraryNotes(notes);
       setMode("library");
       setSelectedLibraryNoteId(note.id);
       setCurrentNote(note);
       setDraft(note.content);
+      setSaveState("idle");
+      setErrorMessage(null);
       setNewNoteTitle("");
       setIsComposerOpen(false);
-      await refreshLibrary(settings.notebookPath);
+      setIsNotePickerOpen(false);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
     }
@@ -518,7 +521,7 @@ function App() {
                   onClick={() => void handleOpenCurrentInDefaultApp()}
                   type="button"
                 >
-                  <span className="header-split-button-mark" aria-hidden="true">
+                  <span aria-hidden="true" className="header-split-button-mark">
                     <svg viewBox="0 0 24 24">
                       <path
                         d="M8 5.75h6.4L18.25 9.6V18a1.25 1.25 0 0 1-1.25 1.25H8A1.25 1.25 0 0 1 6.75 18V7A1.25 1.25 0 0 1 8 5.75Z"
@@ -623,15 +626,43 @@ function App() {
         </header>
 
         {!settings.notebookPath ? (
-          <section className="empty-state">
-            <p className="empty-kicker">Plain markdown. One folder.</p>
-            <h2>Pick a notebook folder and mdbar turns it into a compact daily notes panel.</h2>
+          <section className="empty-state onboarding-state">
+            <p className="empty-kicker">Welcome to mdbar</p>
+            <h2>Choose one folder on your Mac and mdbar turns it into a plain markdown notebook.</h2>
             <p>
-              Daily notes live in <code>daily/</code>. Extra notes live in <code>notes/</code>.
+              Nothing is locked into a database. The first time you open a date, mdbar creates that
+              day&apos;s file in <code>daily/</code>. Everything else lives in <code>notes/</code>,
+              including folders you create yourself.
             </p>
-            <button className="primary-button" onClick={chooseNotebookFolder} type="button">
-              Choose notebook folder
-            </button>
+
+            <div className="onboarding-grid">
+              <article className="onboarding-card">
+                <span className="onboarding-step">1</span>
+                <h3>Pick a folder</h3>
+                <p>Choose any empty or existing directory as the root of your notebook.</p>
+              </article>
+              <article className="onboarding-card">
+                <span className="onboarding-step">2</span>
+                <h3>Daily notes stay dated</h3>
+                <p>Each date maps to its own markdown file inside <code>daily/</code>.</p>
+              </article>
+              <article className="onboarding-card">
+                <span className="onboarding-step">3</span>
+                <h3>Notes can be organized</h3>
+                <p>Create folders inside <code>notes/</code> and mdbar will browse them recursively.</p>
+              </article>
+            </div>
+
+            <div className="onboarding-tree-card">
+              <p className="field-label">Folder structure</p>
+              <pre className="onboarding-tree">{onboardingTree}</pre>
+            </div>
+
+            <div className="onboarding-actions">
+              <button className="primary-button" onClick={chooseNotebookFolder} type="button">
+                Choose notebook folder
+              </button>
+            </div>
           </section>
         ) : (
           <section className="panel-body">
@@ -655,39 +686,72 @@ function App() {
 
               <div className="panel-toolbar-center">
                 {mode === "library" ? (
-                  <>
-                    <select
-                      aria-label="Choose library note"
-                      className="note-select"
-                      onChange={(event) => setSelectedLibraryNoteId(event.currentTarget.value)}
-                      value={selectedLibraryNoteId ?? ""}
-                    >
-                      {libraryNotes.length === 0 ? (
-                        <option value="">No notes yet</option>
-                      ) : (
-                        libraryNotes.map((note) => (
-                          <option key={note.id} value={note.id}>
-                            {note.title}
-                          </option>
-                        ))
-                      )}
-                    </select>
+                  <div className="note-picker" ref={notePickerRef}>
                     <button
-                      className="toolbar-button"
-                      onClick={() => setIsComposerOpen(true)}
+                      aria-expanded={isNotePickerOpen}
+                      className={`note-picker-trigger${isNotePickerOpen ? " is-open" : ""}`}
+                      disabled={libraryNotes.length === 0}
+                      onClick={() => setIsNotePickerOpen((current) => !current)}
                       type="button"
                     >
-                      New
+                      <span className="note-picker-trigger-label">
+                        {currentNote?.title ?? "Choose a note"}
+                      </span>
+                      <span className="note-picker-trigger-meta">
+                        {currentNote?.relativePath ?? "Browse your notes folder"}
+                      </span>
+                      <svg aria-hidden="true" viewBox="0 0 24 24">
+                        <path
+                          d="m8 10 4 4 4-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.6"
+                        />
+                      </svg>
                     </button>
-                  </>
+
+                    {isNotePickerOpen ? (
+                      <div className="note-picker-popover">
+                        {libraryNotes.map((note) => (
+                          <button
+                            className={`note-picker-item${
+                              selectedLibraryNoteId === note.id ? " is-active" : ""
+                            }`}
+                            key={note.id}
+                            onClick={() => {
+                              setSelectedLibraryNoteId(note.id);
+                              setIsNotePickerOpen(false);
+                            }}
+                            type="button"
+                          >
+                            <span className="note-picker-item-title">{note.title}</span>
+                            <span className="note-picker-item-meta">{note.relativePath}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 ) : (
-                  <p className="note-caption">{noteFilename(currentNote)}</p>
+                  <p className="note-caption">{noteCaption(currentNote)}</p>
                 )}
               </div>
 
-              <p className={`status-pill${statusLabel === "Issue" ? " is-error" : ""}`}>
-                {statusLabel}
-              </p>
+              <div className="panel-toolbar-actions">
+                {mode === "library" ? (
+                  <button
+                    className="toolbar-button"
+                    onClick={() => setIsComposerOpen(true)}
+                    type="button"
+                  >
+                    New
+                  </button>
+                ) : null}
+                <p className={`status-pill${statusLabel === "Issue" ? " is-error" : ""}`}>
+                  {statusLabel}
+                </p>
+              </div>
             </div>
 
             {errorMessage ? <p className="inline-message error">{errorMessage}</p> : null}
@@ -695,7 +759,11 @@ function App() {
             {mode === "library" && libraryNotes.length === 0 ? (
               <div className="editor-empty-state">
                 <p className="empty-kicker">No side notes yet</p>
-                <h2>Create one markdown file and it shows up here automatically.</h2>
+                <h2>Create markdown files in <code>notes/</code> and mdbar will pick them up automatically.</h2>
+                <p>
+                  You can also create folders inside <code>notes/</code> to organize projects,
+                  areas, or archives.
+                </p>
                 <button className="primary-button" onClick={() => setIsComposerOpen(true)} type="button">
                   Create a note
                 </button>
@@ -703,7 +771,7 @@ function App() {
             ) : currentNote ? (
               <InkMarkdownEditor
                 documentKey={editorDocumentKey}
-                isLoading={isPending}
+                isLoading={isLoadingNote}
                 onChange={setDraft}
                 style={
                   {
@@ -716,8 +784,12 @@ function App() {
               />
             ) : (
               <div className="editor-empty-state">
-                <p className="empty-kicker">Loading note</p>
-                <h2>Preparing your markdown file.</h2>
+                <p className="empty-kicker">{isLoadingNote ? "Loading note" : "Nothing selected"}</p>
+                <h2>
+                  {isLoadingNote
+                    ? "Preparing your markdown file."
+                    : "Choose a note or pick a notebook folder to continue."}
+                </h2>
               </div>
             )}
           </section>
@@ -745,6 +817,10 @@ function App() {
               type="text"
               value={newNoteTitle}
             />
+            <p className="field-hint">
+              For subfolders, create them directly inside <code>notes/</code> and mdbar will browse
+              them automatically.
+            </p>
             <div className="composer-actions">
               <button
                 className="secondary-button"

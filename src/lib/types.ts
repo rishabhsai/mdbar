@@ -6,6 +6,8 @@ export type NoteSummary = {
   id: string;
   title: string;
   filePath: string;
+  relativePath: string;
+  directory: string;
   updatedAtMs: number;
 };
 
