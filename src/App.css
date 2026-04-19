@@ -450,17 +450,17 @@ code {
   top: calc(100% + 8px);
   right: 0;
   left: auto;
-  width: 240px;
+  width: 286px;
   z-index: 10;
   display: grid;
-  gap: 6px;
-  max-height: 280px;
-  padding: 8px;
+  gap: 8px;
+  max-height: 320px;
+  padding: 10px;
   overflow: auto;
   border: 1px solid var(--panel-border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--panel) 98%, white 2%);
-  box-shadow: 0 20px 34px rgba(24, 24, 24, 0.16);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--panel) 96%, black 4%);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(18px);
 }
 
@@ -506,22 +506,34 @@ code {
 
 .note-picker-item {
   width: 100%;
-  padding: 10px 11px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  background: transparent;
+  display: grid;
+  gap: 3px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 88%, black 12%);
   color: var(--ink);
   text-align: left;
 }
 
 .note-picker-item:hover,
 .note-picker-item.is-active {
-  background: color-mix(in srgb, var(--accent-soft) 76%, var(--panel) 24%);
-  border-color: color-mix(in srgb, var(--ink) 8%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 68%, var(--panel) 32%);
+  border-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 .note-picker-popover-header {
-  width: 252px;
+  width: 286px;
+}
+
+.note-picker-popover-copy {
+  display: grid;
+  gap: 4px;
+  padding: 2px 4px 0;
+}
+
+.note-picker-popover-copy code {
+  font-size: 0.92em;
 }
 
 .note-picker-popover-actions {
@@ -531,16 +543,33 @@ code {
 
 .note-picker-popover-actions .toolbar-button {
   flex: 1;
-  min-height: 30px;
-  padding: 0 10px;
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 11px;
+  border-color: color-mix(in srgb, var(--panel-border) 88%, transparent);
+  background: color-mix(in srgb, var(--panel) 88%, black 12%);
   font-size: 11px;
 }
 
 .note-picker-empty {
   margin: 0;
-  padding: 8px 6px 2px;
+  padding: 10px 8px 4px;
   color: var(--muted);
   font-size: 11px;
+}
+
+.note-picker-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-picker-item-icon {
+  width: 14px;
+  flex: 0 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
 }
 
 .inline-message {
@@ -645,7 +674,6 @@ code {
 }
 
 .ink-editor-host .mdbar-prose {
-  white-space: pre-wrap;
   word-break: break-word;
 }
 
@@ -730,26 +758,28 @@ code {
 
 .ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"],
 .ink-editor-host .mdbar-editor [class*="_listItemChecked_"] {
-  min-height: 1.45rem;
+  min-height: 1.6rem;
   margin-inline-start: 0;
-  padding-left: 1.8rem;
+  padding-left: 2rem;
   padding-right: 0;
   list-style-type: none;
+  cursor: pointer;
 }
 
 .ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"]::before,
 .ink-editor-host .mdbar-editor [class*="_listItemChecked_"]::before {
-  width: 1rem;
-  height: 1rem;
-  top: 0.28rem;
+  width: 1.14rem;
+  height: 1.14rem;
+  top: 0.34em;
   left: 0;
-  border-radius: 0.3rem;
+  border-radius: 0.34rem;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
 .ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"]::before {
-  border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
-  background: color-mix(in srgb, var(--panel) 86%, black 14%);
+  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
+  background: color-mix(in srgb, var(--panel) 84%, black 16%);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
 }
 
@@ -759,12 +789,13 @@ code {
 }
 
 .ink-editor-host .mdbar-editor [class*="_listItemChecked_"]::after {
-  top: 0.52rem;
-  left: 0.34rem;
-  width: 0.24rem;
-  height: 0.48rem;
-  border-width: 0 1.5px 1.5px 0;
+  top: 0.62em;
+  left: 0.41rem;
+  width: 0.28rem;
+  height: 0.54rem;
+  border-width: 0 1.7px 1.7px 0;
   border-color: var(--panel);
+  cursor: pointer;
 }
 
 .ink-editor-host .mdbar-prose a {
@@ -775,9 +806,16 @@ code {
 }
 
 .ink-editor-host .mdbar-prose blockquote {
-  padding-left: 0.95rem;
-  border-left: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
-  color: color-mix(in srgb, var(--ink) 76%, var(--muted));
+  margin-left: 0;
+  padding: 0.72rem 0.9rem 0.72rem 1rem;
+  border-left: 2px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  border-radius: 0 12px 12px 0;
+  background: color-mix(in srgb, var(--accent-soft) 44%, transparent);
+  color: color-mix(in srgb, var(--ink) 78%, var(--muted));
+}
+
+.ink-editor-host .mdbar-prose blockquote p:last-child {
+  margin-bottom: 0;
 }
 
 .ink-editor-host .mdbar-prose hr {

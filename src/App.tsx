@@ -39,6 +39,16 @@ function resolveInitialSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function getNoteFolderLabel(relativePath: string) {
+  const lastSlashIndex = relativePath.lastIndexOf("/");
+
+  if (lastSlashIndex === -1) {
+    return "notes";
+  }
+
+  return `notes/${relativePath.slice(0, lastSlashIndex)}`;
+}
+
 const onboardingTree = `your-notebook/
   daily/
     2026-04-18.md
@@ -526,6 +536,10 @@ function App() {
 
               {isNotePickerOpen ? (
                 <div className="note-picker-popover note-picker-popover-header">
+                  <div className="note-picker-popover-copy">
+                    <p className="empty-kicker">Notes</p>
+                    <p className="sheet-subcopy">Browse markdown files inside <code>notes/</code>.</p>
+                  </div>
                   <div className="note-picker-popover-actions">
                     <button
                       className="toolbar-button"
@@ -558,8 +572,15 @@ function App() {
                         }}
                         type="button"
                       >
-                        <span className="note-picker-item-title">{note.title}</span>
-                        <span className="note-picker-item-meta">{note.relativePath}</span>
+                        <span className="note-picker-item-row">
+                          <span className="note-picker-item-icon" aria-hidden="true">
+                            {note.relativePath.includes("/") ? "↳" : "•"}
+                          </span>
+                          <span className="note-picker-item-title">{note.title}</span>
+                        </span>
+                        <span className="note-picker-item-meta">
+                          {getNoteFolderLabel(note.relativePath)}
+                        </span>
                       </button>
                     ))
                   )}
