@@ -96,7 +96,7 @@ export function InkMarkdownEditor({
         .join(" ")}
       style={style}
     >
-      <EditorContent editor={editor} />
+      <EditorContent className="tiptap-scroll-shell" editor={editor} />
     </div>
   );
 }

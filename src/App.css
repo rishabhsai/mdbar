@@ -192,32 +192,33 @@ code {
 /* ── Scrollbar (auto-hiding, thin, translucent) ── */
 
 .library-view,
-.tiptap-editor-host > .tiptap,
+.tiptap-scroll-shell,
 .settings-view {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.78) transparent;
+  scrollbar-gutter: stable;
 }
 
 .library-view:hover,
-.tiptap-editor-host > .tiptap:hover,
+.tiptap-scroll-shell:hover,
 .settings-view:hover {
   scrollbar-color: rgba(0, 0, 0, 0.9) transparent;
 }
 
 .library-view::-webkit-scrollbar,
-.tiptap-editor-host > .tiptap::-webkit-scrollbar,
+.tiptap-scroll-shell::-webkit-scrollbar,
 .settings-view::-webkit-scrollbar {
   width: 10px;
 }
 
 .library-view::-webkit-scrollbar-track,
-.tiptap-editor-host > .tiptap::-webkit-scrollbar-track,
+.tiptap-scroll-shell::-webkit-scrollbar-track,
 .settings-view::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .library-view::-webkit-scrollbar-thumb,
-.tiptap-editor-host > .tiptap::-webkit-scrollbar-thumb,
+.tiptap-scroll-shell::-webkit-scrollbar-thumb,
 .settings-view::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
@@ -226,14 +227,14 @@ code {
 }
 
 .library-view:hover::-webkit-scrollbar-thumb,
-.tiptap-editor-host > .tiptap:hover::-webkit-scrollbar-thumb,
+.tiptap-scroll-shell:hover::-webkit-scrollbar-thumb,
 .settings-view:hover::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.9);
   background-clip: padding-box;
 }
 
 .library-view::-webkit-scrollbar-thumb:hover,
-.tiptap-editor-host > .tiptap::-webkit-scrollbar-thumb:hover,
+.tiptap-scroll-shell::-webkit-scrollbar-thumb:hover,
 .settings-view::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.96);
   background-clip: padding-box;
@@ -555,17 +556,13 @@ code {
   pointer-events: none;
 }
 
-.tiptap-editor-host > .tiptap {
+.tiptap-scroll-shell {
   flex: 1;
   min-height: 0;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-}
-
-/* Scrollbar on the tiptap editor */
-.tiptap-editor-host > .tiptap {
   position: relative;
 }
 

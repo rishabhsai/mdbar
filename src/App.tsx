@@ -520,30 +520,54 @@ function App() {
 
           <div className="header-side header-side-right">
             <button
-              aria-label="Notes"
+              aria-label={
+                screen === "library" || screen === "library-editor"
+                  ? "Create note"
+                  : "Notes"
+              }
               className={`header-icon${screen === "library" || screen === "library-editor" ? " active" : ""}`}
               disabled={!settings.notebookPath}
-              onClick={handleNotesClick}
+              onClick={() => {
+                if (screen === "library" || screen === "library-editor") {
+                  openComposer("note");
+                  return;
+                }
+
+                handleNotesClick();
+              }}
               type="button"
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24">
-                <path
-                  d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.45"
-                />
-                <path
-                  d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.45"
-                />
-              </svg>
+              {screen === "library" || screen === "library-editor" ? (
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path
+                    d="M12 5v14M5 12h14"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.7"
+                  />
+                </svg>
+              ) : (
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path
+                    d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.45"
+                  />
+                  <path
+                    d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.45"
+                  />
+                </svg>
+              )}
             </button>
 
             <button
