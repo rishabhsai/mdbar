@@ -421,15 +421,24 @@ code {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding-left: calc(10px + var(--depth, 0) * 17px);
+  border-radius: 12px;
+  transform: translateZ(0);
+  transition: background-color 80ms ease-out;
+}
+
+.lib-folder-row:hover,
+.lib-folder-row:focus-within {
+  background: var(--accent-soft);
 }
 
 .lib-folder-toggle {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  padding-left: calc(10px + var(--depth, 0) * 17px);
   border: none;
   border-radius: 12px;
   background: transparent;
@@ -437,11 +446,7 @@ code {
   font-size: 12px;
   font-weight: 600;
   text-align: left;
-  transition: background 120ms ease, border-color 120ms ease;
-}
-
-.lib-folder-toggle:hover {
-  background: var(--accent-soft);
+  transition: color 80ms ease-out;
 }
 
 .lib-folder-chevron {
@@ -495,10 +500,12 @@ code {
   align-items: center;
   gap: 4px;
   padding-right: 6px;
+  opacity: 0;
+  transform: translateX(1px);
+  transition: opacity 70ms ease-out, transform 70ms ease-out;
 }
 
 .lib-folder-action {
-  opacity: 0;
   width: 24px;
   height: 24px;
   display: inline-flex;
@@ -509,10 +516,7 @@ code {
   border-radius: 7px;
   background: transparent;
   color: color-mix(in srgb, var(--muted) 88%, var(--ink));
-  transition:
-    opacity 120ms ease,
-    background 120ms ease,
-    color 120ms ease;
+  transition: color 70ms ease-out;
 }
 
 .lib-folder-action svg {
@@ -520,18 +524,17 @@ code {
   height: 13px;
 }
 
-.lib-folder-row:hover .lib-folder-action,
-.lib-folder-action:focus-visible {
+.lib-folder-row:hover .lib-folder-actions,
+.lib-folder-row:focus-within .lib-folder-actions {
   opacity: 1;
+  transform: translateX(0);
 }
 
 .lib-folder-action:hover {
-  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
   color: var(--ink);
 }
 
 .lib-folder-action-delete:hover {
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
   color: var(--danger);
 }
 
@@ -546,15 +549,23 @@ code {
   align-items: center;
   gap: 6px;
   padding-left: calc(10px + var(--depth, 0) * 16px);
+  border-radius: 12px;
+  transform: translateZ(0);
+  transition: background-color 80ms ease-out;
+}
+
+.lib-note-row:hover,
+.lib-note-row:focus-within {
+  background: var(--accent-soft);
 }
 
 .lib-note-row.is-active {
-  border-radius: 12px;
   background: color-mix(in srgb, var(--accent-soft) 78%, var(--panel) 22%);
 }
 
 .lib-note-item {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -564,11 +575,7 @@ code {
   background: transparent;
   color: var(--ink);
   text-align: left;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-.lib-note-item:hover {
-  background: var(--accent-soft);
+  transition: color 80ms ease-out;
 }
 
 .lib-note-item.is-active {
@@ -612,7 +619,6 @@ code {
 }
 
 .lib-note-delete {
-  opacity: 0;
   width: 24px;
   height: 24px;
   display: inline-flex;
@@ -623,10 +629,9 @@ code {
   border-radius: 7px;
   background: transparent;
   color: color-mix(in srgb, var(--muted) 88%, var(--ink));
-  transition:
-    opacity 120ms ease,
-    background 120ms ease,
-    color 120ms ease;
+  opacity: 0;
+  transform: translateX(1px);
+  transition: opacity 70ms ease-out, transform 70ms ease-out, color 70ms ease-out;
 }
 
 .lib-note-delete svg {
@@ -635,13 +640,14 @@ code {
 }
 
 .lib-note-row:hover .lib-note-delete,
+.lib-note-row:focus-within .lib-note-delete,
 .lib-note-row.is-active .lib-note-delete,
 .lib-note-delete:focus-visible {
   opacity: 1;
+  transform: translateX(0);
 }
 
 .lib-note-delete:hover {
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
   color: var(--danger);
 }
 
