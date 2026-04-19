@@ -601,9 +601,12 @@ code {
   --font-heading: var(--display);
   --font-mono: var(--mono);
   flex: 1;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
   background: transparent;
   color: var(--ink);
 }
@@ -612,7 +615,18 @@ code {
   outline: none;
 }
 
-.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable {
+.ink-editor-host .mdbar-editor [class*="_editorWrapper_"] {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable,
+.ink-editor-host .mdbar-editor [class*="_contentEditable_"] {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   min-height: 100%;
   padding: 14px 18px 28px;
   overflow-y: auto;
@@ -625,7 +639,8 @@ code {
   overscroll-behavior: contain;
 }
 
-.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable:focus {
+.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable:focus,
+.ink-editor-host .mdbar-editor [class*="_contentEditable_"]:focus {
   outline: none;
 }
 
@@ -692,6 +707,13 @@ code {
   padding-left: 1.45rem;
 }
 
+.ink-editor-host .mdbar-prose ul ul,
+.ink-editor-host .mdbar-prose ul ol,
+.ink-editor-host .mdbar-prose ol ul,
+.ink-editor-host .mdbar-prose ol ol {
+  padding-left: 1.2rem;
+}
+
 .ink-editor-host .mdbar-prose li + li {
   margin-top: 0.22rem;
 }
@@ -700,6 +722,49 @@ code {
 .ink-editor-host .mdbar-prose li > ol {
   margin-top: 0.28rem;
   margin-bottom: 0;
+}
+
+.ink-editor-host .mdbar-editor [class*="_listitem_"] {
+  margin: 0.24rem 0;
+}
+
+.ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"],
+.ink-editor-host .mdbar-editor [class*="_listItemChecked_"] {
+  min-height: 1.45rem;
+  margin-inline-start: 0;
+  padding-left: 1.8rem;
+  padding-right: 0;
+  list-style-type: none;
+}
+
+.ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"]::before,
+.ink-editor-host .mdbar-editor [class*="_listItemChecked_"]::before {
+  width: 1rem;
+  height: 1rem;
+  top: 0.28rem;
+  left: 0;
+  border-radius: 0.3rem;
+  box-sizing: border-box;
+}
+
+.ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"]::before {
+  border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  background: color-mix(in srgb, var(--panel) 86%, black 14%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
+}
+
+.ink-editor-host .mdbar-editor [class*="_listItemChecked_"]::before {
+  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
+  background: color-mix(in srgb, var(--ink) 88%, var(--panel));
+}
+
+.ink-editor-host .mdbar-editor [class*="_listItemChecked_"]::after {
+  top: 0.52rem;
+  left: 0.34rem;
+  width: 0.24rem;
+  height: 0.48rem;
+  border-width: 0 1.5px 1.5px 0;
+  border-color: var(--panel);
 }
 
 .ink-editor-host .mdbar-prose a {
@@ -775,14 +840,22 @@ code {
   font-size: 0.92em;
 }
 
+.ink-editor-host .mdbar-editor [class*="_codeMirrorWrapper_"] {
+  margin-bottom: 1rem;
+  border-color: color-mix(in srgb, var(--panel-border) 88%, transparent);
+  background: color-mix(in srgb, var(--panel) 86%, black 14%);
+}
+
 .ink-editor-host .mdbar-editor .cm-scroller {
   overflow: auto;
   overscroll-behavior: contain;
+  background: transparent;
 }
 
 .ink-editor-host .mdbar-editor .cm-content,
 .ink-editor-host .mdbar-editor .cm-lineWrapping {
   max-width: 100%;
+  color: var(--ink);
 }
 
 .ink-editor-host .mdbar-editor .cm-gutters {

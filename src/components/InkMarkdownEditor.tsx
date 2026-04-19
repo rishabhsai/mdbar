@@ -1,6 +1,7 @@
 import "@mdxeditor/editor/style.css";
 
 import { languages } from "@codemirror/language-data";
+import { EditorView } from "@codemirror/view";
 import {
   codeBlockPlugin,
   codeMirrorPlugin,
@@ -27,6 +28,41 @@ type InkMarkdownEditorProps = {
   value: string;
 };
 
+const codeBlockTheme = EditorView.theme({
+  "&": {
+    backgroundColor: "color-mix(in srgb, var(--panel) 82%, black 18%)",
+    color: "var(--ink)",
+  },
+  ".cm-scroller": {
+    overflow: "auto",
+    fontFamily: "var(--mono)",
+  },
+  ".cm-content": {
+    caretColor: "var(--ink)",
+  },
+  ".cm-gutters": {
+    backgroundColor: "color-mix(in srgb, var(--panel) 86%, black 14%)",
+    color: "var(--muted)",
+    borderRight: "1px solid color-mix(in srgb, var(--panel-border) 78%, transparent)",
+  },
+  ".cm-activeLine, .cm-activeLineGutter": {
+    backgroundColor: "transparent",
+  },
+  ".cm-tooltip": {
+    border: "1px solid color-mix(in srgb, var(--panel-border) 92%, transparent)",
+    borderRadius: "12px",
+    backgroundColor: "color-mix(in srgb, var(--panel) 96%, black 4%)",
+    boxShadow: "0 18px 34px rgba(0, 0, 0, 0.22)",
+  },
+  ".cm-cursor": {
+    borderLeftColor: "var(--ink)",
+    borderLeftWidth: "1.5px",
+  },
+  ".cm-selectionBackground, ::selection": {
+    backgroundColor: "color-mix(in srgb, var(--ink) 14%, transparent)",
+  },
+});
+
 const editorPlugins: RealmPlugin[] = [
   headingsPlugin(),
   listsPlugin(),
@@ -40,6 +76,7 @@ const editorPlugins: RealmPlugin[] = [
   }),
   codeMirrorPlugin({
     codeBlockLanguages: languages,
+    codeMirrorExtensions: [EditorView.lineWrapping, codeBlockTheme],
   }),
   markdownShortcutPlugin(),
 ];
