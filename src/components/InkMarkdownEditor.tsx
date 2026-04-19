@@ -24,6 +24,7 @@ const MARKDOWN_LINK_INPUT = /(?:^|\s)\[([^\]]+)]\((https?:\/\/[^\s)]+|mailto:[^\
 type InkMarkdownEditorProps = {
   className?: string;
   documentKey: string;
+  focusToken?: number;
   isLoading: boolean;
   onChange: (value: string) => void;
   onError: (message: string | null) => void;
@@ -169,6 +170,7 @@ function createMarkdownLinkExtension() {
 export function InkMarkdownEditor({
   className,
   documentKey,
+  focusToken = 0,
   isLoading,
   onChange,
   onError,
@@ -281,6 +283,20 @@ export function InkMarkdownEditor({
       suppressUpdate.current = false;
     }
   }, [editor, value]);
+
+  useEffect(() => {
+    if (!editor || isLoading) {
+      return;
+    }
+
+    const focusTimer = window.setTimeout(() => {
+      editor.commands.focus("end");
+    }, 0);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+    };
+  }, [documentKey, editor, focusToken, isLoading]);
 
   return (
     <div

@@ -1,4 +1,5 @@
 import { open } from "@tauri-apps/plugin-dialog";
+import { listen } from "@tauri-apps/api/event";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { SettingsView } from "./components/SettingsSheet";
@@ -13,6 +14,7 @@ import {
   deleteLibraryFolder,
   listLibraryFolders,
   listLibraryNotes,
+  hideMainWindow,
   openDailyNote,
   openLibraryNote,
   renameLibraryNote,
@@ -30,6 +32,11 @@ import "./App.css";
 
 type ComposerKind = "note" | "folder";
 type Screen = "daily" | "library" | "library-editor" | "settings";
+type NavigationSnapshot = {
+  dailyDateKey: string;
+  screen: Screen;
+  selectedLibraryNoteId: string | null;
+};
 
 function resolveInitialSystemTheme() {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -80,6 +87,7 @@ function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [screen, setScreen] = useState<Screen>("daily");
   const [dailyDateKey, setDailyDateKey] = useState(todayKey);
+  const [screenHistory, setScreenHistory] = useState<NavigationSnapshot[]>([]);
   const [libraryFolders, setLibraryFolders] = useState<FolderSummary[]>([]);
   const [libraryNotes, setLibraryNotes] = useState<NoteSummary[]>([]);
   const [selectedLibraryNoteId, setSelectedLibraryNoteId] = useState<string | null>(
@@ -101,9 +109,96 @@ function App() {
     resolveInitialSystemTheme,
   );
   const [isLoadingNote, setIsLoadingNote] = useState(false);
+  const [editorFocusToken, setEditorFocusToken] = useState(0);
   const saveTimerRef = useRef<number | null>(null);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const titleRenameInFlightRef = useRef(false);
+
+  function currentSnapshot(): NavigationSnapshot {
+    return {
+      dailyDateKey,
+      screen,
+      selectedLibraryNoteId,
+    };
+  }
+
+  function applyNavigationSnapshot(
+    snapshot: NavigationSnapshot,
+    { focusEditor = false }: { focusEditor?: boolean } = {},
+  ) {
+    setScreen(snapshot.screen);
+    setDailyDateKey(snapshot.dailyDateKey);
+    setSelectedLibraryNoteId(snapshot.selectedLibraryNoteId);
+
+    if (focusEditor && (snapshot.screen === "daily" || snapshot.screen === "library-editor")) {
+      setEditorFocusToken((value) => value + 1);
+    }
+  }
+
+  function navigateTo(
+    nextScreen: Screen,
+    options: {
+      dailyDateKey?: string;
+      focusEditor?: boolean;
+      pushHistory?: boolean;
+      resetHistory?: boolean;
+      selectedLibraryNoteId?: string | null;
+    } = {},
+  ) {
+    const nextSnapshot: NavigationSnapshot = {
+      dailyDateKey: options.dailyDateKey ?? dailyDateKey,
+      screen: nextScreen,
+      selectedLibraryNoteId:
+        options.selectedLibraryNoteId === undefined
+          ? selectedLibraryNoteId
+          : options.selectedLibraryNoteId,
+    };
+    const snapshot = currentSnapshot();
+    const isSameDestination =
+      snapshot.screen === nextSnapshot.screen &&
+      snapshot.dailyDateKey === nextSnapshot.dailyDateKey &&
+      snapshot.selectedLibraryNoteId === nextSnapshot.selectedLibraryNoteId;
+
+    if (options.resetHistory) {
+      setScreenHistory([]);
+    } else if (!isSameDestination && options.pushHistory !== false) {
+      setScreenHistory((existing) => [...existing, snapshot]);
+    }
+
+    applyNavigationSnapshot(nextSnapshot, {
+      focusEditor: options.focusEditor,
+    });
+  }
+
+  function goBack() {
+    const previousSnapshot = screenHistory[screenHistory.length - 1];
+    if (!previousSnapshot) {
+      return false;
+    }
+
+    setScreenHistory((existing) => existing.slice(0, -1));
+    applyNavigationSnapshot(previousSnapshot, {
+      focusEditor:
+        previousSnapshot.screen === "daily" ||
+        previousSnapshot.screen === "library-editor",
+    });
+
+    return true;
+  }
+
+  function resetToTodayNote() {
+    setIsComposerOpen(false);
+    setPendingDeleteNote(null);
+    setPendingDeleteFolder(null);
+    setIsRenamingTitle(false);
+    setRenamingTitle("");
+    navigateTo("daily", {
+      dailyDateKey: todayKey(),
+      focusEditor: true,
+      pushHistory: false,
+      resetHistory: true,
+    });
+  }
 
   async function refreshNotebookIndex(notebookPath: string) {
     const [folders, notes] = await Promise.all([
@@ -174,6 +269,16 @@ function App() {
       setRenamingTitle("");
     }
   }, [currentNote?.id, currentNote?.kind, screen]);
+
+  useEffect(() => {
+    const unlistenPromise = listen("mdbar://panel-opened", () => {
+      resetToTodayNote();
+    });
+
+    return () => {
+      void unlistenPromise.then((unlisten) => unlisten());
+    };
+  }, [dailyDateKey, screen, selectedLibraryNoteId]);
 
   // Persist the last selected library note
   useEffect(() => {
@@ -352,7 +457,12 @@ function App() {
 
       if (typeof selected === "string") {
         setSettings((existing) => ({ ...existing, notebookPath: selected }));
-        setScreen("daily");
+        navigateTo("daily", {
+          dailyDateKey: todayKey(),
+          focusEditor: true,
+          pushHistory: false,
+          resetHistory: true,
+        });
         setErrorMessage(null);
       }
     } finally {
@@ -378,7 +488,10 @@ function App() {
       setSelectedLibraryNoteId(note.id);
       setCurrentNote(note);
       setDraft(note.content);
-      setScreen("library-editor");
+      navigateTo("library-editor", {
+        focusEditor: true,
+        selectedLibraryNoteId: note.id,
+      });
       setSaveState("idle");
       setErrorMessage(null);
       setNewItemName("");
@@ -397,7 +510,9 @@ function App() {
 
       setLibraryFolders(folders);
       setLibraryNotes(notes);
-      setScreen("library");
+      navigateTo("library", {
+        pushHistory: false,
+      });
       setSaveState("idle");
       setErrorMessage(null);
       setNewItemName("");
@@ -429,21 +544,24 @@ function App() {
 
   function handleNotesClick() {
     if (screen === "library" || screen === "library-editor") {
-      // If in library-editor, go back to library browser
       if (screen === "library-editor") {
-        setScreen("library");
+        navigateTo("library");
         return;
       }
-      // If already on library browser, go to daily
-      setScreen("daily");
+      navigateTo("daily", {
+        dailyDateKey: todayDateKey,
+      });
       return;
     }
-    setScreen("library");
+    navigateTo("library");
   }
 
   function handleLibrarySelectNote(noteId: string) {
     setSelectedLibraryNoteId(noteId);
-    setScreen("library-editor");
+    navigateTo("library-editor", {
+      focusEditor: true,
+      selectedLibraryNoteId: noteId,
+    });
   }
 
   async function handleQuickCreateNote() {
@@ -458,7 +576,10 @@ function App() {
       setSelectedLibraryNoteId(note.id);
       setCurrentNote(note);
       setDraft(note.content);
-      setScreen("library-editor");
+      navigateTo("library-editor", {
+        focusEditor: true,
+        selectedLibraryNoteId: note.id,
+      });
       setSaveState("idle");
       setErrorMessage(null);
     } catch (error) {
@@ -478,7 +599,10 @@ function App() {
       setSelectedLibraryNoteId(note.id);
       setCurrentNote(note);
       setDraft(note.content);
-      setScreen("library-editor");
+      navigateTo("library-editor", {
+        focusEditor: true,
+        selectedLibraryNoteId: note.id,
+      });
       setSaveState("idle");
       setErrorMessage(null);
     } catch (error) {
@@ -589,7 +713,9 @@ function App() {
       if (deletedWasOpen) {
         setCurrentNote(null);
         setDraft("");
-        setScreen("library");
+        navigateTo("library", {
+          pushHistory: false,
+        });
       }
 
       setPendingDeleteNote(null);
@@ -623,7 +749,9 @@ function App() {
       if (openNoteWasDeleted) {
         setCurrentNote(null);
         setDraft("");
-        setScreen("library");
+        navigateTo("library", {
+          pushHistory: false,
+        });
       }
 
       setPendingDeleteFolder(null);
@@ -634,6 +762,57 @@ function App() {
     }
   }
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) {
+        return;
+      }
+
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) {
+        return;
+      }
+
+      if (isRenamingTitle) {
+        return;
+      }
+
+      event.preventDefault();
+
+      if (isComposerOpen) {
+        setIsComposerOpen(false);
+        return;
+      }
+
+      if (pendingDeleteNote) {
+        setPendingDeleteNote(null);
+        return;
+      }
+
+      if (pendingDeleteFolder) {
+        setPendingDeleteFolder(null);
+        return;
+      }
+
+      if (goBack()) {
+        return;
+      }
+
+      void hideMainWindow();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    isComposerOpen,
+    isRenamingTitle,
+    pendingDeleteFolder,
+    pendingDeleteNote,
+    screenHistory,
+  ]);
+
   return (
     <main className={`app-shell ${appearance === "dark" ? "theme-dark" : "theme-light"}`}>
       <section className="panel-frame">
@@ -643,7 +822,7 @@ function App() {
               <button
                 aria-label="Back to notes"
                 className="header-icon"
-                onClick={() => setScreen("library")}
+                onClick={() => navigateTo("library")}
                 type="button"
               >
                 <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -682,8 +861,12 @@ function App() {
                   aria-label="Go to today"
                   className={`header-icon${screen === "daily" ? " active" : ""}`}
                   onClick={() => {
-                    setScreen("daily");
-                    setDailyDateKey(todayDateKey);
+                    navigateTo("daily", {
+                      dailyDateKey: todayDateKey,
+                      focusEditor: true,
+                      pushHistory: false,
+                      resetHistory: true,
+                    });
                   }}
                   type="button"
                 >
@@ -840,7 +1023,21 @@ function App() {
             <button
               aria-label={screen === "settings" ? "Return to note" : "Open settings"}
               className={`header-icon${screen === "settings" ? " active" : ""}`}
-              onClick={() => setScreen(screen === "settings" ? "daily" : "settings")}
+              onClick={() => {
+                if (screen === "settings") {
+                  if (!goBack()) {
+                    navigateTo("daily", {
+                      dailyDateKey: todayDateKey,
+                      focusEditor: true,
+                      pushHistory: false,
+                      resetHistory: true,
+                    });
+                  }
+                  return;
+                }
+
+                navigateTo("settings");
+              }}
               type="button"
             >
               <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -897,7 +1094,16 @@ function App() {
           <SettingsView
             onChange={(patch) => setSettings((existing) => ({ ...existing, ...patch }))}
             onChooseFolder={chooseNotebookFolder}
-            onClose={() => setScreen("daily")}
+            onClose={() => {
+              if (!goBack()) {
+                navigateTo("daily", {
+                  dailyDateKey: todayDateKey,
+                  focusEditor: true,
+                  pushHistory: false,
+                  resetHistory: true,
+                });
+              }
+            }}
             settings={settings}
             shortcutStatus={shortcutStatus}
           />
@@ -920,6 +1126,7 @@ function App() {
             {currentNote ? (
               <InkMarkdownEditor
                 documentKey={editorDocumentKey}
+                focusToken={editorFocusToken}
                 isLoading={isLoadingNote}
                 onChange={setDraft}
                 onError={setErrorMessage}

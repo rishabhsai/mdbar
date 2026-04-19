@@ -113,6 +113,10 @@ export function toggleMainWindow() {
   return invoke("toggle_main_window");
 }
 
+export function hideMainWindow() {
+  return invoke("hide_main_window");
+}
+
 export function syncGlobalShortcut(shortcut: string) {
   return invoke<string>("sync_global_shortcut", {
     shortcut,

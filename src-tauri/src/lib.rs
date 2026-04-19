@@ -10,7 +10,8 @@ use tauri::{
     include_image,
     menu::{Menu, MenuItem, PredefinedMenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    ActivationPolicy, AppHandle, Manager, PhysicalPosition, Runtime, WebviewWindow, WindowEvent,
+    ActivationPolicy, AppHandle, Emitter, Manager, PhysicalPosition, Runtime, WebviewWindow,
+    WindowEvent,
 };
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
@@ -40,6 +41,12 @@ fn toggle_main_window(app: AppHandle) -> Result<(), String> {
 
     reveal_panel(&app, &window);
     Ok(())
+}
+
+#[tauri::command(rename_all = "camelCase")]
+fn hide_main_window(app: AppHandle) -> Result<(), String> {
+    let window = get_main_window(&app)?;
+    window.hide().map_err(|error| error.to_string())
 }
 
 #[tauri::command(rename_all = "camelCase")]
@@ -107,6 +114,7 @@ fn reveal_panel<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) {
     let _ = window.unminimize();
     let _ = window.show();
     let _ = window.set_focus();
+    let _ = app.emit("mdbar://panel-opened", ());
 }
 
 fn place_window_under_tray<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) {
@@ -241,6 +249,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             toggle_main_window,
+            hide_main_window,
             sync_global_shortcut,
             set_panel_auto_hide,
             list_system_fonts,
