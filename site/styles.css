@@ -104,27 +104,10 @@ code {
   padding: 160px 24px 48px;
 }
 
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(232, 227, 219, 0.55);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 32px;
-  animation: fadeUp 0.8s ease both;
-}
-
 .hero-logo-wrap {
   display: flex;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   animation: fadeUp 0.8s 0.05s ease both;
 }
 
@@ -339,67 +322,44 @@ code {
   padding: 16px 20px 28px;
 }
 
-.pv-h1 {
-  font-family: "Newsreader", Georgia, serif;
-  font-size: 22px;
-  font-weight: 500;
+.preview-editor-live {
+  min-height: 340px;
+  margin: 0;
+  border: none;
+  outline: none;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
   color: #f0ece4;
-  margin-bottom: 14px;
-  letter-spacing: -0.02em;
-}
-
-.pv-h3 {
-  font-family: "Newsreader", Georgia, serif;
-  font-size: 15px;
-  font-weight: 400;
-  color: rgba(232, 227, 219, 0.55);
-  margin-bottom: 12px;
-}
-
-.pv-task {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 0;
+  background: transparent;
+  font-family: "JetBrains Mono", "SF Mono", monospace;
   font-size: 13px;
-  color: rgba(232, 227, 219, 0.6);
+  line-height: 1.68;
+  caret-color: #f0ece4;
 }
 
-.pv-check {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  flex-shrink: 0;
+.preview-editor-live:focus {
+  background: rgba(255, 255, 255, 0.015);
 }
 
-.pv-checked {
-  background: rgba(232, 227, 219, 0.75);
-  border-color: rgba(232, 227, 219, 0.75);
-  position: relative;
+.site-shot {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
 }
 
-.pv-checked::after {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 1px;
-  width: 4px;
-  height: 8px;
-  border-right: 1.5px solid #0c0b0a;
-  border-bottom: 1.5px solid #0c0b0a;
-  transform: rotate(45deg);
+.site-shot-link {
+  display: block;
 }
 
-.pv-cursor::after {
-  content: "";
-  display: inline-block;
-  width: 1.5px;
-  height: 14px;
-  background: rgba(232, 227, 219, 0.5);
-  margin-left: 1px;
-  vertical-align: middle;
-  animation: blink 1s steps(1) infinite;
+.site-shot-image {
+  width: 100%;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 22px 72px rgba(0, 0, 0, 0.34);
 }
 
 .features {
@@ -523,11 +483,6 @@ code {
   }
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
-
 @media (max-width: 768px) {
   .site-nav {
     padding: 14px 20px;
@@ -570,6 +525,10 @@ code {
   }
 
   .features {
+    padding: 0 16px 60px;
+  }
+
+  .site-shot {
     padding: 0 16px 60px;
   }
 

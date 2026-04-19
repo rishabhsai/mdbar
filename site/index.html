@@ -39,7 +39,6 @@
     </nav>
 
     <section class="hero">
-      <p class="hero-badge">Menu bar app for macOS</p>
       <div class="hero-logo-wrap">
         <img src="./logo.svg" alt="mdbar app icon" class="hero-logo" />
       </div>
@@ -49,7 +48,7 @@
         notebook
       </h1>
       <p class="hero-sub">
-        Plain files. Live rendered editor. Always one shortcut&nbsp;away.
+        Plain files. Live rendered editor. Press <strong>Cmd+Shift+M</strong> and start writing.
       </p>
       <div class="hero-actions">
         <a
@@ -64,10 +63,10 @@
       </div>
       <div class="hero-links">
         <a href="https://github.com/rishabhsai/mdbar/releases">Releases</a>
-        <a href="https://github.com/rishabhsai/mdbar/issues">Roadmap / Issues</a>
+        <a href="https://imgur.com/bRB0KrG">Screenshot</a>
         <a href="https://github.com/rishabhsai/mdbar/blob/main/README.md">README</a>
       </div>
-      <p class="hero-footnote">Current direct download: Apple Silicon macOS DMG.</p>
+      <p class="hero-footnote">Current direct download: Apple Silicon macOS DMG. Default launcher: Cmd+Shift+M.</p>
     </section>
 
     <section class="preview">
@@ -101,28 +100,38 @@
               </svg>
             </span>
           </div>
-          <div class="preview-editor">
-            <p class="pv-h1">ship mdbar</p>
-            <p class="pv-h3">afternoon</p>
-            <div class="pv-task">
-              <span class="pv-check pv-checked"></span>
-              <span>build the menu bar shell</span>
-            </div>
-            <div class="pv-task">
-              <span class="pv-check pv-checked"></span>
-              <span>tune fonts and dark mode</span>
-            </div>
-            <div class="pv-task">
-              <span class="pv-check"></span>
-              <span>landing page that feels real</span>
-            </div>
-            <div class="pv-task">
-              <span class="pv-check"></span>
-              <span class="pv-cursor">write release notes</span>
-            </div>
-          </div>
+          <pre
+            class="preview-editor preview-editor-live"
+            contenteditable="true"
+            spellcheck="false"
+          ># mdbar
+
+> Press Cmd+Shift+M and start writing.
+
+---
+
+- plain markdown files
+- daily notes
+- notes folders
+
+- [x] fast to open
+- [ ] ship v1
+
+```bash
+npm run tauri dev
+```</pre>
         </div>
       </div>
+    </section>
+
+    <section class="site-shot">
+      <a href="https://imgur.com/bRB0KrG" class="site-shot-link">
+        <img
+          src="https://i.imgur.com/bRB0KrG.png"
+          alt="mdbar screenshot"
+          class="site-shot-image"
+        />
+      </a>
     </section>
 
     <section class="features" id="features">

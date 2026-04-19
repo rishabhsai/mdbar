@@ -2,7 +2,13 @@
 
 mdbar is a macOS menu bar markdown notebook built around plain files on disk.
 
-It opens from the menu bar, drops you straight into today’s note, and keeps everything in a normal folder you can browse with Finder, Git, Obsidian, or any editor you want.
+Press `Cmd+Shift+M`, drop into today’s note, and start typing. Everything stays in a normal folder you can browse with Finder, Git, Obsidian, or any editor you want.
+
+## Screenshot
+
+[Open screenshot](https://imgur.com/bRB0KrG)
+
+![mdbar screenshot](https://i.imgur.com/bRB0KrG.png)
 
 ## What mdbar does
 
@@ -13,6 +19,17 @@ It opens from the menu bar, drops you straight into today’s note, and keeps ev
 - Opens to today’s note and focuses the editor from a global shortcut
 - Uses a live rendered markdown editor instead of a raw textarea
 - Supports dark mode, font selection, font size, line height, images, links, and autosave
+
+## Keyboard shortcuts
+
+- `Cmd+Shift+M`: open mdbar from anywhere
+- `←`: previous day
+- `→`: next day
+- `Cmd+O`: open the current note in your default editor
+- `Cmd+Shift+O`: reveal the current note in Finder
+- `Esc`: go back through the current view stack, then hide the panel
+
+The global launcher is configurable in settings, but `Cmd+Shift+M` is the default.
 
 ## Storage model
 
