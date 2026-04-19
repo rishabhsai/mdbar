@@ -192,50 +192,50 @@ code {
 /* ── Scrollbar (auto-hiding, thin, translucent) ── */
 
 .library-view,
-.ink-editor-host .cm-scroller,
+.tiptap-editor-host > .tiptap,
 .settings-view {
   scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.78) transparent;
 }
 
 .library-view:hover,
-.ink-editor-host .cm-scroller:hover,
+.tiptap-editor-host > .tiptap:hover,
 .settings-view:hover {
-  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.9) transparent;
 }
 
 .library-view::-webkit-scrollbar,
-.ink-editor-host .cm-scroller::-webkit-scrollbar,
+.tiptap-editor-host > .tiptap::-webkit-scrollbar,
 .settings-view::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 .library-view::-webkit-scrollbar-track,
-.ink-editor-host .cm-scroller::-webkit-scrollbar-track,
+.tiptap-editor-host > .tiptap::-webkit-scrollbar-track,
 .settings-view::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .library-view::-webkit-scrollbar-thumb,
-.ink-editor-host .cm-scroller::-webkit-scrollbar-thumb,
+.tiptap-editor-host > .tiptap::-webkit-scrollbar-thumb,
 .settings-view::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 0%, transparent);
+  background: rgba(0, 0, 0, 0.82);
   background-clip: padding-box;
 }
 
 .library-view:hover::-webkit-scrollbar-thumb,
-.ink-editor-host .cm-scroller:hover::-webkit-scrollbar-thumb,
+.tiptap-editor-host > .tiptap:hover::-webkit-scrollbar-thumb,
 .settings-view:hover::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--ink) 20%, transparent);
+  background: rgba(0, 0, 0, 0.9);
   background-clip: padding-box;
 }
 
 .library-view::-webkit-scrollbar-thumb:hover,
-.ink-editor-host .cm-scroller::-webkit-scrollbar-thumb:hover,
+.tiptap-editor-host > .tiptap::-webkit-scrollbar-thumb:hover,
 .settings-view::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--ink) 38%, transparent);
+  background: rgba(0, 0, 0, 0.96);
   background-clip: padding-box;
 }
 
@@ -247,6 +247,7 @@ code {
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .lib-header {
@@ -300,7 +301,7 @@ code {
 }
 
 .lib-tree {
-  padding: 6px;
+  padding: 8px;
 }
 
 .lib-empty {
@@ -330,24 +331,24 @@ code {
 /* ── Folder node ── */
 
 .lib-folder {
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .lib-folder-toggle {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
-  padding-left: calc(10px + var(--depth, 0) * 16px);
+  gap: 8px;
+  padding: 8px 11px;
+  padding-left: calc(10px + var(--depth, 0) * 17px);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: transparent;
   color: var(--ink);
   font-size: 12px;
   font-weight: 600;
   text-align: left;
-  transition: background 120ms ease;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
 .lib-folder-toggle:hover {
@@ -356,10 +357,18 @@ code {
 
 .lib-folder-chevron {
   color: var(--muted);
-  font-size: 12px;
   line-height: 1;
   transform: rotate(0deg);
   transition: transform 140ms ease;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+
+.lib-folder-chevron svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .lib-folder-toggle.is-open .lib-folder-chevron {
@@ -367,8 +376,16 @@ code {
 }
 
 .lib-folder-icon {
-  font-size: 13px;
-  line-height: 1;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: color-mix(in srgb, var(--ink) 84%, #d0a847);
+}
+
+.lib-folder-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .lib-folder-name {
@@ -385,7 +402,7 @@ code {
 }
 
 .lib-folder-children {
-  margin: 0;
+  margin: 2px 0 4px;
 }
 
 /* ── Note item ── */
@@ -395,14 +412,14 @@ code {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 8px 11px;
   padding-left: calc(10px + var(--depth, 0) * 16px);
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: transparent;
   color: var(--ink);
   text-align: left;
-  transition: background 120ms ease;
+  transition: background 120ms ease, color 120ms ease;
 }
 
 .lib-note-item:hover {
@@ -414,9 +431,16 @@ code {
 }
 
 .lib-note-icon {
-  font-size: 13px;
-  line-height: 1;
+  width: 15px;
+  height: 15px;
   flex: 0 0 auto;
+  color: color-mix(in srgb, var(--ink) 76%, var(--muted));
+}
+
+.lib-note-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .lib-note-info {
@@ -533,6 +557,8 @@ code {
 
 .tiptap-editor-host > .tiptap {
   flex: 1;
+  min-height: 0;
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -540,37 +566,7 @@ code {
 
 /* Scrollbar on the tiptap editor */
 .tiptap-editor-host > .tiptap {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-}
-
-.tiptap-editor-host > .tiptap:hover {
-  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
-}
-
-.tiptap-editor-host > .tiptap::-webkit-scrollbar {
-  width: 8px;
-}
-
-.tiptap-editor-host > .tiptap::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.tiptap-editor-host > .tiptap::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ink) 0%, transparent);
-  background-clip: padding-box;
-}
-
-.tiptap-editor-host > .tiptap:hover::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--ink) 20%, transparent);
-  background-clip: padding-box;
-}
-
-.tiptap-editor-host > .tiptap::-webkit-scrollbar-thumb:hover {
-  background: color-mix(in srgb, var(--ink) 38%, transparent);
-  background-clip: padding-box;
+  position: relative;
 }
 
 /* ── Tiptap content area ── */
@@ -583,6 +579,7 @@ code {
   font-size: var(--editor-font-size, 15px);
   line-height: var(--editor-line-height, 1.65);
   min-height: 100%;
+  box-sizing: border-box;
 }
 
 .tiptap-content > * + * {
@@ -656,13 +653,19 @@ code {
 }
 
 .tiptap-content ul[data-type="taskList"] li > label {
-  flex: 0 0 auto;
-  margin-top: 0.25em;
+  width: 18px;
+  height: calc(var(--editor-font-size, 15px) * var(--editor-line-height, 1.65));
+  display: inline-flex;
+  flex: 0 0 18px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
 }
 
 .tiptap-content ul[data-type="taskList"] li > label input[type="checkbox"] {
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
+  margin: 0;
   border-radius: 4px;
   border: 1.5px solid color-mix(in srgb, var(--ink) 28%, transparent);
   background: transparent;
@@ -680,8 +683,8 @@ code {
 .tiptap-content ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
   content: "";
   position: absolute;
-  left: 3px;
-  top: 0px;
+  left: 4px;
+  top: 1px;
   width: 5px;
   height: 9px;
   border-right: 1.5px solid var(--panel);
@@ -692,6 +695,10 @@ code {
 .tiptap-content ul[data-type="taskList"] li > div {
   flex: 1;
   min-width: 0;
+}
+
+.tiptap-content ul[data-type="taskList"] li > div > p {
+  line-height: inherit;
 }
 
 .tiptap-content ul[data-type="taskList"] li[data-checked="true"] > div {
@@ -993,18 +1000,25 @@ code {
 
 .composer-modal {
   position: absolute;
-  left: 14px;
-  right: 14px;
-  top: 108px;
-  padding: 18px;
+  left: 50%;
+  top: 112px;
+  width: min(calc(100vw - 28px), 432px);
+  padding: 20px;
   border: 1px solid var(--panel-border);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--panel) 98%, white 2%);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--panel) 96%, white 4%);
   box-shadow: var(--shadow);
+  transform: translateX(-50%);
 }
 
 .composer-modal h2 {
   font-size: 18px;
+  margin-bottom: 14px;
+}
+
+.composer-modal .field-label {
+  margin-bottom: 6px;
+  display: block;
 }
 
 .composer-actions {
@@ -1195,61 +1209,68 @@ code {
   gap: 6px;
 }
 
-/* ── Options grid (fonts) ── */
+/* ── Font selector ── */
 
-.option-grid {
-  display: grid;
-  gap: 8px;
+.font-select-wrap {
+  position: relative;
 }
 
-.option-card {
+.font-select {
   width: 100%;
+  min-height: 40px;
+  padding: 0 40px 0 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 92%, white 8%);
+  color: var(--ink);
+  font: inherit;
+  appearance: none;
+  outline: none;
+}
+
+.font-select:focus {
+  border-color: color-mix(in srgb, var(--ink) 18%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.font-select-chevron {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.font-select-chevron svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.font-preview-card {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   padding: 12px 13px;
   border: 1px solid var(--panel-border);
   border-radius: 14px;
-  background: transparent;
-  color: var(--ink);
-  text-align: left;
-  transition: background 140ms ease, border-color 140ms ease;
+  background: color-mix(in srgb, var(--panel) 94%, white 6%);
 }
 
-.option-card:hover,
-.option-card.is-active {
-  background: color-mix(in srgb, var(--accent-soft) 76%, var(--panel) 24%);
-  border-color: color-mix(in srgb, var(--ink) 10%, transparent);
-}
-
-.option-card-title {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.option-card-preview {
-  display: block;
-  color: var(--ink);
-  font-size: 15px;
-}
-
-.option-card-editorial .option-card-preview {
-  font-family: var(--display);
-}
-
-.option-card-sans .option-card-preview {
-  font-family: var(--sans);
-}
-
-.option-card-mono .option-card-preview {
-  font-family: var(--mono);
-}
-
-.option-card-copy {
-  display: block;
+.font-preview-label {
   color: var(--muted);
   font-size: 11px;
-  line-height: 1.45;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.font-preview-sample {
+  color: var(--ink);
+  font-size: 18px;
+  line-height: 1.35;
 }
 
 /* ── Range inputs ── */

@@ -1,5 +1,4 @@
 export type ThemePreference = "system" | "light" | "dark";
-export type EditorFont = "editorial" | "sans" | "mono";
 export type NoteKind = "daily" | "library";
 
 export type NoteSummary = {
@@ -16,6 +15,14 @@ export type NoteDocument = NoteSummary & {
   content: string;
 };
 
+export type FolderSummary = {
+  id: string;
+  name: string;
+  relativePath: string;
+  directory: string;
+  updatedAtMs: number;
+};
+
 export type SaveNoteResult = {
   persisted: boolean;
   updatedAtMs: number;
@@ -24,7 +31,7 @@ export type SaveNoteResult = {
 export type AppSettings = {
   notebookPath: string | null;
   theme: ThemePreference;
-  fontFamily: EditorFont;
+  fontFamily: string;
   fontSize: number;
   lineHeight: number;
   shortcut: string;
@@ -34,9 +41,9 @@ export type AppSettings = {
 export const defaultSettings: AppSettings = {
   notebookPath: null,
   theme: "system",
-  fontFamily: "editorial",
+  fontFamily: "Iowan Old Style",
   fontSize: 17,
   lineHeight: 1.6,
-  shortcut: "CommandOrControl+Shift+M",
+  shortcut: "CmdOrControl+Shift+M",
   lastLibraryNoteId: null,
 };

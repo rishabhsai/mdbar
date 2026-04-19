@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { AppSettings, EditorFont, ThemePreference } from "../lib/types";
+
+import { listSystemFonts } from "../lib/tauri";
+import type { AppSettings, ThemePreference } from "../lib/types";
 
 type SettingsViewProps = {
   onChange: (patch: Partial<AppSettings>) => void;
@@ -15,30 +17,16 @@ const themeOptions: Array<{ label: string; value: ThemePreference }> = [
   { label: "Dark", value: "dark" },
 ];
 
-const fontOptions: Array<{
-  description: string;
-  label: string;
-  preview: string;
-  value: EditorFont;
-}> = [
-  {
-    description: "Editorial serif for journal-style notes.",
-    label: "Editorial",
-    preview: "Iowan Old Style",
-    value: "editorial",
-  },
-  {
-    description: "Clean sans for a calmer utility feel.",
-    label: "Sans",
-    preview: "Avenir Next",
-    value: "sans",
-  },
-  {
-    description: "Monospace for code, logs, and outlines.",
-    label: "Mono",
-    preview: "SF Mono",
-    value: "mono",
-  },
+const fallbackFonts = [
+  "Iowan Old Style",
+  "Avenir Next",
+  "SF Mono",
+  "Helvetica Neue",
+  "Menlo",
+  "Georgia",
+  "Times New Roman",
+  "Verdana",
+  "Courier New",
 ];
 
 /* ── Shortcut recorder helpers ── */
@@ -58,7 +46,7 @@ function keyEventToAccelerator(event: KeyboardEvent): string | null {
   const parts: string[] = [];
 
   if (event.metaKey || event.ctrlKey) {
-    parts.push("CommandOrControl");
+    parts.push("CmdOrControl");
   }
 
   if (event.altKey) {
@@ -94,11 +82,16 @@ function keyEventToAccelerator(event: KeyboardEvent): string | null {
 
   parts.push(key);
 
+  if (parts.length < 2) {
+    return null;
+  }
+
   return parts.join("+");
 }
 
 function formatAcceleratorForDisplay(accelerator: string): string {
   return accelerator
+    .replace(/CmdOrControl/g, "⌘")
     .replace(/CommandOrControl/g, "⌘")
     .replace(/Shift/g, "⇧")
     .replace(/Alt/g, "⌥")
@@ -114,11 +107,35 @@ export function SettingsView({
   settings,
   shortcutStatus,
 }: SettingsViewProps) {
+  const [availableFonts, setAvailableFonts] = useState<string[]>(fallbackFonts);
   const [isRecording, setIsRecording] = useState(false);
   const recorderRef = useRef<HTMLButtonElement | null>(null);
 
   const handleStartRecording = useCallback(() => {
     setIsRecording(true);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void listSystemFonts()
+      .then((fonts) => {
+        if (cancelled || fonts.length === 0) {
+          return;
+        }
+
+        const merged = Array.from(new Set([...fallbackFonts, ...fonts]));
+        setAvailableFonts(merged);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setAvailableFonts(fallbackFonts);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -203,22 +220,45 @@ export function SettingsView({
           </summary>
           <div className="settings-subsection-content">
             <div className="settings-subsection-group">
-              <span className="settings-sublabel">Editor font</span>
-              <div className="option-grid">
-                {fontOptions.map((option) => (
-                  <button
-                    className={`option-card option-card-${option.value}${
-                      settings.fontFamily === option.value ? " is-active" : ""
-                    }`}
-                    key={option.value}
-                    onClick={() => onChange({ fontFamily: option.value })}
-                    type="button"
-                  >
-                    <span className="option-card-title">{option.label}</span>
-                    <span className="option-card-preview">{option.preview}</span>
-                    <span className="option-card-copy">{option.description}</span>
-                  </button>
-                ))}
+              <label className="settings-sublabel" htmlFor="font-family">
+                Editor font
+              </label>
+              <div className="font-select-wrap">
+                <select
+                  className="font-select"
+                  id="font-family"
+                  onChange={(event) =>
+                    onChange({ fontFamily: event.currentTarget.value })
+                  }
+                  value={settings.fontFamily}
+                >
+                  {availableFonts.map((fontName) => (
+                    <option key={fontName} value={fontName}>
+                      {fontName}
+                    </option>
+                  ))}
+                </select>
+                <span className="font-select-chevron" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path
+                      d="m6 9 6 6 6-6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.8"
+                    />
+                  </svg>
+                </span>
+              </div>
+              <div
+                className="font-preview-card"
+                style={{ fontFamily: `"${settings.fontFamily.replace(/"/g, '\\"')}", var(--sans)` }}
+              >
+                <span className="font-preview-label">{settings.fontFamily}</span>
+                <span className="font-preview-sample">
+                  The quick brown fox jumps over the lazy dog.
+                </span>
               </div>
             </div>
 

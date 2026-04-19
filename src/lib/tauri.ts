@@ -1,6 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { NoteDocument, NoteSummary, SaveNoteResult } from "./types";
+import type {
+  FolderSummary,
+  NoteDocument,
+  NoteSummary,
+  SaveNoteResult,
+} from "./types";
 
 export function openDailyNote(folderPath: string, dateKey: string) {
   return invoke<NoteDocument>("open_daily_note", {
@@ -11,6 +16,12 @@ export function openDailyNote(folderPath: string, dateKey: string) {
 
 export function listLibraryNotes(folderPath: string) {
   return invoke<NoteSummary[]>("list_library_notes", {
+    folderPath,
+  });
+}
+
+export function listLibraryFolders(folderPath: string) {
+  return invoke<FolderSummary[]>("list_library_folders", {
     folderPath,
   });
 }
@@ -63,4 +74,8 @@ export function setPanelAutoHide(enabled: boolean) {
   return invoke("set_panel_auto_hide", {
     enabled,
   });
+}
+
+export function listSystemFonts() {
+  return invoke<string[]>("list_system_fonts");
 }

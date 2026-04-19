@@ -14,6 +14,7 @@ import { loadSettings, saveSettings } from "./lib/settings";
 import {
   createLibraryFolder,
   createLibraryNote,
+  listLibraryFolders,
   listLibraryNotes,
   openDailyNote,
   openLibraryNote,
@@ -21,7 +22,12 @@ import {
   setPanelAutoHide,
   toggleMainWindow,
 } from "./lib/tauri";
-import type { AppSettings, NoteDocument, NoteSummary } from "./lib/types";
+import type {
+  AppSettings,
+  FolderSummary,
+  NoteDocument,
+  NoteSummary,
+} from "./lib/types";
 import "./App.css";
 
 type ComposerKind = "note" | "folder";
@@ -33,6 +39,20 @@ function resolveInitialSystemTheme() {
   }
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function editorFontStack(fontFamily: string) {
+  const sanitized = fontFamily.replace(/"/g, '\\"');
+
+  if (/mono|code|menlo|sf mono|jetbrains/i.test(fontFamily)) {
+    return `"${sanitized}", var(--mono)`;
+  }
+
+  if (/serif|georgia|garamond|palatino|iowan|times|baskerville/i.test(fontFamily)) {
+    return `"${sanitized}", var(--display)`;
+  }
+
+  return `"${sanitized}", var(--sans)`;
 }
 
 const onboardingTree = `your-notebook/
@@ -48,6 +68,7 @@ function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [screen, setScreen] = useState<Screen>("daily");
   const [dailyDateKey, setDailyDateKey] = useState(todayKey);
+  const [libraryFolders, setLibraryFolders] = useState<FolderSummary[]>([]);
   const [libraryNotes, setLibraryNotes] = useState<NoteSummary[]>([]);
   const [selectedLibraryNoteId, setSelectedLibraryNoteId] = useState<string | null>(
     () => loadSettings().lastLibraryNoteId,
@@ -89,12 +110,7 @@ function App() {
   }, []);
 
   const appearance = settings.theme === "system" ? systemTheme : settings.theme;
-  const editorFontFamily =
-    settings.fontFamily === "editorial"
-      ? '"Iowan Old Style", "Palatino Linetype", Georgia, serif'
-      : settings.fontFamily === "mono"
-        ? '"SF Mono", "JetBrains Mono", Menlo, monospace'
-        : '"Avenir Next", "Helvetica Neue", sans-serif';
+  const editorFontFamily = editorFontStack(settings.fontFamily);
   const editorDocumentKey =
     currentNote?.filePath ??
     `${screen}:${dailyDateKey}:${selectedLibraryNoteId ?? "none"}`;
@@ -124,6 +140,7 @@ function App() {
   // Load note content
   useEffect(() => {
     if (!settings.notebookPath) {
+      setLibraryFolders([]);
       setLibraryNotes([]);
       setSelectedLibraryNoteId(null);
       setCurrentNote(null);
@@ -138,9 +155,22 @@ function App() {
       // Library browser: just load the list, not a note
       if (screen === "library") {
         let cancelled = false;
-        listLibraryNotes(settings.notebookPath).then((notes) => {
-          if (!cancelled) setLibraryNotes(notes);
-        });
+        void Promise.all([
+          listLibraryFolders(settings.notebookPath),
+          listLibraryNotes(settings.notebookPath),
+        ])
+          .then(([folders, notes]) => {
+            if (!cancelled) {
+              setLibraryFolders(folders);
+              setLibraryNotes(notes);
+              setErrorMessage(null);
+            }
+          })
+          .catch((error) => {
+            if (!cancelled) {
+              setErrorMessage(error instanceof Error ? error.message : String(error));
+            }
+          });
         return () => { cancelled = true; };
       }
       return;
@@ -153,9 +183,13 @@ function App() {
       setErrorMessage(null);
 
       try {
-        const notes = await listLibraryNotes(settings.notebookPath!);
+        const [folders, notes] = await Promise.all([
+          listLibraryFolders(settings.notebookPath!),
+          listLibraryNotes(settings.notebookPath!),
+        ]);
         if (cancelled) return;
 
+        setLibraryFolders(folders);
         setLibraryNotes(notes);
 
         if (screen === "library-editor") {
@@ -216,7 +250,7 @@ function App() {
     setSaveState("saving");
     saveTimerRef.current = window.setTimeout(async () => {
       try {
-        const result = await saveNote(currentNote.filePath, draft);
+      const result = await saveNote(currentNote.filePath, draft);
 
         setCurrentNote((existing) =>
           existing
@@ -304,8 +338,12 @@ function App() {
 
     try {
       const note = await createLibraryNote(settings.notebookPath, newItemName.trim());
-      const notes = await listLibraryNotes(settings.notebookPath);
+      const [folders, notes] = await Promise.all([
+        listLibraryFolders(settings.notebookPath),
+        listLibraryNotes(settings.notebookPath),
+      ]);
 
+      setLibraryFolders(folders);
       setLibraryNotes(notes);
       setSelectedLibraryNoteId(note.id);
       setCurrentNote(note);
@@ -325,8 +363,12 @@ function App() {
 
     try {
       await createLibraryFolder(settings.notebookPath, newItemName.trim());
-      const notes = await listLibraryNotes(settings.notebookPath);
+      const [folders, notes] = await Promise.all([
+        listLibraryFolders(settings.notebookPath),
+        listLibraryNotes(settings.notebookPath),
+      ]);
 
+      setLibraryFolders(folders);
       setLibraryNotes(notes);
       setScreen("library");
       setSaveState("idle");
@@ -570,6 +612,7 @@ function App() {
           />
         ) : screen === "library" ? (
           <LibraryView
+            libraryFolders={libraryFolders}
             libraryNotes={libraryNotes}
             onCreateFolder={() => openComposer("folder")}
             onCreateNote={() => openComposer("note")}

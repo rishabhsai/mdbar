@@ -2,6 +2,7 @@ mod notes;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use font_kit::source::SystemSource;
 use tauri::{
     include_image,
     menu::{Menu, MenuItem, PredefinedMenuItem, Submenu},
@@ -34,6 +35,18 @@ fn toggle_main_window(app: AppHandle) -> Result<(), String> {
 
     reveal_panel(&app, &window);
     Ok(())
+}
+
+#[tauri::command]
+fn list_system_fonts() -> Result<Vec<String>, String> {
+    let mut families = SystemSource::new()
+        .all_families()
+        .map_err(|error| format!("Couldn't read the system fonts: {error}"))?;
+
+    families.sort_unstable();
+    families.dedup();
+
+    Ok(families)
 }
 
 fn get_main_window<R: Runtime>(app: &AppHandle<R>) -> Result<WebviewWindow<R>, String> {
@@ -180,8 +193,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             toggle_main_window,
             set_panel_auto_hide,
+            list_system_fonts,
             notes::open_daily_note,
             notes::list_library_notes,
+            notes::list_library_folders,
             notes::open_library_note,
             notes::create_library_note,
             notes::create_library_folder,

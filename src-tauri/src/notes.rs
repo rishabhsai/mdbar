@@ -21,6 +21,16 @@ pub struct NoteSummary {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct FolderSummary {
+    pub id: String,
+    pub name: String,
+    pub relative_path: String,
+    pub directory: String,
+    pub updated_at_ms: u128,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NoteDocument {
     pub id: String,
     pub title: String,
@@ -176,6 +186,19 @@ fn library_directory(notes_root: &Path, path: &Path) -> String {
     normalize_path_string(relative)
 }
 
+fn library_folder_id(notes_root: &Path, path: &Path) -> Result<String, String> {
+    let relative = path
+        .strip_prefix(notes_root)
+        .map_err(|_| "mdbar couldn't map that folder into your notes folder.".to_string())?;
+    let id = normalize_path_string(relative);
+
+    if id.is_empty() {
+        Err("mdbar couldn't read that folder path.".to_string())
+    } else {
+        Ok(id)
+    }
+}
+
 fn build_daily_document(path: &Path) -> Result<NoteDocument, String> {
     Ok(NoteDocument {
         id: daily_note_id(path)?,
@@ -217,6 +240,21 @@ fn build_library_document(notes_root: &Path, path: &Path) -> Result<NoteDocument
         directory: library_directory(notes_root, path),
         kind: "library".to_string(),
         content: load_text(path)?,
+        updated_at_ms: updated_at_ms(path),
+    })
+}
+
+fn build_folder_summary(notes_root: &Path, path: &Path) -> Result<FolderSummary, String> {
+    Ok(FolderSummary {
+        id: library_folder_id(notes_root, path)?,
+        name: path
+            .file_name()
+            .and_then(OsStr::to_str)
+            .map(ToOwned::to_owned)
+            .filter(|name| !name.is_empty())
+            .ok_or_else(|| "mdbar couldn't read that folder name.".to_string())?,
+        relative_path: library_folder_id(notes_root, path)?,
+        directory: library_directory(notes_root, path),
         updated_at_ms: updated_at_ms(path),
     })
 }
@@ -373,6 +411,29 @@ fn collect_library_notes(
     Ok(())
 }
 
+fn collect_library_folders(
+    notes_root: &Path,
+    folder: &Path,
+    folders: &mut Vec<FolderSummary>,
+) -> Result<(), String> {
+    let entries =
+        fs::read_dir(folder).map_err(|error| format!("Couldn't scan folders: {error}"))?;
+
+    for entry in entries {
+        let entry = entry.map_err(|error| format!("Couldn't scan folders: {error}"))?;
+        let path = entry.path();
+
+        if !path.is_dir() {
+            continue;
+        }
+
+        folders.push(build_folder_summary(notes_root, &path)?);
+        collect_library_folders(notes_root, &path, folders)?;
+    }
+
+    Ok(())
+}
+
 #[tauri::command(rename_all = "camelCase")]
 pub fn open_daily_note(folder_path: String, date_key: String) -> Result<NoteDocument, String> {
     let root = normalize_notebook_root(&folder_path)?;
@@ -401,6 +462,19 @@ pub fn list_library_notes(folder_path: String) -> Result<Vec<NoteSummary>, Strin
     });
 
     Ok(notes)
+}
+
+#[tauri::command(rename_all = "camelCase")]
+pub fn list_library_folders(folder_path: String) -> Result<Vec<FolderSummary>, String> {
+    let root = normalize_notebook_root(&folder_path)?;
+    let folder = library_root(&root);
+    ensure_dir(&folder)?;
+
+    let mut folders = Vec::new();
+    collect_library_folders(&folder, &folder, &mut folders)?;
+    folders.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
+
+    Ok(folders)
 }
 
 #[tauri::command(rename_all = "camelCase")]
@@ -507,8 +581,8 @@ pub fn open_note_in_default_app(file_path: String) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        create_library_folder, list_library_notes, normalize_library_directory_relative_path,
-        normalize_library_note_relative_path, slugify,
+        create_library_folder, list_library_folders, list_library_notes,
+        normalize_library_directory_relative_path, normalize_library_note_relative_path, slugify,
     };
     use std::{
         fs,
@@ -578,6 +652,29 @@ mod tests {
 
         assert_eq!(created, "projects/client");
         assert!(root.join("notes/projects/client").exists());
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn list_library_folders_includes_empty_nested_directories() {
+        let root = temporary_root("folders-list");
+        create_library_folder(
+            root.to_string_lossy().into_owned(),
+            "projects/client".to_string(),
+        )
+        .expect("folder should be created");
+
+        let folders = list_library_folders(root.to_string_lossy().into_owned())
+            .expect("folders should be listed");
+
+        let paths = folders
+            .into_iter()
+            .map(|folder| folder.relative_path)
+            .collect::<Vec<_>>();
+
+        assert!(paths.contains(&"projects".to_string()));
+        assert!(paths.contains(&"projects/client".to_string()));
 
         let _ = fs::remove_dir_all(root);
     }
