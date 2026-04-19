@@ -136,6 +136,32 @@ code {
   white-space: nowrap;
 }
 
+.header-title.is-editable {
+  cursor: text;
+}
+
+.header-title-input {
+  width: 100%;
+  min-width: 0;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent-soft) 56%, var(--panel) 44%);
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-align: center;
+  outline: none;
+}
+
+.header-title-input:focus {
+  border-color: color-mix(in srgb, var(--ink) 18%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
 /* ── Header buttons ── */
 
 .header-icon {
@@ -932,8 +958,16 @@ code {
 }
 
 /* Selection */
-.tiptap-content ::selection {
-  background: color-mix(in srgb, var(--ink) 14%, transparent);
+.tiptap-content::selection,
+.tiptap-content *::selection {
+  background: rgba(189, 160, 128, 0.36);
+  color: inherit;
+}
+
+.theme-dark .tiptap-content::selection,
+.theme-dark .tiptap-content *::selection {
+  background: rgba(244, 233, 220, 0.28);
+  color: inherit;
 }
 
 /* Strong / Em */
@@ -1225,8 +1259,9 @@ code {
   border: 1px solid var(--panel-border);
   border-radius: 12px;
   background: color-mix(in srgb, var(--accent-soft) 72%, var(--panel) 28%);
-  color: var(--muted);
+  color: color-mix(in srgb, var(--ink) 76%, var(--muted));
   font-size: 11px;
+  line-height: 1.45;
 }
 
 /* ── Inline settings view ── */
@@ -1432,29 +1467,6 @@ code {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.font-preview-card {
-  display: grid;
-  gap: 6px;
-  padding: 12px 13px;
-  border: 1px solid var(--panel-border);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--panel) 94%, white 6%);
-}
-
-.font-preview-label {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.font-preview-sample {
-  color: var(--ink);
-  font-size: 18px;
-  line-height: 1.35;
 }
 
 /* ── Range inputs ── */

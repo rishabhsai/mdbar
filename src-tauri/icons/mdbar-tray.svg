@@ -1,6 +1,5 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M18 11H31.5L44 23.5V46C44 48.2091 42.2091 50 40 50H18C15.7909 50 14 48.2091 14 46V15C14 12.7909 15.7909 11 18 11Z" stroke="black" stroke-width="4" stroke-linejoin="round"/>
-  <path d="M31 11V23.5H43.5" stroke="black" stroke-width="4" stroke-linejoin="round"/>
-  <path d="M23 31H36" stroke="black" stroke-width="4" stroke-linecap="round"/>
-  <path d="M23 39H36" stroke="black" stroke-width="4" stroke-linecap="round"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M18 11C15.7909 11 14 12.7909 14 15V46C14 48.2091 15.7909 50 18 50H40C42.2091 50 44 48.2091 44 46V23.5L31.5 11H18ZM31 13.8V22.1C31 24.1445 32.6555 25.8 34.7 25.8H42V46C42 47.1046 41.1046 48 40 48H18C16.8954 48 16 47.1046 16 46V15C16 13.8954 16.8954 13 18 13H30.2C30.4652 13 30.7254 13.0276 30.9765 13.0801C30.9843 13.3117 31 13.5465 31 13.8Z" fill="black"/>
+  <path d="M23 31H35.5" stroke="black" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M23 39H33" stroke="black" stroke-width="3.5" stroke-linecap="round"/>
 </svg>

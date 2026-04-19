@@ -53,6 +53,18 @@ export function createLibraryFolder(folderPath: string, directory: string) {
   });
 }
 
+export function renameLibraryNote(
+  folderPath: string,
+  noteId: string,
+  title: string,
+) {
+  return invoke<NoteDocument>("rename_library_note", {
+    folderPath,
+    noteId,
+    title,
+  });
+}
+
 export function deleteLibraryFolder(folderPath: string, directory: string) {
   return invoke("delete_library_folder", {
     directory,

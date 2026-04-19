@@ -388,6 +388,28 @@ fn unique_library_path(root: &Path, directory: Option<&str>, title: &str) -> Res
     }
 }
 
+fn rewritten_asset_markdown_paths(content: &str, old_note_path: &Path, new_note_path: &Path) -> String {
+    let Ok(old_assets) = note_assets_directory(old_note_path) else {
+        return content.to_string();
+    };
+    let Ok(new_assets) = note_assets_directory(new_note_path) else {
+        return content.to_string();
+    };
+
+    let Some(old_name) = old_assets.file_name().and_then(OsStr::to_str) else {
+        return content.to_string();
+    };
+    let Some(new_name) = new_assets.file_name().and_then(OsStr::to_str) else {
+        return content.to_string();
+    };
+
+    if old_name == new_name {
+        return content.to_string();
+    }
+
+    content.replace(&format!("./{old_name}/"), &format!("./{new_name}/"))
+}
+
 fn normalize_library_directory_relative_path(directory: &str) -> Result<PathBuf, String> {
     let trimmed = directory.trim().trim_matches('/');
     if trimmed.is_empty() {
@@ -569,6 +591,76 @@ pub fn create_library_folder(folder_path: String, directory: String) -> Result<S
 }
 
 #[tauri::command(rename_all = "camelCase")]
+pub fn rename_library_note(
+    folder_path: String,
+    note_id: String,
+    title: String,
+) -> Result<NoteDocument, String> {
+    let root = normalize_notebook_root(&folder_path)?;
+    let notes_root = library_root(&root);
+    let relative = normalize_library_note_relative_path(&note_id)?;
+    let current_path = notes_root.join(relative);
+
+    if !current_path.exists() {
+        return Err("That note could not be found. It may have been moved or deleted.".to_string());
+    }
+
+    let directory = library_directory(&notes_root, &current_path);
+    let next_path = unique_library_path(
+        &root,
+        if directory.is_empty() { None } else { Some(directory.as_str()) },
+        &title,
+    )?;
+
+    if next_path == current_path {
+        return build_library_document(&notes_root, &current_path);
+    }
+
+    let current_content = load_text(&current_path)?;
+    let rewritten_content = rewritten_asset_markdown_paths(&current_content, &current_path, &next_path);
+    let current_assets = note_assets_directory(&current_path).ok();
+    let next_assets = note_assets_directory(&next_path).ok();
+    let should_move_assets = matches!(
+        (&current_assets, &next_assets),
+        (Some(current_assets), Some(next_assets))
+            if current_assets.exists() && current_assets != next_assets
+    );
+
+    if let (Some(_), Some(next_assets)) = (&current_assets, &next_assets) {
+        if should_move_assets && next_assets.exists() {
+            return Err("A pasted-image folder with that note name already exists.".to_string());
+        }
+    }
+
+    fs::rename(&current_path, &next_path)
+        .map_err(|error| format!("Couldn't rename that note: {error}"))?;
+
+    if should_move_assets {
+        let current_assets = current_assets.as_ref().expect("checked above");
+        let next_assets = next_assets.as_ref().expect("checked above");
+
+        if let Err(error) = fs::rename(current_assets, next_assets) {
+            let _ = fs::rename(&next_path, &current_path);
+            return Err(format!("Couldn't rename that note's image folder: {error}"));
+        }
+    }
+
+    if rewritten_content != current_content {
+        if let Err(error) = atomic_write(&next_path, &rewritten_content) {
+            if should_move_assets {
+                if let (Some(current_assets), Some(next_assets)) = (&current_assets, &next_assets) {
+                    let _ = fs::rename(next_assets, current_assets);
+                }
+            }
+            let _ = fs::rename(&next_path, &current_path);
+            return Err(error);
+        }
+    }
+
+    build_library_document(&notes_root, &next_path)
+}
+
+#[tauri::command(rename_all = "camelCase")]
 pub fn delete_library_folder(folder_path: String, directory: String) -> Result<(), String> {
     let root = normalize_notebook_root(&folder_path)?;
     let notes_root = library_root(&root);
@@ -708,7 +800,7 @@ pub fn open_note_in_default_app(file_path: String) -> Result<(), String> {
 mod tests {
     use super::{
         build_markdown_asset_path, create_library_folder, create_library_note, delete_library_folder,
-        delete_note, list_library_folders, list_library_notes,
+        delete_note, list_library_folders, list_library_notes, rename_library_note,
         normalize_library_directory_relative_path, normalize_library_note_relative_path,
         note_assets_directory, save_pasted_image, slugify,
     };
@@ -890,6 +982,39 @@ mod tests {
         .expect("folder should delete");
 
         assert!(!root.join("notes/projects").exists());
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn rename_library_note_moves_assets_and_rewrites_paths() {
+        let root = temporary_root("rename-note");
+        let note = create_library_note(root.to_string_lossy().into_owned(), "Roadmap".to_string(), None)
+            .expect("note should be created");
+        let note_path = PathBuf::from(&note.file_path);
+        let assets_dir = note_assets_directory(&note_path).expect("assets dir");
+        fs::create_dir_all(&assets_dir).expect("assets dir should exist");
+        fs::write(assets_dir.join("diagram.png"), b"png").expect("asset should write");
+        fs::write(
+            &note_path,
+            "![Diagram](./roadmap.assets/diagram.png)",
+        )
+        .expect("note should write");
+
+        let renamed = rename_library_note(
+            root.to_string_lossy().into_owned(),
+            note.id,
+            "Project Brief".to_string(),
+        )
+        .expect("note should rename");
+
+        assert_eq!(renamed.relative_path, "project-brief.md");
+        assert!(root.join("notes/project-brief.md").exists());
+        assert!(root.join("notes/project-brief.assets/diagram.png").exists());
+        assert_eq!(
+            fs::read_to_string(root.join("notes/project-brief.md")).expect("renamed note should read"),
+            "![Diagram](./project-brief.assets/diagram.png)"
+        );
 
         let _ = fs::remove_dir_all(root);
     }

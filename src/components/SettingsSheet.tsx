@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { listSystemFonts } from "../lib/tauri";
 import type { AppSettings, ThemePreference } from "../lib/types";
@@ -38,15 +38,76 @@ const MODIFIER_KEYS = new Set([
   "Shift",
 ]);
 
+const CODE_MAP: Record<string, string> = {
+  Backquote: "Backquote",
+  Minus: "Minus",
+  Equal: "Equal",
+  BracketLeft: "[",
+  BracketRight: "]",
+  Backslash: "Backslash",
+  Semicolon: ";",
+  Quote: "'",
+  Comma: ",",
+  Period: ".",
+  Slash: "/",
+  Space: "Space",
+  Escape: "Escape",
+  Enter: "Enter",
+  Tab: "Tab",
+  Backspace: "Backspace",
+  Delete: "Delete",
+  Insert: "Insert",
+  Home: "Home",
+  End: "End",
+  PageUp: "PageUp",
+  PageDown: "PageDown",
+  ArrowUp: "Up",
+  ArrowDown: "Down",
+  ArrowLeft: "Left",
+  ArrowRight: "Right",
+};
+
+function acceleratorKeyFromEvent(event: KeyboardEvent): string | null {
+  if (event.code.startsWith("Key")) {
+    return event.code.slice(3).toUpperCase();
+  }
+
+  if (event.code.startsWith("Digit")) {
+    return event.code.slice(5);
+  }
+
+  if (event.code.startsWith("Numpad") && event.code.length > "Numpad".length) {
+    return event.code;
+  }
+
+  if (/^F\d{1,2}$/.test(event.code)) {
+    return event.code;
+  }
+
+  if (event.code in CODE_MAP) {
+    return CODE_MAP[event.code];
+  }
+
+  if (event.key.length === 1 && /[a-z0-9]/i.test(event.key)) {
+    return event.key.toUpperCase();
+  }
+
+  return null;
+}
+
 function keyEventToAccelerator(event: KeyboardEvent): string | null {
-  if (MODIFIER_KEYS.has(event.key)) {
+  if (MODIFIER_KEYS.has(event.key) || MODIFIER_KEYS.has(event.code)) {
     return null; // only modifiers pressed, wait for a real key
   }
 
   const parts: string[] = [];
 
-  if (event.metaKey || event.ctrlKey) {
-    parts.push("CmdOrControl");
+  if (event.metaKey) {
+    parts.push("CommandOrControl");
+  }
+
+  if (event.ctrlKey && !event.metaKey) {
+    parts.push("Control");
   }
 
   if (event.altKey) {
@@ -57,27 +118,9 @@ function keyEventToAccelerator(event: KeyboardEvent): string | null {
     parts.push("Shift");
   }
 
-  // Normalize key name
-  let key = event.key;
-
-  if (key.length === 1) {
-    key = key.toUpperCase();
-  } else {
-    // Map some common keys to Tauri accelerator names
-    const keyMap: Record<string, string> = {
-      ArrowUp: "Up",
-      ArrowDown: "Down",
-      ArrowLeft: "Left",
-      ArrowRight: "Right",
-      " ": "Space",
-      Escape: "Escape",
-      Enter: "Enter",
-      Backspace: "Backspace",
-      Delete: "Delete",
-      Tab: "Tab",
-    };
-
-    key = keyMap[key] ?? key;
+  const key = acceleratorKeyFromEvent(event);
+  if (!key) {
+    return null;
   }
 
   parts.push(key);
@@ -91,8 +134,9 @@ function keyEventToAccelerator(event: KeyboardEvent): string | null {
 
 function formatAcceleratorForDisplay(accelerator: string): string {
   return accelerator
-    .replace(/CmdOrControl/g, "⌘")
     .replace(/CommandOrControl/g, "⌘")
+    .replace(/CmdOrControl/g, "⌘")
+    .replace(/Control/g, "⌃")
     .replace(/Shift/g, "⇧")
     .replace(/Alt/g, "⌥")
     .replace(/\+/g, " ");
@@ -109,7 +153,6 @@ export function SettingsView({
 }: SettingsViewProps) {
   const [availableFonts, setAvailableFonts] = useState<string[]>(fallbackFonts);
   const [isRecording, setIsRecording] = useState(false);
-  const recorderRef = useRef<HTMLButtonElement | null>(null);
 
   const handleStartRecording = useCallback(() => {
     setIsRecording(true);
@@ -251,15 +294,6 @@ export function SettingsView({
                   </svg>
                 </span>
               </div>
-              <div
-                className="font-preview-card"
-                style={{ fontFamily: `"${settings.fontFamily.replace(/"/g, '\\"')}", var(--sans)` }}
-              >
-                <span className="font-preview-label">{settings.fontFamily}</span>
-                <span className="font-preview-sample">
-                  The quick brown fox jumps over the lazy dog.
-                </span>
-              </div>
             </div>
 
             <div className="settings-subsection-group">
@@ -321,7 +355,6 @@ export function SettingsView({
                 <span className="shortcut-raw">{settings.shortcut}</span>
               </div>
               <button
-                ref={recorderRef}
                 className={`shortcut-record-button ${isRecording ? "is-recording" : ""}`}
                 onClick={handleStartRecording}
                 type="button"

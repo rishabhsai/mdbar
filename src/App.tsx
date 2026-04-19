@@ -20,6 +20,7 @@ import {
   listLibraryNotes,
   openDailyNote,
   openLibraryNote,
+  renameLibraryNote,
   saveNote,
   setPanelAutoHide,
   toggleMainWindow,
@@ -57,6 +58,20 @@ function editorFontStack(fontFamily: string) {
   return `"${sanitized}", var(--sans)`;
 }
 
+function describeShortcutError(error: unknown, shortcut: string) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (/unrecognized|invalid accelerator|invalid shortcut/i.test(message)) {
+    return `mdbar couldn't parse "${shortcut}". Try letters, numbers, arrows, space, or function keys.`;
+  }
+
+  if (/already|taken|in use|failed to register/i.test(message)) {
+    return `That shortcut is already taken by macOS or another app. Try a different combo.`;
+  }
+
+  return message || "Could not register that shortcut.";
+}
+
 const onboardingTree = `your-notebook/
   daily/
     2026-04-18.md
@@ -85,11 +100,15 @@ function App() {
   const [newItemName, setNewItemName] = useState("");
   const [pendingDeleteNote, setPendingDeleteNote] = useState<NoteSummary | null>(null);
   const [pendingDeleteFolder, setPendingDeleteFolder] = useState<FolderSummary | null>(null);
+  const [isRenamingTitle, setIsRenamingTitle] = useState(false);
+  const [renamingTitle, setRenamingTitle] = useState("");
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
     resolveInitialSystemTheme,
   );
   const [isLoadingNote, setIsLoadingNote] = useState(false);
   const saveTimerRef = useRef<number | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+  const titleRenameInFlightRef = useRef(false);
 
   async function refreshNotebookIndex(notebookPath: string) {
     const [folders, notes] = await Promise.all([
@@ -142,6 +161,24 @@ function App() {
   const disablePrevious = !settings.notebookPath || screen !== "daily";
   const disableNext =
     !settings.notebookPath || screen !== "daily" || dailyDateKey >= todayDateKey;
+
+  useEffect(() => {
+    if (!isRenamingTitle) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      titleInputRef.current?.focus();
+      titleInputRef.current?.select();
+    }, 0);
+  }, [isRenamingTitle]);
+
+  useEffect(() => {
+    if (screen !== "library-editor" || currentNote?.kind !== "library") {
+      setIsRenamingTitle(false);
+      setRenamingTitle("");
+    }
+  }, [currentNote?.id, currentNote?.kind, screen]);
 
   // Persist the last selected library note
   useEffect(() => {
@@ -294,7 +331,11 @@ function App() {
     async function syncShortcut() {
       try {
         await unregisterAll();
-        await register(settings.shortcut, async () => {
+        await register(settings.shortcut, async (event) => {
+          if (event.state !== "Pressed") {
+            return;
+          }
+
           await toggleMainWindow();
         });
 
@@ -306,9 +347,7 @@ function App() {
         }
       } catch (error) {
         if (!disposed) {
-          setShortcutStatus(
-            error instanceof Error ? error.message : "Could not register that shortcut.",
-          );
+          setShortcutStatus(describeShortcutError(error, settings.shortcut));
         }
       }
     }
@@ -474,6 +513,70 @@ function App() {
       directory: currentNote.directory,
       updatedAtMs: currentNote.updatedAtMs,
     });
+  }
+
+  function startTitleRename() {
+    if (screen !== "library-editor" || currentNote?.kind !== "library") {
+      return;
+    }
+
+    setRenamingTitle(currentNote.title);
+    setIsRenamingTitle(true);
+  }
+
+  async function submitTitleRename() {
+    if (titleRenameInFlightRef.current) {
+      return;
+    }
+
+    if (
+      !settings.notebookPath ||
+      !currentNote ||
+      currentNote.kind !== "library" ||
+      !isRenamingTitle
+    ) {
+      return;
+    }
+
+    const nextTitle = renamingTitle.trim();
+    setIsRenamingTitle(false);
+
+    if (!nextTitle || nextTitle === currentNote.title) {
+      setRenamingTitle("");
+      return;
+    }
+
+    try {
+      titleRenameInFlightRef.current = true;
+
+      if (saveTimerRef.current) {
+        window.clearTimeout(saveTimerRef.current);
+      }
+
+      if (draft !== currentNote.content) {
+        await saveNote(currentNote.filePath, draft);
+      }
+
+      const renamed = await renameLibraryNote(
+        settings.notebookPath,
+        currentNote.id,
+        nextTitle,
+      );
+      const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
+
+      setLibraryFolders(folders);
+      setLibraryNotes(notes);
+      setSelectedLibraryNoteId(renamed.id);
+      setCurrentNote(renamed);
+      setDraft(renamed.content);
+      setSaveState("idle");
+      setErrorMessage(null);
+      setRenamingTitle("");
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      titleRenameInFlightRef.current = false;
+    }
   }
 
   function noteLivesInFolder(note: NoteDocument | NoteSummary, folderPath: string) {
@@ -642,9 +745,39 @@ function App() {
             )}
           </div>
 
-          <h1 className="header-title" title={title}>
-            {title}
-          </h1>
+          {isRenamingTitle && currentNote?.kind === "library" ? (
+            <input
+              ref={titleInputRef}
+              aria-label="Rename note"
+              className="header-title-input"
+              onBlur={() => void submitTitleRename()}
+              onChange={(event) => setRenamingTitle(event.currentTarget.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void submitTitleRename();
+                }
+
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setIsRenamingTitle(false);
+                  setRenamingTitle("");
+                }
+              }}
+              type="text"
+              value={renamingTitle}
+            />
+          ) : (
+            <h1
+              className={`header-title${screen === "library-editor" && currentNote?.kind === "library" ? " is-editable" : ""}`}
+              onDoubleClick={() => {
+                startTitleRename();
+              }}
+              title={title}
+            >
+              {title}
+            </h1>
+          )}
 
           <div className="header-side header-side-right">
             <button
