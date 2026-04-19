@@ -1,4 +1,4 @@
-import { open } from "@tauri-apps/plugin-dialog";
+import { confirm, open } from "@tauri-apps/plugin-dialog";
 import {
   isRegistered,
   register,
@@ -12,6 +12,7 @@ import { LibraryView } from "./components/LibraryView";
 import { formatDateLabel, shiftDateKey, todayKey } from "./lib/dates";
 import { loadSettings, saveSettings } from "./lib/settings";
 import {
+  deleteNote,
   createLibraryFolder,
   createLibraryNote,
   listLibraryFolders,
@@ -87,6 +88,18 @@ function App() {
   const [isLoadingNote, setIsLoadingNote] = useState(false);
   const saveTimerRef = useRef<number | null>(null);
 
+  async function refreshNotebookIndex(notebookPath: string) {
+    const [folders, notes] = await Promise.all([
+      listLibraryFolders(notebookPath),
+      listLibraryNotes(notebookPath),
+    ]);
+
+    setLibraryFolders(folders);
+    setLibraryNotes(notes);
+
+    return { folders, notes };
+  }
+
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
@@ -155,11 +168,8 @@ function App() {
       // Library browser: just load the list, not a note
       if (screen === "library") {
         let cancelled = false;
-        void Promise.all([
-          listLibraryFolders(settings.notebookPath),
-          listLibraryNotes(settings.notebookPath),
-        ])
-          .then(([folders, notes]) => {
+        void refreshNotebookIndex(settings.notebookPath)
+          .then(({ folders, notes }) => {
             if (!cancelled) {
               setLibraryFolders(folders);
               setLibraryNotes(notes);
@@ -183,10 +193,7 @@ function App() {
       setErrorMessage(null);
 
       try {
-        const [folders, notes] = await Promise.all([
-          listLibraryFolders(settings.notebookPath!),
-          listLibraryNotes(settings.notebookPath!),
-        ]);
+        const { folders, notes } = await refreshNotebookIndex(settings.notebookPath!);
         if (cancelled) return;
 
         setLibraryFolders(folders);
@@ -338,10 +345,7 @@ function App() {
 
     try {
       const note = await createLibraryNote(settings.notebookPath, newItemName.trim());
-      const [folders, notes] = await Promise.all([
-        listLibraryFolders(settings.notebookPath),
-        listLibraryNotes(settings.notebookPath),
-      ]);
+      const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
 
       setLibraryFolders(folders);
       setLibraryNotes(notes);
@@ -363,10 +367,7 @@ function App() {
 
     try {
       await createLibraryFolder(settings.notebookPath, newItemName.trim());
-      const [folders, notes] = await Promise.all([
-        listLibraryFolders(settings.notebookPath),
-        listLibraryNotes(settings.notebookPath),
-      ]);
+      const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
 
       setLibraryFolders(folders);
       setLibraryNotes(notes);
@@ -417,6 +418,56 @@ function App() {
   function handleLibrarySelectNote(noteId: string) {
     setSelectedLibraryNoteId(noteId);
     setScreen("library-editor");
+  }
+
+  async function handleQuickCreateNote() {
+    if (!settings.notebookPath) return;
+
+    try {
+      const note = await createLibraryNote(settings.notebookPath, "");
+      const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
+
+      setLibraryFolders(folders);
+      setLibraryNotes(notes);
+      setSelectedLibraryNoteId(note.id);
+      setCurrentNote(note);
+      setDraft(note.content);
+      setScreen("library-editor");
+      setSaveState("idle");
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  async function handleDeleteCurrentNote() {
+    if (!settings.notebookPath || !currentNote || currentNote.kind !== "library") return;
+
+    const confirmed = await confirm(
+      `Delete "${currentNote.title}" and its pasted images? This cannot be undone.`,
+      {
+        title: "Delete note",
+        kind: "warning",
+      },
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteNote(currentNote.filePath);
+      const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
+
+      setLibraryFolders(folders);
+      setLibraryNotes(notes);
+      setSelectedLibraryNoteId(null);
+      setCurrentNote(null);
+      setDraft("");
+      setScreen("library");
+      setSaveState("idle");
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
   }
 
   return (
@@ -529,7 +580,7 @@ function App() {
               disabled={!settings.notebookPath}
               onClick={() => {
                 if (screen === "library" || screen === "library-editor") {
-                  openComposer("note");
+                  void handleQuickCreateNote();
                   return;
                 }
 
@@ -540,12 +591,12 @@ function App() {
               {screen === "library" || screen === "library-editor" ? (
                 <svg aria-hidden="true" viewBox="0 0 24 24">
                   <path
-                    d="M12 5v14M5 12h14"
+                    d="M12 5.5v13M5.5 12h13"
                     fill="none"
                     stroke="currentColor"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth="1.7"
+                    strokeWidth="1.85"
                   />
                 </svg>
               ) : (
@@ -569,6 +620,28 @@ function App() {
                 </svg>
               )}
             </button>
+
+            {screen === "library-editor" && currentNote?.kind === "library" ? (
+              <button
+                aria-label="Delete note"
+                className="header-icon"
+                onClick={() => {
+                  void handleDeleteCurrentNote();
+                }}
+                type="button"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path
+                    d="M8.2 8.8v8.3M12 8.8v8.3M15.8 8.8v8.3M5.5 6.6h13M9.2 4.8h5.6M7.2 6.6l.5 11a1.5 1.5 0 0 0 1.5 1.4h5.6a1.5 1.5 0 0 0 1.5-1.4l.5-11"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.35"
+                  />
+                </svg>
+              </button>
+            ) : null}
 
             <button
               aria-label={screen === "settings" ? "Return to note" : "Open settings"}
@@ -652,6 +725,8 @@ function App() {
                 documentKey={editorDocumentKey}
                 isLoading={isLoadingNote}
                 onChange={setDraft}
+                onError={setErrorMessage}
+                noteFilePath={currentNote.filePath}
                 theme={appearance}
                 style={
                   {

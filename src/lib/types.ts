@@ -28,6 +28,11 @@ export type SaveNoteResult = {
   updatedAtMs: number;
 };
 
+export type SavedImageAsset = {
+  filePath: string;
+  markdownPath: string;
+};
+
 export type AppSettings = {
   notebookPath: string | null;
   theme: ThemePreference;

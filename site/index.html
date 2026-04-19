@@ -6,174 +6,177 @@
     <title>mdbar — Menu bar markdown for macOS</title>
     <meta
       name="description"
-      content="A fast macOS menu bar markdown notebook. Plain files, live rendered editor, daily notes. Open source."
+      content="A fast macOS menu bar markdown notebook. Plain files, live rendered editing, daily notes, and a notes library that lives on disk."
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <!-- ── Nav ── -->
-    <nav class="site-nav">
-      <a href="/" class="nav-wordmark">mdbar</a>
-      <div class="nav-links">
-        <a href="https://github.com/rishabhsai/mdbar">GitHub</a>
-        <a
-          href="https://github.com/rishabhsai/mdbar/releases"
-          class="nav-cta"
-          >Download</a
-        >
-      </div>
-    </nav>
-
-    <!-- ── Hero ── -->
-    <section class="hero">
-      <p class="hero-badge">Menu bar app for macOS</p>
-      <h1 class="hero-title">
-        Your daily<br />
-        markdown<br />
-        notebook
-      </h1>
-      <p class="hero-sub">
-        Plain files. Live rendered editor. Always one shortcut&nbsp;away.
-      </p>
-      <div class="hero-actions">
-        <a
-          href="https://github.com/rishabhsai/mdbar/releases"
-          class="btn btn-primary"
-          >Download for Mac</a
-        >
-        <a href="https://github.com/rishabhsai/mdbar" class="btn btn-ghost"
-          >View source</a
-        >
-      </div>
-    </section>
-
-    <!-- ── App preview ── -->
-    <section class="preview">
-      <div class="preview-window">
-        <div class="preview-titlebar">
-          <div class="preview-dots">
-            <span></span><span></span><span></span>
-          </div>
-          <span class="preview-title">mdbar</span>
+    <div class="site-shell">
+      <nav class="site-nav">
+        <a href="/" class="nav-brand">
+          <span class="nav-brand-mark" aria-hidden="true"></span>
+          <span>mdbar</span>
+        </a>
+        <div class="nav-links">
+          <a href="https://github.com/rishabhsai/mdbar">GitHub</a>
+          <a href="https://github.com/rishabhsai/mdbar/releases">Releases</a>
+          <a href="https://github.com/rishabhsai/mdbar/releases" class="nav-cta">Download</a>
         </div>
-        <div class="preview-body">
-          <div class="preview-header-row">
-            <span class="preview-nav-icon">‹</span>
-            <span class="preview-nav-icon preview-nav-active">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M7 4.5v2.2M17 4.5v2.2M5.5 8.2h13M6.3 6.5h11.4a.8.8 0 0 1 .8.8v10a1.2 1.2 0 0 1-1.2 1.2H6.7a1.2 1.2 0 0 1-1.2-1.2v-10a.8.8 0 0 1 .8-.8Z"/>
-              </svg>
-            </span>
-            <span class="preview-nav-icon">›</span>
-            <span class="preview-date">Saturday, April 19</span>
-            <span class="preview-nav-icon preview-nav-right">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"/>
-                <path d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"/>
-              </svg>
-            </span>
-            <span class="preview-nav-icon preview-nav-right">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="2.2" stroke-width="1.4"/>
-                <path d="M12 8.7a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Zm9 3.3-.08-.88-2.2-.62a7.35 7.35 0 0 0-.58-1.4l1.1-2-1.76-1.77-2 1.1a7.34 7.34 0 0 0-1.4-.58l-.62-2.2L12 3l-.88.08-.62 2.2c-.49.13-.96.32-1.4.58l-2-1.1-1.77 1.76 1.1 2c-.26.44-.45.91-.58 1.4l-2.2.62L3 12l.08.88 2.2.62c.13.49.32.96.58 1.4l-1.1 2 1.76 1.77 2-1.1c.44.26.91.45 1.4.58l.62 2.2L12 21l.88-.08.62-2.2c.49-.13.96-.32 1.4-.58l2 1.1 1.77-1.76-1.1-2c.26-.44.45-.91.58-1.4l2.2-.62L21 12Z"/>
-              </svg>
-            </span>
-          </div>
-          <div class="preview-editor">
-            <p class="pv-h1">ship mdbar</p>
-            <p class="pv-h3">afternoon</p>
-            <div class="pv-task">
-              <span class="pv-check pv-checked"></span>
-              <span>build the menu bar shell</span>
+      </nav>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="hero-kicker">macOS menu bar markdown notebook</p>
+            <h1>Write in markdown without opening another app.</h1>
+            <p class="hero-sub">
+              mdbar lives in the top bar, stores plain <code>.md</code> files in one folder,
+              gives you one daily note per date, and keeps the rest of your notes in a browsable
+              library.
+            </p>
+            <div class="hero-actions">
+              <a href="https://github.com/rishabhsai/mdbar/releases" class="btn btn-primary">
+                Download for Mac
+              </a>
+              <a href="https://github.com/rishabhsai/mdbar" class="btn btn-secondary">
+                View source
+              </a>
             </div>
-            <div class="pv-task">
-              <span class="pv-check pv-checked"></span>
-              <span>tune fonts and dark mode</span>
-            </div>
-            <div class="pv-task">
-              <span class="pv-check"></span>
-              <span>landing page that feels real</span>
-            </div>
-            <div class="pv-task">
-              <span class="pv-check"></span>
-              <span class="pv-cursor">write release notes</span>
+            <div class="hero-proof">
+              <div>
+                <strong>Plain files</strong>
+                <span>`daily/` and `notes/`, nothing hidden.</span>
+              </div>
+              <div>
+                <strong>Live editor</strong>
+                <span>Rendered headings, lists, links, images, and checkboxes.</span>
+              </div>
+              <div>
+                <strong>Fast shell</strong>
+                <span>Tauri window, global shortcut, and small memory footprint.</span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- ── Features ── -->
-    <section class="features">
-      <div class="feature-grid">
-        <article class="feature-card">
-          <h2>Plain<br />files</h2>
-          <p>Notes live as <code>.md</code> on disk. No database, no lock-in, no export ceremony.</p>
-        </article>
-        <article class="feature-card">
-          <h2>Live<br />rendering</h2>
-          <p>Headings, lists, and checkboxes render in place. Your cursor reveals the markdown.</p>
-        </article>
-        <article class="feature-card">
-          <h2>Daily<br />notes</h2>
-          <p>One file per day, auto-created. Navigate dates with arrows or the calendar picker.</p>
-        </article>
-        <article class="feature-card">
-          <h2>Menu bar<br />native</h2>
-          <p>Lives in the macOS menu bar. One global shortcut to open, one to close.</p>
-        </article>
-        <article class="feature-card">
-          <h2>Notes<br />library</h2>
-          <p>Organize notes into folders inside <code>notes/</code>. mdbar browses them recursively.</p>
-        </article>
-        <article class="feature-card">
-          <h2>Blazing<br />fast</h2>
-          <p>Tauri + Rust backend. Sub-second launch, instant autosave, tiny memory footprint.</p>
-        </article>
-      </div>
-    </section>
+          <div class="hero-stage">
+            <div class="menubar-strip">
+              <div class="menubar-left">
+                <span>Finder</span>
+                <span>File</span>
+                <span>Edit</span>
+                <span>View</span>
+              </div>
+              <div class="menubar-right">
+                <span>100%</span>
+                <span>Wi-Fi</span>
+                <span class="menubar-mdbar">mdbar</span>
+                <span>Sun Apr 19</span>
+              </div>
+            </div>
 
-    <!-- ── Closing ── -->
-    <section class="closing">
-      <p class="closing-label">Open source</p>
-      <h2 class="closing-title">
-        Built in public with an MIT license.
-      </h2>
-      <a
-        href="https://github.com/rishabhsai/mdbar"
-        class="btn btn-primary"
-        >View the source</a
-      >
-    </section>
+            <div class="macbook">
+              <div class="macbook-screen">
+                <div class="wallpaper-glow"></div>
+                <div class="mdbar-floating">
+                  <div class="app-preview-header">
+                    <div class="app-preview-left">
+                      <button class="chrome-icon" type="button" aria-label="Previous day">
+                        <svg viewBox="0 0 24 24">
+                          <path d="m14.5 6.5-5 5 5 5" />
+                        </svg>
+                      </button>
+                      <button class="chrome-icon chrome-icon-active" type="button" aria-label="Today">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M7 4.5v2.2M17 4.5v2.2M5.5 8.2h13M6.3 6.5h11.4a.8.8 0 0 1 .8.8v10a1.2 1.2 0 0 1-1.2 1.2H6.7a1.2 1.2 0 0 1-1.2-1.2v-10a.8.8 0 0 1 .8-.8Z" />
+                          <path d="m10 13 2 2 3.5-4" />
+                        </svg>
+                      </button>
+                      <button class="chrome-icon" type="button" aria-label="Next day">
+                        <svg viewBox="0 0 24 24">
+                          <path d="m9.5 6.5 5 5-5 5" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="app-preview-title">Sunday, April 19</div>
+                    <div class="app-preview-right">
+                      <button class="chrome-icon" type="button" aria-label="Notes">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z" />
+                          <path d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1" />
+                        </svg>
+                      </button>
+                      <button class="chrome-icon" type="button" aria-label="Settings">
+                        <svg viewBox="0 0 24 24">
+                          <path d="M12 8.7a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Zm9 3.3-.08-.88-2.2-.62a7.35 7.35 0 0 0-.58-1.4l1.1-2-1.76-1.77-2 1.1a7.34 7.34 0 0 0-1.4-.58l-.62-2.2L12 3l-.88.08-.62 2.2c-.49.13-.96.32-1.4.58l-2-1.1-1.77 1.76 1.1 2c-.26.44-.45.91-.58 1.4l-2.2.62L3 12l.08.88 2.2.62c.13.49.32.96.58 1.4l-1.1 2 1.76 1.77 2-1.1c.44.26.91.45 1.4.58l.62 2.2L12 21l.88-.08.62-2.2c.49-.13.96-.32 1.4-.58l2 1.1 1.77-1.76-1.1-2c.26-.44.45-.91.58-1.4l2.2-.62L21 12Z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
 
-    <footer class="site-footer">
-      <span>mdbar</span>
-      <span>Made on a Mac.</span>
-    </footer>
+                  <div class="app-preview-editor">
+                    <div class="demo-scrollbar" aria-hidden="true"></div>
+                    <div data-demo-editor class="demo-editor"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="macbook-base"></div>
+            </div>
+          </div>
+        </section>
 
-    <script>
-      // Intersection Observer for scroll-triggered entrance animations
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("in-view");
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.15 },
-      );
+        <section class="feature-marquee">
+          <div class="feature-pill">Global shortcut</div>
+          <div class="feature-pill">Daily notes at midnight</div>
+          <div class="feature-pill">Nested folders in `notes/`</div>
+          <div class="feature-pill">Markdown links and pasted images</div>
+          <div class="feature-pill">Dark mode and system fonts</div>
+        </section>
 
-      document
-        .querySelectorAll(".feature-card, .preview-window, .closing")
-        .forEach((el) => observer.observe(el));
-    </script>
+        <section class="feature-grid">
+          <article class="feature-card reveal">
+            <p class="feature-label">Storage</p>
+            <h2>Own the files.</h2>
+            <p>Use any folder on your Mac. mdbar creates `daily/` and `notes/`, then stays out of the way.</p>
+          </article>
+          <article class="feature-card reveal">
+            <p class="feature-label">Editor</p>
+            <h2>Rendered while you type.</h2>
+            <p>Headings, rules, quotes, links, code, checklists, and images render in the same surface.</p>
+          </article>
+          <article class="feature-card reveal">
+            <p class="feature-label">Library</p>
+            <h2>Folders that feel native.</h2>
+            <p>Organize projects inside `notes/`, browse nested folders, and keep side notes near the daily stream.</p>
+          </article>
+          <article class="feature-card reveal">
+            <p class="feature-label">Speed</p>
+            <h2>Built for the menu bar.</h2>
+            <p>No giant Electron shell, no heavy workspace boot. Open, jot something down, and close it again.</p>
+          </article>
+        </section>
+
+        <section class="closing reveal">
+          <p class="hero-kicker">Open source</p>
+          <h2>MIT licensed, plain markdown, and built to ship as a real macOS app.</h2>
+          <div class="hero-actions">
+            <a href="https://github.com/rishabhsai/mdbar" class="btn btn-primary">Browse the repo</a>
+            <a href="https://github.com/rishabhsai/mdbar/releases" class="btn btn-secondary">Get the latest build</a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span>mdbar</span>
+        <span>Built for the top bar.</span>
+      </footer>
+    </div>
+
+    <script type="module" src="./demo.js"></script>
   </body>
 </html>

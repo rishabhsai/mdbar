@@ -149,6 +149,7 @@ code {
   color: var(--ink);
   transition:
     background 140ms ease,
+    border-color 140ms ease,
     opacity 140ms ease,
     transform 140ms ease;
 }
@@ -156,6 +157,14 @@ code {
 .header-icon:hover:not(:disabled),
 .header-icon.active {
   background: var(--accent-soft);
+}
+
+.header-icon:focus-visible,
+.lib-action-button:focus-visible,
+.lib-folder-toggle:focus-visible,
+.lib-note-item:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent);
 }
 
 .header-icon:active:not(:disabled) {
@@ -195,48 +204,49 @@ code {
 .tiptap-scroll-shell,
 .settings-view {
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.78) transparent;
+  scrollbar-color: rgba(4, 4, 5, 0.96) rgba(0, 0, 0, 0.08);
   scrollbar-gutter: stable;
 }
 
 .library-view:hover,
 .tiptap-scroll-shell:hover,
 .settings-view:hover {
-  scrollbar-color: rgba(0, 0, 0, 0.9) transparent;
+  scrollbar-color: rgba(4, 4, 5, 0.98) rgba(0, 0, 0, 0.12);
 }
 
 .library-view::-webkit-scrollbar,
 .tiptap-scroll-shell::-webkit-scrollbar,
 .settings-view::-webkit-scrollbar {
-  width: 10px;
+  width: 12px;
 }
 
 .library-view::-webkit-scrollbar-track,
 .tiptap-scroll-shell::-webkit-scrollbar-track,
 .settings-view::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
 }
 
 .library-view::-webkit-scrollbar-thumb,
 .tiptap-scroll-shell::-webkit-scrollbar-thumb,
 .settings-view::-webkit-scrollbar-thumb {
-  border: 2px solid transparent;
+  border: 2px solid rgba(0, 0, 0, 0.08);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.82);
+  background: rgba(4, 4, 5, 0.96);
   background-clip: padding-box;
 }
 
 .library-view:hover::-webkit-scrollbar-thumb,
 .tiptap-scroll-shell:hover::-webkit-scrollbar-thumb,
 .settings-view:hover::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(4, 4, 5, 0.98);
   background-clip: padding-box;
 }
 
 .library-view::-webkit-scrollbar-thumb:hover,
 .tiptap-scroll-shell::-webkit-scrollbar-thumb:hover,
 .settings-view::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.96);
+  background: rgba(0, 0, 0, 1);
   background-clip: padding-box;
 }
 
@@ -285,20 +295,31 @@ code {
 .lib-action-button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
+  gap: 5px;
+  padding: 6px 11px;
   border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--panel) 88%, black 12%);
+  color: color-mix(in srgb, var(--ink) 80%, var(--muted));
   font-size: 11px;
-  font-weight: 500;
-  transition: background 140ms ease, color 140ms ease;
+  font-weight: 550;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.lib-action-button svg {
+  width: 13px;
+  height: 13px;
 }
 
 .lib-action-button:hover {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent-soft) 62%, var(--panel) 38%);
+  border-color: color-mix(in srgb, var(--ink) 10%, transparent);
   color: var(--ink);
+  transform: translateY(-1px);
 }
 
 .lib-tree {
@@ -752,10 +773,31 @@ code {
 
 /* Links */
 .tiptap-content a {
-  color: var(--ink);
+  color: color-mix(in srgb, var(--ink) 86%, #e0bea1 14%);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--ink) 22%, transparent);
-  text-underline-offset: 0.16em;
+  text-decoration-color: color-mix(in srgb, var(--ink) 28%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.tiptap-content a:hover {
+  color: var(--ink);
+  text-decoration-color: color-mix(in srgb, var(--ink) 42%, transparent);
+}
+
+.tiptap-content img,
+.tiptap-content .tiptap-image {
+  display: block;
+  width: min(100%, 100%);
+  max-width: 100%;
+  height: auto;
+  margin: 0.9em 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--panel) 88%, transparent),
+    0 18px 36px rgba(0, 0, 0, 0.12);
 }
 
 /* Selection */

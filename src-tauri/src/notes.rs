@@ -49,6 +49,13 @@ pub struct SaveNoteResult {
     pub updated_at_ms: u128,
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedImageAsset {
+    pub file_path: String,
+    pub markdown_path: String,
+}
+
 fn normalize_notebook_root(folder_path: &str) -> Result<PathBuf, String> {
     let trimmed = folder_path.trim();
 
@@ -130,6 +137,45 @@ fn normalize_path_string(path: &Path) -> String {
         })
         .collect::<Vec<_>>()
         .join("/")
+}
+
+fn note_assets_directory(path: &Path) -> Result<PathBuf, String> {
+    let Some(parent) = path.parent() else {
+        return Err("mdbar couldn't find that note folder.".to_string());
+    };
+
+    let stem = path
+        .file_stem()
+        .and_then(OsStr::to_str)
+        .filter(|value| !value.is_empty())
+        .ok_or_else(|| "mdbar couldn't name that note attachment folder.".to_string())?;
+
+    Ok(parent.join(format!("{stem}.assets")))
+}
+
+fn attachment_extension(mime_type: Option<&str>) -> &'static str {
+    match mime_type.unwrap_or_default() {
+        "image/jpeg" | "image/jpg" => "jpg",
+        "image/webp" => "webp",
+        "image/gif" => "gif",
+        "image/heic" => "heic",
+        "image/heif" => "heif",
+        _ => "png",
+    }
+}
+
+fn build_markdown_asset_path(note_path: &Path, asset_path: &Path) -> Result<String, String> {
+    let assets_dir = note_assets_directory(note_path)?;
+    let relative = asset_path
+        .strip_prefix(note_path.parent().unwrap_or(&assets_dir))
+        .map_err(|_| "mdbar couldn't map that image into your note folder.".to_string())?;
+
+    let normalized = normalize_path_string(relative);
+    if normalized.is_empty() {
+        return Err("mdbar couldn't read that image path.".to_string());
+    }
+
+    Ok(format!("./{normalized}"))
 }
 
 fn strip_markdown_extension(path: &Path) -> PathBuf {
@@ -536,6 +582,61 @@ pub fn save_note(file_path: String, content: String) -> Result<SaveNoteResult, S
 }
 
 #[tauri::command(rename_all = "camelCase")]
+pub fn save_pasted_image(
+    note_file_path: String,
+    bytes: Vec<u8>,
+    mime_type: Option<String>,
+) -> Result<SavedImageAsset, String> {
+    if bytes.is_empty() {
+        return Err("Paste an image before trying to attach it.".to_string());
+    }
+
+    let note_path = PathBuf::from(note_file_path);
+    if note_path.extension().and_then(OsStr::to_str) != Some("md") {
+        return Err("mdbar only attaches images to markdown files.".to_string());
+    }
+
+    let assets_dir = note_assets_directory(&note_path)?;
+    ensure_dir(&assets_dir)?;
+
+    let extension = attachment_extension(mime_type.as_deref());
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or(0);
+    let asset_path = assets_dir.join(format!("pasted-{nonce}.{extension}"));
+
+    fs::write(&asset_path, bytes).map_err(|error| format!("Couldn't save the pasted image: {error}"))?;
+
+    Ok(SavedImageAsset {
+        file_path: asset_path.to_string_lossy().into_owned(),
+        markdown_path: build_markdown_asset_path(&note_path, &asset_path)?,
+    })
+}
+
+#[tauri::command(rename_all = "camelCase")]
+pub fn delete_note(file_path: String) -> Result<(), String> {
+    let path = PathBuf::from(file_path);
+
+    if path.extension().and_then(OsStr::to_str) != Some("md") {
+        return Err("mdbar only deletes markdown files.".to_string());
+    }
+
+    if path.exists() {
+        fs::remove_file(&path).map_err(|error| format!("Couldn't delete that note: {error}"))?;
+    }
+
+    if let Ok(assets_dir) = note_assets_directory(&path) {
+        if assets_dir.exists() {
+            fs::remove_dir_all(&assets_dir)
+                .map_err(|error| format!("Couldn't remove that note's images: {error}"))?;
+        }
+    }
+
+    Ok(())
+}
+
+#[tauri::command(rename_all = "camelCase")]
 pub fn reveal_note_in_finder(file_path: String) -> Result<(), String> {
     let path = PathBuf::from(file_path);
     let mut command = Command::new("open");
@@ -581,8 +682,9 @@ pub fn open_note_in_default_app(file_path: String) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        create_library_folder, list_library_folders, list_library_notes,
-        normalize_library_directory_relative_path, normalize_library_note_relative_path, slugify,
+        build_markdown_asset_path, create_library_folder, delete_note, list_library_folders,
+        list_library_notes, normalize_library_directory_relative_path,
+        normalize_library_note_relative_path, note_assets_directory, save_pasted_image, slugify,
     };
     use std::{
         fs,
@@ -677,5 +779,55 @@ mod tests {
         assert!(paths.contains(&"projects/client".to_string()));
 
         let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn save_pasted_image_writes_next_to_note_assets_folder() {
+        let root = temporary_root("pasted-image");
+        let note_path = root.join("notes/projects/plan.md");
+        fs::create_dir_all(note_path.parent().expect("note parent")).expect("note folder exists");
+        fs::write(&note_path, "# plan").expect("note should exist");
+
+        let saved = save_pasted_image(
+            note_path.to_string_lossy().into_owned(),
+            vec![1, 2, 3, 4],
+            Some("image/png".to_string()),
+        )
+        .expect("image should save");
+
+        assert!(PathBuf::from(&saved.file_path).exists());
+        assert!(saved.markdown_path.starts_with("./plan.assets/pasted-"));
+        assert!(saved.markdown_path.ends_with(".png"));
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn delete_note_removes_note_assets_folder() {
+        let root = temporary_root("delete-note");
+        let note_path = root.join("notes/ideas.md");
+        let assets_dir = note_assets_directory(&note_path).expect("assets dir");
+
+        fs::create_dir_all(&assets_dir).expect("assets dir should exist");
+        fs::write(&note_path, "# ideas").expect("note should exist");
+        fs::write(assets_dir.join("pasted.png"), vec![1, 2, 3]).expect("asset should exist");
+
+        delete_note(note_path.to_string_lossy().into_owned()).expect("note should delete");
+
+        assert!(!note_path.exists());
+        assert!(!assets_dir.exists());
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn build_markdown_asset_path_is_relative_to_note_folder() {
+        let note_path = PathBuf::from("/tmp/notes/client/brief.md");
+        let asset_path = PathBuf::from("/tmp/notes/client/brief.assets/diagram.png");
+
+        let markdown_path =
+            build_markdown_asset_path(&note_path, &asset_path).expect("markdown path");
+
+        assert_eq!(markdown_path, "./brief.assets/diagram.png");
     }
 }

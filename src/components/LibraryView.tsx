@@ -140,6 +140,61 @@ function NoteGlyph() {
   );
 }
 
+function NewNoteGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path
+        d="M7.2 4.8h7.76L19 8.84V18c0 1.1-.9 2-2 2H7.2c-1.1 0-2-.9-2-2V6.8c0-1.1.9-2 2-2Z"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.35"
+      />
+      <path
+        d="M14.96 4.8v4.04H19M12 10.9v5.6M9.2 13.7h5.6"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.3"
+      />
+    </svg>
+  );
+}
+
+function NewFolderGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path
+        d="M3.8 8.4c0-1.1.9-2 2-2h4.1l1.56 1.82h6.74c1.1 0 2 .9 2 2v.48"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.3"
+        opacity="0.7"
+      />
+      <path
+        d="M7.02 11.4c.25-.56.8-.92 1.42-.92h10.22c1.02 0 1.75.98 1.45 1.94l-1.54 4.86a1.52 1.52 0 0 1-1.45 1.06H5.25c-1.06 0-1.8-1.08-1.39-2.06l3.16-4.88Z"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.3"
+      />
+      <path
+        d="M15.5 11.9v4.2M13.4 14h4.2"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.3"
+      />
+    </svg>
+  );
+}
+
 function FolderNode({
   depth,
   name,
@@ -258,27 +313,11 @@ export function LibraryView({
         </div>
         <div className="lib-header-actions">
           <button className="lib-action-button" onClick={onCreateNote} type="button">
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <path
-                d="M12 5v14M5 12h14"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeWidth="1.8"
-              />
-            </svg>
+            <NewNoteGlyph />
             Note
           </button>
           <button className="lib-action-button" onClick={onCreateFolder} type="button">
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <path
-                d="M12 5v14M5 12h14"
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeWidth="1.8"
-              />
-            </svg>
+            <NewFolderGlyph />
             Folder
           </button>
         </div>

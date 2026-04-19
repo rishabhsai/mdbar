@@ -4,6 +4,7 @@ import type {
   FolderSummary,
   NoteDocument,
   NoteSummary,
+  SavedImageAsset,
   SaveNoteResult,
 } from "./types";
 
@@ -51,6 +52,24 @@ export function saveNote(filePath: string, content: string) {
   return invoke<SaveNoteResult>("save_note", {
     filePath,
     content,
+  });
+}
+
+export function savePastedImage(
+  noteFilePath: string,
+  bytes: number[],
+  mimeType?: string,
+) {
+  return invoke<SavedImageAsset>("save_pasted_image", {
+    noteFilePath,
+    bytes,
+    mimeType,
+  });
+}
+
+export function deleteNote(filePath: string) {
+  return invoke("delete_note", {
+    filePath,
   });
 }
 
