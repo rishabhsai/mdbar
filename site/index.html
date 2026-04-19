@@ -113,36 +113,8 @@
               </svg>
             </span>
           </div>
-          <div class="preview-workbench">
-            <label class="preview-pane-label" for="preview-input">Write</label>
-            <textarea
-              id="preview-input"
-              class="preview-editor preview-input"
-              spellcheck="false"
-            ># mdbar
-
-> Press Cmd+Shift+M and start writing.
-
----
-
-## What it feels like
-
-- plain markdown files
-- daily notes
-- side notes in folders
-
-- [x] fast to open
-- [ ] ship v1
-
-```bash
-npm run tauri dev
-```</textarea>
-            <div class="preview-pane-divider"></div>
-            <div class="preview-pane-label">Render</div>
-            <article
-              class="preview-editor preview-rendered"
-              id="preview-rendered"
-            ></article>
+          <div class="preview-editor-shell">
+            <div class="preview-editor-host" id="preview-editor"></div>
           </div>
         </div>
       </div>
@@ -241,22 +213,12 @@ npm run tauri dev
       import TaskItem from "https://esm.sh/@tiptap/extension-task-item@3.22.4";
       import { Markdown } from "https://esm.sh/tiptap-markdown@0.9.0";
 
-      const previewInput = document.querySelector("#preview-input");
-      const previewRendered = document.querySelector("#preview-rendered");
-      let previewEditor = null;
+      const previewEditorHost = document.querySelector("#preview-editor");
 
-      function renderPreview() {
-        if (!previewInput || !previewRendered || !previewEditor) {
-          return;
-        }
-
-        previewEditor.commands.setContent(previewInput.value);
-      }
-
-      if (previewInput) {
-        previewEditor = new Editor({
-          element: previewRendered,
-          editable: false,
+      if (previewEditorHost) {
+        new Editor({
+          element: previewEditorHost,
+          editable: true,
           extensions: [
             StarterKit.configure({
               heading: { levels: [1, 2, 3, 4, 5, 6] },
@@ -266,14 +228,28 @@ npm run tauri dev
             Markdown.configure({
               html: false,
               transformCopiedText: false,
-              transformPastedText: false,
+              transformPastedText: true,
             }),
           ],
-          content: previewInput.value,
-        });
+          content: `# mdbar
 
-        previewInput.addEventListener("input", renderPreview);
-        renderPreview();
+> Press Cmd+Shift+M and start writing.
+
+---
+
+## What it feels like
+
+- plain markdown files
+- daily notes
+- side notes in folders
+
+- [x] fast to open
+- [ ] ship v1
+
+\`\`\`bash
+npm run tauri dev
+\`\`\``,
+        });
       }
 
       const observer = new IntersectionObserver(

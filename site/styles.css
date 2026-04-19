@@ -305,175 +305,117 @@ code {
   padding: 16px 20px 28px;
 }
 
-.preview-workbench {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+.preview-editor-shell {
   min-height: 420px;
 }
 
-.preview-pane-label {
-  display: block;
-  padding: 10px 20px 0;
-  color: rgba(232, 227, 219, 0.38);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.preview-editor-host {
+  min-height: 380px;
+  padding: 16px 20px 28px;
 }
 
-.preview-workbench > .preview-pane-label:first-of-type {
-  grid-column: 1;
-  grid-row: 1;
-}
-
-.preview-workbench > .preview-pane-label:last-of-type {
-  grid-column: 3;
-  grid-row: 1;
-}
-
-.preview-pane-divider {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.preview-input,
-.preview-rendered {
+.preview-editor-host .ProseMirror {
   min-height: 360px;
-  margin: 0;
-  border: none;
   outline: none;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
   color: #f0ece4;
-  background: transparent;
-  font-family: "JetBrains Mono", "SF Mono", monospace;
-  font-size: 13px;
-  line-height: 1.68;
-}
-
-.preview-input {
-  grid-column: 1;
-  grid-row: 2;
-  resize: none;
-  padding-top: 12px;
+  font-family: "DM Sans", "Helvetica Neue", sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
   caret-color: #f0ece4;
 }
 
-.preview-input:focus {
-  background: rgba(255, 255, 255, 0.015);
-}
-
-.preview-rendered {
-  grid-column: 3;
-  grid-row: 2;
-  padding-top: 12px;
-  font-family: "DM Sans", "Helvetica Neue", sans-serif;
-}
-
-.preview-rendered .ProseMirror {
-  min-height: 100%;
-  outline: none;
-  color: #f0ece4;
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.preview-rendered .ProseMirror > *:first-child {
+.preview-editor-host .ProseMirror > *:first-child {
   margin-top: 0;
 }
 
-.preview-rendered .ProseMirror h1,
-.preview-rendered .ProseMirror h2,
-.preview-rendered .ProseMirror h3,
-.preview-rendered .ProseMirror h4,
-.preview-rendered .ProseMirror h5,
-.preview-rendered .ProseMirror h6 {
+.preview-editor-host .ProseMirror h1,
+.preview-editor-host .ProseMirror h2,
+.preview-editor-host .ProseMirror h3,
+.preview-editor-host .ProseMirror h4,
+.preview-editor-host .ProseMirror h5,
+.preview-editor-host .ProseMirror h6 {
   font-family: "Newsreader", Georgia, serif;
   color: #f0ece4;
   letter-spacing: -0.03em;
 }
 
-.preview-rendered .ProseMirror h1 {
-  font-size: 28px;
-  margin: 0 0 10px;
+.preview-editor-host .ProseMirror h1 {
+  font-size: 42px;
+  margin: 0 0 14px;
 }
 
-.preview-rendered .ProseMirror h2 {
+.preview-editor-host .ProseMirror h2 {
+  font-size: 30px;
+  margin: 24px 0 10px;
+}
+
+.preview-editor-host .ProseMirror h3 {
   font-size: 22px;
   margin: 18px 0 8px;
 }
 
-.preview-rendered .ProseMirror h3 {
-  font-size: 18px;
-  margin: 16px 0 8px;
-}
-
-.preview-rendered .ProseMirror p,
-.preview-rendered .ProseMirror li {
+.preview-editor-host .ProseMirror p,
+.preview-editor-host .ProseMirror li {
   color: rgba(232, 227, 219, 0.76);
 }
 
-.preview-rendered .ProseMirror ul,
-.preview-rendered .ProseMirror ol {
+.preview-editor-host .ProseMirror ul,
+.preview-editor-host .ProseMirror ol {
   padding-left: 1.2rem;
   margin: 10px 0;
 }
 
-.preview-rendered .ProseMirror blockquote {
+.preview-editor-host .ProseMirror blockquote {
   margin: 12px 0;
   padding-left: 14px;
   border-left: 2px solid rgba(255, 255, 255, 0.14);
   color: rgba(232, 227, 219, 0.62);
 }
 
-.preview-rendered .ProseMirror hr {
+.preview-editor-host .ProseMirror hr {
   border: none;
   height: 1px;
   margin: 16px 0;
   background: rgba(255, 255, 255, 0.08);
 }
 
-.preview-rendered .ProseMirror pre {
+.preview-editor-host .ProseMirror pre {
   margin: 14px 0;
   padding: 12px 14px;
   overflow: auto;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
-}
-
-.preview-rendered .ProseMirror pre code {
+.preview-editor-host .ProseMirror pre code {
   padding: 0;
   background: transparent;
 }
 
-.preview-rendered .ProseMirror code {
+.preview-editor-host .ProseMirror code {
   font-family: "JetBrains Mono", "SF Mono", monospace;
 }
 
-.preview-rendered .ProseMirror a {
+.preview-editor-host .ProseMirror a {
   color: #f0ece4;
   text-decoration: underline;
   text-decoration-color: rgba(255, 255, 255, 0.24);
 }
 
-.preview-rendered .ProseMirror ul[data-type="taskList"] {
+.preview-editor-host .ProseMirror ul[data-type="taskList"] {
   list-style: none;
   padding-left: 0;
 }
 
-.preview-rendered .ProseMirror ul[data-type="taskList"] li {
+.preview-editor-host .ProseMirror ul[data-type="taskList"] li {
   display: flex;
   align-items: flex-start;
   gap: 10px;
 }
 
-.preview-rendered .ProseMirror ul[data-type="taskList"] li > label {
+.preview-editor-host .ProseMirror ul[data-type="taskList"] li > label {
   margin-top: 2px;
 }
 
-.preview-rendered .ProseMirror ul[data-type="taskList"] li > div {
+.preview-editor-host .ProseMirror ul[data-type="taskList"] li > div {
   min-width: 0;
 }
 
@@ -725,14 +667,6 @@ code {
 
   .preview-window {
     max-width: 100%;
-  }
-
-  .preview-workbench {
-    grid-template-columns: 1fr;
-  }
-
-  .preview-pane-divider {
-    display: none;
   }
 
   .features {
