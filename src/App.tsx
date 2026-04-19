@@ -5,15 +5,14 @@ import {
   unregisterAll,
 } from "@tauri-apps/plugin-global-shortcut";
 import {
-  lazy,
-  Suspense,
   useEffect,
   useRef,
   useState,
   type CSSProperties,
 } from "react";
 
-import { SettingsSheet } from "./components/SettingsSheet";
+import { SettingsView } from "./components/SettingsSheet";
+import { InkMarkdownEditor } from "./components/InkMarkdownEditor";
 import { formatDateLabel, shiftDateKey, todayKey } from "./lib/dates";
 import { loadSettings, saveSettings } from "./lib/settings";
 import {
@@ -30,6 +29,7 @@ import type { AppSettings, NoteDocument, NoteSummary } from "./lib/types";
 import "./App.css";
 
 type ComposerKind = "note" | "folder";
+type Screen = "daily" | "library" | "settings";
 
 function resolveInitialSystemTheme() {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -58,25 +58,19 @@ const onboardingTree = `your-notebook/
     projects/
       mdbar-roadmap.md`;
 
-const InkMarkdownEditor = lazy(async () => {
-  const module = await import("./components/InkMarkdownEditor");
-  return {
-    default: module.InkMarkdownEditor,
-  };
-});
-
 function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
-  const [mode, setMode] = useState<"daily" | "library">("daily");
+  const [screen, setScreen] = useState<Screen>("daily");
   const [dailyDateKey, setDailyDateKey] = useState(todayKey);
   const [libraryNotes, setLibraryNotes] = useState<NoteSummary[]>([]);
-  const [selectedLibraryNoteId, setSelectedLibraryNoteId] = useState<string | null>(null);
+  const [selectedLibraryNoteId, setSelectedLibraryNoteId] = useState<string | null>(
+    () => loadSettings().lastLibraryNoteId,
+  );
   const [currentNote, setCurrentNote] = useState<NoteDocument | null>(null);
   const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [shortcutStatus, setShortcutStatus] = useState<string | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerKind, setComposerKind] = useState<ComposerKind>("note");
   const [isNotePickerOpen, setIsNotePickerOpen] = useState(false);
@@ -142,23 +136,38 @@ function App() {
 
   useEffect(() => {
     setIsNotePickerOpen(false);
-  }, [mode, dailyDateKey, selectedLibraryNoteId]);
+  }, [screen, dailyDateKey, selectedLibraryNoteId]);
 
   const appearance = settings.theme === "system" ? systemTheme : settings.theme;
   const editorFontFamily =
     settings.fontFamily === "editorial"
-      ? '"Iowan Old Style", "Palatino Linotype", Georgia, serif'
+      ? '"Iowan Old Style", "Palatino Linetype", Georgia, serif'
       : settings.fontFamily === "mono"
         ? '"SF Mono", "JetBrains Mono", Menlo, monospace'
         : '"Avenir Next", "Helvetica Neue", sans-serif';
   const editorDocumentKey =
     currentNote?.filePath ??
-    `${mode}:${dailyDateKey}:${selectedLibraryNoteId ?? "no-library-note"}`;
+    `${screen}:${dailyDateKey}:${selectedLibraryNoteId ?? "no-library-note"}`;
   const todayDateKey = todayKey();
-  const title = mode === "daily" ? formatDateLabel(dailyDateKey) : currentNote?.title ?? "Notes";
-  const disablePrevious = !settings.notebookPath || mode !== "daily";
+  const title =
+    screen === "settings"
+      ? "Settings"
+      : screen === "daily"
+        ? formatDateLabel(dailyDateKey)
+        : currentNote?.title ?? "Notes";
+  const disablePrevious = !settings.notebookPath || screen !== "daily";
   const disableNext =
-    !settings.notebookPath || mode !== "daily" || dailyDateKey >= todayDateKey;
+    !settings.notebookPath || screen !== "daily" || dailyDateKey >= todayDateKey;
+
+  // Persist the last selected library note
+  useEffect(() => {
+    if (selectedLibraryNoteId !== settings.lastLibraryNoteId) {
+      setSettings((existing) => ({
+        ...existing,
+        lastLibraryNoteId: selectedLibraryNoteId,
+      }));
+    }
+  }, [selectedLibraryNoteId]);
 
   useEffect(() => {
     if (!settings.notebookPath) {
@@ -169,6 +178,10 @@ function App() {
       setErrorMessage(null);
       setSaveState("idle");
       setIsLoadingNote(false);
+      return;
+    }
+
+    if (screen === "settings") {
       return;
     }
 
@@ -186,7 +199,7 @@ function App() {
 
         setLibraryNotes(notes);
 
-        if (mode === "library") {
+        if (screen === "library") {
           const nextLibraryId =
             selectedLibraryNoteId && notes.some((note) => note.id === selectedLibraryNoteId)
               ? selectedLibraryNoteId
@@ -243,7 +256,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [dailyDateKey, mode, selectedLibraryNoteId, settings.notebookPath]);
+  }, [dailyDateKey, screen, selectedLibraryNoteId, settings.notebookPath]);
 
   useEffect(() => {
     if (isLoadingNote || !currentNote || draft === currentNote.content) {
@@ -340,9 +353,8 @@ function App() {
           ...existing,
           notebookPath: selected,
         }));
-        setMode("daily");
+        setScreen("daily");
         setErrorMessage(null);
-        setIsSettingsOpen(false);
       }
     } finally {
       await setPanelAutoHide(true);
@@ -365,7 +377,7 @@ function App() {
       const notes = await listLibraryNotes(settings.notebookPath);
 
       setLibraryNotes(notes);
-      setMode("library");
+      setScreen("library");
       setSelectedLibraryNoteId(note.id);
       setCurrentNote(note);
       setDraft(note.content);
@@ -389,7 +401,7 @@ function App() {
       const notes = await listLibraryNotes(settings.notebookPath);
 
       setLibraryNotes(notes);
-      setMode("library");
+      setScreen("library");
       setSaveState("idle");
       setErrorMessage(null);
       setNewItemName("");
@@ -401,13 +413,13 @@ function App() {
   }
 
   function handlePrevious() {
-    if (mode === "daily") {
+    if (screen === "daily") {
       setDailyDateKey((current) => shiftDateKey(current, -1));
     }
   }
 
   function handleNext() {
-    if (mode === "daily" && dailyDateKey < todayDateKey) {
+    if (screen === "daily" && dailyDateKey < todayDateKey) {
       setDailyDateKey((current) => shiftDateKey(current, 1));
     }
   }
@@ -422,10 +434,39 @@ function App() {
   }
 
   function handleNotesButtonClick() {
-    setMode("library");
-    if (libraryNotes.length > 0) {
-      setIsNotePickerOpen((current) => !current);
+    // Click notes icon → go directly to last library note
+    if (screen === "library" && !isNotePickerOpen) {
+      // Already on library, just open picker
+      if (libraryNotes.length > 0) {
+        setIsNotePickerOpen(true);
+      }
+      return;
     }
+
+    setScreen("library");
+    // If we have a saved last note ID, use it
+    const lastId = settings.lastLibraryNoteId;
+    if (lastId && libraryNotes.some((n) => n.id === lastId)) {
+      setSelectedLibraryNoteId(lastId);
+    } else if (libraryNotes.length > 0) {
+      setSelectedLibraryNoteId(libraryNotes[0].id);
+    }
+  }
+
+  function handleNotesDropdownToggle() {
+    // Dropdown chevron → toggle the note picker
+    setScreen("library");
+    setIsNotePickerOpen((current) => !current);
+  }
+
+  function handleSettingsToggle() {
+    if (screen === "settings") {
+      // Return to last mode
+      setScreen("daily");
+      return;
+    }
+
+    setScreen("settings");
   }
 
   return (
@@ -454,9 +495,9 @@ function App() {
 
             <button
               aria-label="Go to today"
-              className={`header-icon${mode === "daily" ? " active" : ""}`}
+              className={`header-icon${screen === "daily" ? " active" : ""}`}
               onClick={() => {
-                setMode("daily");
+                setScreen("daily");
                 setDailyDateKey(todayDateKey);
               }}
               type="button"
@@ -507,35 +548,60 @@ function App() {
 
           <div className="header-side header-side-right">
             <div className="header-menu-wrap" ref={notePickerRef}>
-              <button
-                aria-expanded={isNotePickerOpen}
-                aria-label="Open notes"
-                className={`header-icon${mode === "library" ? " active" : ""}`}
-                onClick={handleNotesButtonClick}
-                type="button"
+              <div
+                className={`header-split-button${screen === "library" ? " active" : ""}${!settings.notebookPath ? " disabled" : ""}`}
               >
-                <svg aria-hidden="true" viewBox="0 0 24 24">
-                  <path
-                    d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.45"
-                  />
-                  <path
-                    d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.45"
-                  />
-                </svg>
-              </button>
+                <button
+                  aria-label="Open last note"
+                  className="header-split-button-primary"
+                  disabled={!settings.notebookPath}
+                  onClick={handleNotesButtonClick}
+                  type="button"
+                >
+                  <span className="header-split-button-mark">
+                    <svg aria-hidden="true" viewBox="0 0 24 24">
+                      <path
+                        d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.45"
+                      />
+                      <path
+                        d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.45"
+                      />
+                    </svg>
+                  </span>
+                </button>
+                <button
+                  aria-expanded={isNotePickerOpen}
+                  aria-label="Browse notes"
+                  className="header-split-button-toggle"
+                  disabled={!settings.notebookPath}
+                  onClick={handleNotesDropdownToggle}
+                  type="button"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24">
+                    <path
+                      d="m7.5 9.5 4.5 5 4.5-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.6"
+                    />
+                  </svg>
+                </button>
+              </div>
 
               {isNotePickerOpen ? (
-                <div className="note-picker-popover note-picker-popover-header">
+                <div className="note-picker-popover">
                   <div className="note-picker-popover-copy">
                     <p className="empty-kicker">Notes</p>
                     <p className="sheet-subcopy">Browse markdown files inside <code>notes/</code>.</p>
@@ -567,7 +633,7 @@ function App() {
                         key={note.id}
                         onClick={() => {
                           setSelectedLibraryNoteId(note.id);
-                          setMode("library");
+                          setScreen("library");
                           setIsNotePickerOpen(false);
                         }}
                         type="button"
@@ -589,26 +655,18 @@ function App() {
             </div>
 
             <button
-              aria-label="Open settings"
-              className="header-icon"
-              onClick={() => setIsSettingsOpen(true)}
+              aria-label={screen === "settings" ? "Return to note" : "Open settings"}
+              className={`header-icon${screen === "settings" ? " active" : ""}`}
+              onClick={handleSettingsToggle}
               type="button"
             >
               <svg aria-hidden="true" viewBox="0 0 24 24">
                 <path
-                  d="M12 4.8a1 1 0 0 1 1-.96h.22a1 1 0 0 1 .96.78l.28 1.27c.1.43.43.74.84.89.2.08.4.17.6.28.38.2.83.22 1.22.02l1.14-.56a1 1 0 0 1 1.2.22l.16.18a1 1 0 0 1 .08 1.2l-.78 1.04a1.3 1.3 0 0 0-.24 1.18c.04.22.06.45.06.68s-.02.46-.06.68c-.08.42 0 .86.24 1.18l.78 1.04a1 1 0 0 1-.08 1.2l-.16.18a1 1 0 0 1-1.2.22l-1.14-.56a1.3 1.3 0 0 0-1.22.02c-.2.11-.4.2-.6.28-.41.15-.74.46-.84.89l-.28 1.27a1 1 0 0 1-.96.78H13a1 1 0 0 1-1-.96l-.08-1.3a1.3 1.3 0 0 0-.62-1.03 5.6 5.6 0 0 1-.52-.32 1.3 1.3 0 0 0-1.26-.1l-1.2.42a1 1 0 0 1-1.14-.34l-.14-.2a1 1 0 0 1 .06-1.2l.82-.98c.28-.34.4-.8.34-1.24a5.8 5.8 0 0 1 0-1.38c.06-.44-.06-.9-.34-1.24l-.82-.98a1 1 0 0 1-.06-1.2l.14-.2a1 1 0 0 1 1.14-.34l1.2.42c.42.15.88.1 1.26-.1.17-.12.35-.22.52-.32.36-.22.58-.6.62-1.03L12 4.8Z"
+                  d="M12 8.7a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Zm9 3.3-.08-.88-2.2-.62a7.35 7.35 0 0 0-.58-1.4l1.1-2-1.76-1.77-2 1.1a7.34 7.34 0 0 0-1.4-.58l-.62-2.2L12 3l-.88.08-.62 2.2c-.49.13-.96.32-1.4.58l-2-1.1-1.77 1.76 1.1 2c-.26.44-.45.91-.58 1.4l-2.2.62L3 12l.08.88 2.2.62c.13.49.32.96.58 1.4l-1.1 2 1.76 1.77 2-1.1c.44.26.91.45 1.4.58l.62 2.2L12 21l.88-.08.62-2.2c.49-.13.96-.32 1.4-.58l2 1.1 1.77-1.76-1.1-2c.26-.44.45-.91.58-1.4l2.2-.62L21 12Z"
                   fill="none"
                   stroke="currentColor"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth="1.15"
-                />
-                <circle
-                  cx="12"
-                  cy="12"
-                  fill="none"
-                  r="2.2"
-                  stroke="currentColor"
                   strokeWidth="1.4"
                 />
               </svg>
@@ -655,11 +713,19 @@ function App() {
               </button>
             </div>
           </section>
+        ) : screen === "settings" ? (
+          <SettingsView
+            onChange={(patch) => setSettings((existing) => ({ ...existing, ...patch }))}
+            onChooseFolder={chooseNotebookFolder}
+            onClose={() => setScreen("daily")}
+            settings={settings}
+            shortcutStatus={shortcutStatus}
+          />
         ) : (
           <section className="panel-body">
             {errorMessage ? <p className="inline-message error">{errorMessage}</p> : null}
 
-            {mode === "library" && libraryNotes.length === 0 ? (
+            {screen === "library" && libraryNotes.length === 0 ? (
               <div className="editor-empty-state">
                 <p className="empty-kicker">No side notes yet</p>
                 <h2>Create markdown files or folders in <code>notes/</code> and mdbar will pick them up automatically.</h2>
@@ -677,29 +743,20 @@ function App() {
                 </div>
               </div>
             ) : currentNote ? (
-              <Suspense
-                fallback={
-                  <div className="editor-empty-state">
-                    <p className="empty-kicker">Loading editor</p>
-                    <h2>Preparing the markdown editor.</h2>
-                  </div>
+              <InkMarkdownEditor
+                documentKey={editorDocumentKey}
+                isLoading={isLoadingNote}
+                onChange={setDraft}
+                theme={appearance}
+                style={
+                  {
+                    "--editor-font-family": editorFontFamily,
+                    "--editor-font-size": `${settings.fontSize}px`,
+                    "--editor-line-height": `${settings.lineHeight}`,
+                  } as CSSProperties
                 }
-              >
-                <InkMarkdownEditor
-                  documentKey={editorDocumentKey}
-                  isLoading={isLoadingNote}
-                  onChange={setDraft}
-                  theme={appearance}
-                  style={
-                    {
-                      "--editor-font-family": editorFontFamily,
-                      "--editor-font-size": `${settings.fontSize}px`,
-                      "--editor-line-height": `${settings.lineHeight}`,
-                    } as CSSProperties
-                  }
-                  value={draft}
-                />
-              </Suspense>
+                value={draft}
+              />
             ) : (
               <div className="editor-empty-state">
                 <p className="empty-kicker">{isLoadingNote ? "Loading note" : "Nothing selected"}</p>
@@ -761,15 +818,6 @@ function App() {
           </div>
         </div>
       ) : null}
-
-      <SettingsSheet
-        onChange={(patch) => setSettings((existing) => ({ ...existing, ...patch }))}
-        onChooseFolder={chooseNotebookFolder}
-        onClose={() => setIsSettingsOpen(false)}
-        open={isSettingsOpen}
-        settings={settings}
-        shortcutStatus={shortcutStatus}
-      />
     </main>
   );
 }

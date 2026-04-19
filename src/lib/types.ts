@@ -28,6 +28,7 @@ export type AppSettings = {
   fontSize: number;
   lineHeight: number;
   shortcut: string;
+  lastLibraryNoteId: string | null;
 };
 
 export const defaultSettings: AppSettings = {
@@ -37,4 +38,5 @@ export const defaultSettings: AppSettings = {
   fontSize: 17,
   lineHeight: 1.6,
   shortcut: "CommandOrControl+Shift+M",
+  lastLibraryNoteId: null,
 };

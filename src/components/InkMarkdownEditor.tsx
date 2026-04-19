@@ -1,23 +1,16 @@
-import "@mdxeditor/editor/style.css";
-
-import { languages } from "@codemirror/language-data";
-import { EditorView } from "@codemirror/view";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import {
-  codeBlockPlugin,
-  codeMirrorPlugin,
-  headingsPlugin,
-  linkDialogPlugin,
-  linkPlugin,
-  listsPlugin,
-  markdownShortcutPlugin,
-  MDXEditor,
-  type MDXEditorMethods,
-  quotePlugin,
-  tablePlugin,
-  thematicBreakPlugin,
-  type RealmPlugin,
-} from "@mdxeditor/editor";
+  EditorView,
+  keymap,
+  placeholder as placeholderExtension,
+} from "@codemirror/view";
 import { useEffect, useRef, type CSSProperties } from "react";
+
+import { markdownPresentationExtension } from "../lib/editor-plugins";
 
 type InkMarkdownEditorProps = {
   className?: string;
@@ -29,173 +22,256 @@ type InkMarkdownEditorProps = {
   value: string;
 };
 
-const codeBlockTheme = EditorView.theme({
-  "&": {
-    backgroundColor: "color-mix(in srgb, var(--panel) 82%, black 18%)",
+const editableCompartment = new Compartment();
+const placeholderCompartment = new Compartment();
+
+const markdownHighlightStyle = HighlightStyle.define([
+  {
+    tag: tags.heading,
     color: "var(--ink)",
+    fontFamily: "var(--display)",
+    fontWeight: "520",
+  },
+  {
+    tag: tags.heading1,
+    color: "var(--ink)",
+    fontFamily: "var(--display)",
+    fontSize: "1.42em",
+    fontWeight: "520",
+  },
+  {
+    tag: tags.heading2,
+    color: "var(--ink)",
+    fontFamily: "var(--display)",
+    fontSize: "1.24em",
+    fontWeight: "520",
+  },
+  {
+    tag: tags.heading3,
+    color: "var(--ink)",
+    fontFamily: "var(--display)",
+    fontSize: "1.14em",
+    fontWeight: "520",
+  },
+  {
+    tag: tags.strong,
+    fontWeight: "600",
+  },
+  {
+    tag: tags.emphasis,
+    fontStyle: "italic",
+  },
+  {
+    tag: [tags.link, tags.url],
+    color: "var(--ink)",
+    textDecoration: "underline",
+    textDecorationColor: "color-mix(in srgb, var(--ink) 18%, transparent)",
+    textUnderlineOffset: "0.16em",
+  },
+  {
+    tag: tags.monospace,
+    fontFamily: "var(--mono)",
+    fontSize: "0.94em",
+  },
+  {
+    tag: tags.quote,
+    color: "color-mix(in srgb, var(--ink) 72%, var(--muted))",
+  },
+  {
+    tag: tags.processingInstruction,
+    color: "var(--muted)",
+  },
+]);
+
+const editorTheme = EditorView.theme({
+  "&": {
+    height: "100%",
+    backgroundColor: "transparent",
+    color: "var(--ink)",
+    fontFamily: "var(--editor-font-family, var(--sans))",
+    fontSize: "var(--editor-font-size, 15px)",
   },
   ".cm-scroller": {
     overflow: "auto",
-    fontFamily: "var(--mono)",
+    padding: "14px 18px 28px",
   },
   ".cm-content": {
+    minHeight: "100%",
+    padding: "0",
+    whiteSpace: "pre-wrap",
     caretColor: "var(--ink)",
+    lineHeight: "var(--editor-line-height, 1.65)",
   },
-  ".cm-gutters": {
-    backgroundColor: "color-mix(in srgb, var(--panel) 86%, black 14%)",
+  ".cm-line": {
+    padding: "0",
+    paddingBottom: "1px",
+    paddingRight: "8px",
+  },
+  ".cm-focused": {
+    outline: "none",
+  },
+  ".cm-editor": {
+    height: "100%",
+  },
+  ".cm-placeholder": {
     color: "var(--muted)",
-    borderRight: "1px solid color-mix(in srgb, var(--panel-border) 78%, transparent)",
+    whiteSpace: "pre-wrap",
   },
-  ".cm-activeLine, .cm-activeLineGutter": {
-    backgroundColor: "transparent",
-  },
-  ".cm-tooltip": {
-    border: "1px solid color-mix(in srgb, var(--panel-border) 92%, transparent)",
-    borderRadius: "12px",
-    backgroundColor: "color-mix(in srgb, var(--panel) 96%, black 4%)",
-    boxShadow: "0 18px 34px rgba(0, 0, 0, 0.22)",
-  },
-  ".cm-cursor": {
+  ".cm-cursor, .cm-dropCursor": {
     borderLeftColor: "var(--ink)",
     borderLeftWidth: "1.5px",
   },
   ".cm-selectionBackground, ::selection": {
     backgroundColor: "color-mix(in srgb, var(--ink) 14%, transparent)",
   },
+  ".cm-activeLine": {
+    backgroundColor: "transparent",
+  },
+  ".cm-tooltip": {
+    border: "1px solid var(--panel-border)",
+    borderRadius: "12px",
+    boxShadow: "0 12px 24px rgba(24, 24, 24, 0.08)",
+  },
 });
 
-const editorPlugins: RealmPlugin[] = [
-  headingsPlugin(),
-  listsPlugin(),
-  quotePlugin(),
-  thematicBreakPlugin(),
-  linkPlugin(),
-  linkDialogPlugin(),
-  tablePlugin(),
-  codeBlockPlugin({
-    defaultCodeBlockLanguage: "txt",
-  }),
-  codeMirrorPlugin({
-    codeBlockLanguages: languages,
-    codeMirrorExtensions: [EditorView.lineWrapping, codeBlockTheme],
-  }),
-  markdownShortcutPlugin(),
-];
+function createPlaceholder(loading: boolean) {
+  const placeholder = document.createElement("div");
+  placeholder.className = "daily-editor-placeholder";
+
+  if (loading) {
+    placeholder.textContent = "Loading note…";
+    return placeholder;
+  }
+
+  placeholder.textContent =
+    "Start with a heading, a checklist, or whatever is on your mind.";
+  return placeholder;
+}
+
+function buildExtensions(
+  isLoading: boolean,
+  onChange: (value: string) => void,
+): Extension[] {
+  return [
+    keymap.of([...defaultKeymap, ...historyKeymap]),
+    history(),
+    markdown({ base: markdownLanguage }),
+    EditorView.lineWrapping,
+    syntaxHighlighting(markdownHighlightStyle),
+    editorTheme,
+    markdownPresentationExtension,
+    EditorView.contentAttributes.of({
+      spellcheck: "true",
+      autocapitalize: "sentences",
+    }),
+    EditorView.updateListener.of((update) => {
+      if (update.docChanged) {
+        onChange(update.state.doc.toString());
+      }
+    }),
+    editableCompartment.of(EditorView.editable.of(!isLoading)),
+    placeholderCompartment.of(
+      placeholderExtension(createPlaceholder(isLoading)),
+    ),
+  ];
+}
 
 export function InkMarkdownEditor({
   className,
   documentKey,
   isLoading,
   onChange,
-  theme,
   style,
   value,
 }: InkMarkdownEditorProps) {
-  const shellRef = useRef<HTMLDivElement | null>(null);
-  const editorRef = useRef<MDXEditorMethods | null>(null);
-  const lastAppliedValueRef = useRef(value);
-  const isPushingExternalValueRef = useRef(false);
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const editorViewRef = useRef<EditorView | null>(null);
+  const initialLoadingRef = useRef(isLoading);
+  const latestValueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+
+  onChangeRef.current = onChange;
 
   useEffect(() => {
-    lastAppliedValueRef.current = value;
-  }, [documentKey]);
-
-  useEffect(() => {
-    const editor = editorRef.current;
-
-    if (!editor || isPushingExternalValueRef.current) {
-      return;
-    }
-
-    if (value === lastAppliedValueRef.current) {
-      return;
-    }
-
-    isPushingExternalValueRef.current = true;
-    lastAppliedValueRef.current = value;
-    editor.setMarkdown(value);
-
-    queueMicrotask(() => {
-      isPushingExternalValueRef.current = false;
-    });
+    latestValueRef.current = value;
   }, [value]);
 
   useEffect(() => {
-    const contentEditable = shellRef.current?.querySelector(".mdxeditor-root-contenteditable");
+    const host = hostRef.current;
 
-    if (!(contentEditable instanceof HTMLElement)) {
+    if (!host || editorViewRef.current) {
       return;
     }
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key !== "Tab" ||
-        event.defaultPrevented ||
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey
-      ) {
-        return;
-      }
+    const state = EditorState.create({
+      doc: latestValueRef.current,
+      extensions: buildExtensions(initialLoadingRef.current, (nextValue) => {
+        latestValueRef.current = nextValue;
+        onChangeRef.current(nextValue);
+      }),
+    });
 
-      event.preventDefault();
-      editorRef.current?.insertMarkdown("  ");
-    };
+    const view = new EditorView({
+      parent: host,
+      state,
+    });
 
-    contentEditable.addEventListener("keydown", handleKeyDown);
+    editorViewRef.current = view;
 
     return () => {
-      contentEditable.removeEventListener("keydown", handleKeyDown);
+      view.destroy();
+      editorViewRef.current = null;
     };
-  }, [documentKey]);
+  }, []);
+
+  useEffect(() => {
+    const view = editorViewRef.current;
+
+    if (!view) {
+      return;
+    }
+
+    view.dispatch({
+      effects: [
+        editableCompartment.reconfigure(EditorView.editable.of(!isLoading)),
+        placeholderCompartment.reconfigure(
+          placeholderExtension(createPlaceholder(isLoading)),
+        ),
+      ],
+    });
+  }, [isLoading]);
+
+  useEffect(() => {
+    const view = editorViewRef.current;
+
+    if (!view) {
+      return;
+    }
+
+    const currentValue = view.state.doc.toString();
+
+    if (currentValue === value) {
+      return;
+    }
+
+    view.dispatch({
+      changes: {
+        from: 0,
+        to: currentValue.length,
+        insert: value,
+      },
+    });
+  }, [documentKey, value]);
 
   return (
     <div
-      ref={shellRef}
+      ref={hostRef}
       className={["ink-editor-shell", isLoading ? "is-loading" : "", className]
         .filter(Boolean)
         .join(" ")}
       style={style}
     >
-      <div className="ink-editor-host">
-        <MDXEditor
-          key={documentKey}
-          ref={editorRef}
-          className={["mdbar-editor", theme === "dark" ? "dark-theme" : "", className]
-            .filter(Boolean)
-            .join(" ")}
-          contentEditableClassName="mdbar-prose"
-          markdown={value}
-          onChange={(nextValue, initialMarkdownNormalize) => {
-            lastAppliedValueRef.current = nextValue;
-
-            if (isPushingExternalValueRef.current || initialMarkdownNormalize) {
-              return;
-            }
-
-            onChange(nextValue);
-          }}
-          placeholder={
-            <div className="daily-editor-placeholder">
-              {isLoading
-                ? "Loading note..."
-                : "Start with a heading, a checklist, or whatever is on your mind."}
-            </div>
-          }
-          plugins={editorPlugins}
-          readOnly={isLoading}
-          spellCheck
-          toMarkdownOptions={{
-            bullet: "-",
-            emphasis: "*",
-            fence: "`",
-            listItemIndent: "one",
-            rule: "-",
-            ruleRepetition: 3,
-            strong: "*",
-          }}
-        />
-      </div>
+      <div className="ink-editor-host" />
     </div>
   );
 }
