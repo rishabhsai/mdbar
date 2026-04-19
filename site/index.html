@@ -60,11 +60,9 @@
         <a href="https://github.com/rishabhsai/mdbar" class="btn btn-ghost"
           >View source</a
         >
-      </div>
-      <div class="hero-links">
-        <a href="https://github.com/rishabhsai/mdbar/releases">Releases</a>
-        <a href="https://imgur.com/bRB0KrG">Screenshot</a>
-        <a href="https://github.com/rishabhsai/mdbar/blob/main/README.md">README</a>
+        <a href="https://x.com/rishabhsaiv" class="btn btn-ghost"
+          >Follow</a
+        >
       </div>
       <p class="hero-footnote">Current direct download: Apple Silicon macOS DMG. Default launcher: Cmd+Shift+M.</p>
     </section>
@@ -100,38 +98,39 @@
               </svg>
             </span>
           </div>
-          <pre
-            class="preview-editor preview-editor-live"
-            contenteditable="true"
-            spellcheck="false"
-          ># mdbar
+          <div class="preview-workbench">
+            <label class="preview-pane-label" for="preview-input">Write</label>
+            <textarea
+              id="preview-input"
+              class="preview-editor preview-input"
+              spellcheck="false"
+            ># mdbar
 
 > Press Cmd+Shift+M and start writing.
 
 ---
 
+## What it feels like
+
 - plain markdown files
 - daily notes
-- notes folders
+- side notes in folders
 
 - [x] fast to open
 - [ ] ship v1
 
 ```bash
 npm run tauri dev
-```</pre>
+```</textarea>
+            <div class="preview-pane-divider"></div>
+            <div class="preview-pane-label">Render</div>
+            <article
+              class="preview-editor preview-rendered"
+              id="preview-rendered"
+            ></article>
+          </div>
         </div>
       </div>
-    </section>
-
-    <section class="site-shot">
-      <a href="https://imgur.com/bRB0KrG" class="site-shot-link">
-        <img
-          src="https://i.imgur.com/bRB0KrG.png"
-          alt="mdbar screenshot"
-          class="site-shot-image"
-        />
-      </a>
     </section>
 
     <section class="performance">
@@ -195,10 +194,9 @@ npm run tauri dev
       </h2>
       <div class="closing-actions">
         <a
-          href="./downloads/mdbar-0.1.0-aarch64.dmg"
-          download="mdbar-0.1.0-aarch64.dmg"
+          href="https://github.com/rishabhsai/mdbar/releases"
           class="btn btn-primary"
-          >Download mdbar</a
+          >View releases</a
         >
         <a
           href="https://github.com/rishabhsai/mdbar"
@@ -208,14 +206,53 @@ npm run tauri dev
       </div>
     </section>
 
+    <section class="site-shot site-shot-last">
+      <div class="performance-copy">
+        <p class="closing-label">Screenshot</p>
+        <h2 class="performance-title">mdbar in its actual menu bar panel.</h2>
+      </div>
+      <a href="https://imgur.com/bRB0KrG" class="site-shot-link">
+        <img
+          src="https://i.imgur.com/bRB0KrG.png"
+          alt="mdbar screenshot"
+          class="site-shot-image"
+        />
+      </a>
+    </section>
+
     <footer class="site-footer">
       <span>mdbar</span>
       <span><a href="https://github.com/rishabhsai/mdbar">GitHub</a></span>
       <span><a href="https://github.com/rishabhsai/mdbar/releases">Releases</a></span>
+      <span><a href="https://daily.raz.lol/">Inspired by Daily</a></span>
       <span>Made on a Mac.</span>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
     <script>
+      const previewInput = document.querySelector("#preview-input");
+      const previewRendered = document.querySelector("#preview-rendered");
+
+      function renderPreview() {
+        if (!previewInput || !previewRendered || !window.marked || !window.DOMPurify) {
+          return;
+        }
+
+        const raw = previewInput.value;
+        const html = window.marked.parse(raw, {
+          breaks: true,
+          gfm: true,
+        });
+
+        previewRendered.innerHTML = window.DOMPurify.sanitize(html);
+      }
+
+      if (previewInput) {
+        previewInput.addEventListener("input", renderPreview);
+        renderPreview();
+      }
+
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
