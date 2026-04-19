@@ -200,6 +200,7 @@ pub fn run() {
             notes::open_library_note,
             notes::create_library_note,
             notes::create_library_folder,
+            notes::delete_library_folder,
             notes::save_note,
             notes::save_pasted_image,
             notes::delete_note,

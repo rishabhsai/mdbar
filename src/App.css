@@ -78,6 +78,7 @@ code {
   --accent-strong: rgba(247, 243, 237, 0.96);
   --danger: #d28d83;
   --shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+  color-scheme: dark;
   background:
     radial-gradient(circle at top, rgba(62, 60, 58, 0.56), transparent 42%),
     linear-gradient(180deg, rgba(24, 22, 20, 0.96), rgba(17, 16, 15, 0.98));
@@ -204,14 +205,26 @@ code {
 .tiptap-scroll-shell,
 .settings-view {
   scrollbar-width: thin;
-  scrollbar-color: rgba(4, 4, 5, 0.96) rgba(0, 0, 0, 0.08);
+  scrollbar-color: rgba(16, 16, 17, 0.98) rgba(8, 8, 9, 0.54);
   scrollbar-gutter: stable;
 }
 
 .library-view:hover,
 .tiptap-scroll-shell:hover,
 .settings-view:hover {
-  scrollbar-color: rgba(4, 4, 5, 0.98) rgba(0, 0, 0, 0.12);
+  scrollbar-color: rgba(10, 10, 11, 1) rgba(8, 8, 9, 0.72);
+}
+
+.theme-dark .library-view,
+.theme-dark .tiptap-scroll-shell,
+.theme-dark .settings-view {
+  scrollbar-color: rgba(7, 7, 8, 0.98) rgba(12, 12, 13, 0.82);
+}
+
+.theme-dark .library-view:hover,
+.theme-dark .tiptap-scroll-shell:hover,
+.theme-dark .settings-view:hover {
+  scrollbar-color: rgba(3, 3, 4, 1) rgba(16, 16, 18, 0.92);
 }
 
 .library-view::-webkit-scrollbar,
@@ -223,23 +236,23 @@ code {
 .library-view::-webkit-scrollbar-track,
 .tiptap-scroll-shell::-webkit-scrollbar-track,
 .settings-view::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(16, 16, 17, 0.55);
   border-radius: 999px;
 }
 
 .library-view::-webkit-scrollbar-thumb,
 .tiptap-scroll-shell::-webkit-scrollbar-thumb,
 .settings-view::-webkit-scrollbar-thumb {
-  border: 2px solid rgba(0, 0, 0, 0.08);
+  border: 2px solid rgba(16, 16, 17, 0.48);
   border-radius: 999px;
-  background: rgba(4, 4, 5, 0.96);
+  background: rgba(8, 8, 9, 0.98);
   background-clip: padding-box;
 }
 
 .library-view:hover::-webkit-scrollbar-thumb,
 .tiptap-scroll-shell:hover::-webkit-scrollbar-thumb,
 .settings-view:hover::-webkit-scrollbar-thumb {
-  background: rgba(4, 4, 5, 0.98);
+  background: rgba(4, 4, 5, 1);
   background-clip: padding-box;
 }
 
@@ -248,6 +261,28 @@ code {
 .settings-view::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 1);
   background-clip: padding-box;
+}
+
+.theme-dark .library-view::-webkit-scrollbar-track,
+.theme-dark .tiptap-scroll-shell::-webkit-scrollbar-track,
+.theme-dark .settings-view::-webkit-scrollbar-track {
+  background: rgba(12, 12, 13, 0.88);
+}
+
+.theme-dark .library-view::-webkit-scrollbar-thumb,
+.theme-dark .tiptap-scroll-shell::-webkit-scrollbar-thumb,
+.theme-dark .settings-view::-webkit-scrollbar-thumb {
+  border-color: rgba(14, 14, 15, 0.94);
+  background: rgba(4, 4, 5, 1);
+}
+
+.theme-dark .library-view:hover::-webkit-scrollbar-thumb,
+.theme-dark .tiptap-scroll-shell:hover::-webkit-scrollbar-thumb,
+.theme-dark .settings-view:hover::-webkit-scrollbar-thumb,
+.theme-dark .library-view::-webkit-scrollbar-thumb:hover,
+.theme-dark .tiptap-scroll-shell::-webkit-scrollbar-thumb:hover,
+.theme-dark .settings-view::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 1);
 }
 
 /* ── Library view ── */
@@ -356,12 +391,18 @@ code {
   border-radius: 12px;
 }
 
+.lib-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .lib-folder-toggle {
   width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 11px;
+  padding: 8px 10px;
   padding-left: calc(10px + var(--depth, 0) * 17px);
   border: none;
   border-radius: 12px;
@@ -401,7 +442,7 @@ code {
   width: 16px;
   height: 16px;
   flex: 0 0 16px;
-  color: color-mix(in srgb, var(--ink) 84%, #d0a847);
+  color: color-mix(in srgb, var(--ink) 72%, #c7b28a);
 }
 
 .lib-folder-icon svg {
@@ -421,6 +462,51 @@ code {
   color: var(--muted);
   font-size: 10px;
   font-weight: 500;
+}
+
+.lib-folder-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+}
+
+.lib-folder-action {
+  opacity: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  transition:
+    opacity 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.lib-folder-action svg {
+  width: 13px;
+  height: 13px;
+}
+
+.lib-folder-row:hover .lib-folder-action,
+.lib-folder-action:focus-visible {
+  opacity: 1;
+}
+
+.lib-folder-action:hover {
+  background: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+  color: var(--ink);
+}
+
+.lib-folder-action-delete:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
 }
 
 .lib-folder-children {

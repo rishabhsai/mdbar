@@ -7,12 +7,15 @@ type LibraryViewProps = {
   libraryNotes: NoteSummary[];
   onCreateFolder: () => void;
   onCreateNote: () => void;
+  onCreateNoteInFolder: (directory: string) => void;
+  onDeleteFolder: (folder: FolderSummary) => void;
   onDeleteNote: (note: NoteSummary) => void;
   onSelectNote: (noteId: string) => void;
   selectedNoteId: string | null;
 };
 
 type FolderTree = {
+  folder: FolderSummary | null;
   folders: Map<string, FolderTree>;
   notes: NoteSummary[];
 };
@@ -21,30 +24,64 @@ function buildTree(
   notes: NoteSummary[],
   folders: FolderSummary[],
 ): FolderTree {
-  const root: FolderTree = { folders: new Map(), notes: [] };
+  const root: FolderTree = { folder: null, folders: new Map(), notes: [] };
 
   for (const folder of folders) {
     const parts = folder.relativePath.split("/").filter(Boolean);
     let current = root;
+    let currentPath = "";
 
     for (const part of parts) {
       if (!current.folders.has(part)) {
-        current.folders.set(part, { folders: new Map(), notes: [] });
+        currentPath = currentPath ? `${currentPath}/${part}` : part;
+        current.folders.set(part, {
+          folder: {
+            directory: currentPath.includes("/")
+              ? currentPath.split("/").slice(0, -1).join("/")
+              : "",
+            id: currentPath,
+            name: part,
+            relativePath: currentPath,
+            updatedAtMs: folder.updatedAtMs,
+          },
+          folders: new Map(),
+          notes: [],
+        });
+      } else {
+        currentPath = currentPath ? `${currentPath}/${part}` : part;
       }
 
       current = current.folders.get(part)!;
     }
+
+    current.folder = folder;
   }
 
   for (const note of notes) {
     const parts = note.relativePath.split("/");
     let current = root;
+    let currentPath = "";
 
     for (let index = 0; index < parts.length - 1; index += 1) {
       const folderName = parts[index];
 
       if (!current.folders.has(folderName)) {
-        current.folders.set(folderName, { folders: new Map(), notes: [] });
+        currentPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+        current.folders.set(folderName, {
+          folder: {
+            directory: currentPath.includes("/")
+              ? currentPath.split("/").slice(0, -1).join("/")
+              : "",
+            id: currentPath,
+            name: folderName,
+            relativePath: currentPath,
+            updatedAtMs: note.updatedAtMs,
+          },
+          folders: new Map(),
+          notes: [],
+        });
+      } else {
+        currentPath = currentPath ? `${currentPath}/${folderName}` : folderName;
       }
 
       current = current.folders.get(folderName)!;
@@ -78,35 +115,24 @@ function formatTimestamp(ms: number) {
 function FolderGlyph({ isOpen }: { isOpen: boolean }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24">
-      {isOpen ? (
-        <>
-          <path
-            d="M3.5 8.6c0-1.16.94-2.1 2.1-2.1h4.2l1.56 1.84h7.02c1.16 0 2.1.94 2.1 2.1v.57a2.1 2.1 0 0 0-.68-.11H8.4c-.85 0-1.61.5-1.95 1.28l-.33.77H5.6a2.1 2.1 0 0 1-2.1-2.1V8.6Z"
-            fill="currentColor"
-            opacity="0.42"
-          />
-          <path
-            d="M7.18 12.3c.27-.63.89-1.05 1.58-1.05h11.01c1.13 0 1.94 1.09 1.6 2.17l-1.65 5.2a1.7 1.7 0 0 1-1.62 1.18H5.27c-1.18 0-2-1.21-1.54-2.3l3.45-5.2Z"
-            fill="currentColor"
-          />
-        </>
-      ) : (
-        <>
-          <path
-            d="M3.5 8.5c0-1.1.9-2 2-2h4.22l1.5 1.72h7.28c1.1 0 2 .9 2 2v7.28c0 1.1-.9 2-2 2H5.5c-1.1 0-2-.9-2-2V8.5Z"
-            fill="currentColor"
-            opacity="0.82"
-          />
-          <path
-            d="M3.5 9.05c0-.67.55-1.22 1.22-1.22h5.01l1.42 1.6h8.13c.67 0 1.22.55 1.22 1.22"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeWidth="1.2"
-            opacity="0.38"
-          />
-        </>
-      )}
+      <path
+        d="M3.8 8.25c0-1.02.83-1.85 1.85-1.85h4.16l1.52 1.78h6.99c1.02 0 1.85.83 1.85 1.85v1.03"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.35"
+        opacity={isOpen ? 0.74 : 0.92}
+      />
+      <path
+        d="M6.65 11.38c.23-.52.75-.86 1.33-.86h11.05c.98 0 1.69.94 1.4 1.86l-1.49 4.72a1.45 1.45 0 0 1-1.38 1.01H5.36c-1.01 0-1.72-1.03-1.33-1.96l2.62-4.77Z"
+        fill={isOpen ? "currentColor" : "none"}
+        fillOpacity={isOpen ? 0.12 : 0}
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.35"
+      />
     </svg>
   );
 }
@@ -115,27 +141,20 @@ function NoteGlyph() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24">
       <path
-        d="M6.2 4.8h7.76l4.04 4.04v9.16c0 1.1-.9 2-2 2H6.2c-1.1 0-2-.9-2-2V6.8c0-1.1.9-2 2-2Z"
+        d="M6.5 4.75h7.14l3.86 3.85v9.05A1.6 1.6 0 0 1 15.9 19.25H6.5a1.6 1.6 0 0 1-1.6-1.6v-11.3a1.6 1.6 0 0 1 1.6-1.6Z"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.35"
+        strokeWidth="1.25"
       />
       <path
-        d="M13.96 4.8v4.04H18"
+        d="M13.64 4.75V8.6h3.86"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.35"
-      />
-      <path
-        d="M7.7 12.1h6.6M7.7 15.1h5.05"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeWidth="1.2"
+        strokeWidth="1.25"
       />
     </svg>
   );
@@ -145,20 +164,20 @@ function NewNoteGlyph() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24">
       <path
-        d="M7.2 4.8h7.76L19 8.84V18c0 1.1-.9 2-2 2H7.2c-1.1 0-2-.9-2-2V6.8c0-1.1.9-2 2-2Z"
+        d="M7.15 4.85h7.02l3.68 3.7v8.97A1.48 1.48 0 0 1 16.37 19H7.15a1.48 1.48 0 0 1-1.47-1.48V6.33c0-.82.66-1.48 1.47-1.48Z"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.35"
+        strokeWidth="1.25"
       />
       <path
-        d="M14.96 4.8v4.04H19M12 10.9v5.6M9.2 13.7h5.6"
+        d="M14.17 4.85v3.7h3.68M11.75 10.7v5.1M9.2 13.25h5.1"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth="1.3"
+        strokeWidth="1.25"
       />
     </svg>
   );
@@ -211,16 +230,35 @@ function TrashGlyph() {
   );
 }
 
+function AddGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path
+        d="M12 5.5v13M5.5 12h13"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
 function FolderNode({
+  folder,
   depth,
-  name,
+  onCreateNoteInFolder,
+  onDeleteFolder,
   onDeleteNote,
   tree,
   onSelectNote,
   selectedNoteId,
 }: {
+  folder: FolderSummary;
   depth: number;
-  name: string;
+  onCreateNoteInFolder: (directory: string) => void;
+  onDeleteFolder: (folder: FolderSummary) => void;
   onDeleteNote: (note: NoteSummary) => void;
   tree: FolderTree;
   onSelectNote: (noteId: string) => void;
@@ -236,39 +274,69 @@ function FolderNode({
 
   return (
     <div className="lib-folder" style={{ "--depth": depth } as CSSProperties}>
-      <button
-        className={`lib-folder-toggle ${isOpen ? "is-open" : ""}`}
-        onClick={() => setIsOpen((current) => !current)}
-        type="button"
-      >
-        <span className="lib-folder-chevron" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="m9 6 6 6-6 6"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="1.7"
-            />
-          </svg>
-        </span>
-        <span className="lib-folder-icon" aria-hidden="true">
-          <FolderGlyph isOpen={isOpen} />
-        </span>
-        <span className="lib-folder-name">{name}</span>
-        <span className="lib-folder-count">
-          {folderEntries.length + sortedNotes.length}
-        </span>
-      </button>
+      <div className={`lib-folder-row ${isOpen ? "is-open" : ""}`}>
+        <button
+          className={`lib-folder-toggle ${isOpen ? "is-open" : ""}`}
+          onClick={() => setIsOpen((current) => !current)}
+          type="button"
+        >
+          <span className="lib-folder-chevron" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path
+                d="m9 6 6 6-6 6"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.7"
+              />
+            </svg>
+          </span>
+          <span className="lib-folder-icon" aria-hidden="true">
+            <FolderGlyph isOpen={isOpen} />
+          </span>
+          <span className="lib-folder-name">{folder.name}</span>
+          <span className="lib-folder-count">
+            {folderEntries.length + sortedNotes.length}
+          </span>
+        </button>
+        <div className="lib-folder-actions">
+          <button
+            aria-label={`Add note in ${folder.name}`}
+            className="lib-folder-action"
+            onClick={() => onCreateNoteInFolder(folder.relativePath)}
+            type="button"
+          >
+            <AddGlyph />
+          </button>
+          <button
+            aria-label={`Delete folder ${folder.name}`}
+            className="lib-folder-action lib-folder-action-delete"
+            onClick={() => onDeleteFolder(folder)}
+            type="button"
+          >
+            <TrashGlyph />
+          </button>
+        </div>
+      </div>
 
       {isOpen ? (
         <div className="lib-folder-children">
           {folderEntries.map(([childName, childTree]) => (
             <FolderNode
               depth={depth + 1}
-              key={childName}
-              name={childName}
+              folder={
+                childTree.folder ?? {
+                  directory: folder.relativePath,
+                  id: `${folder.relativePath}/${childName}`,
+                  name: childName,
+                  relativePath: `${folder.relativePath}/${childName}`,
+                  updatedAtMs: 0,
+                }
+              }
+              key={childTree.folder?.id ?? `${folder.relativePath}/${childName}`}
+              onCreateNoteInFolder={onCreateNoteInFolder}
+              onDeleteFolder={onDeleteFolder}
               onDeleteNote={onDeleteNote}
               onSelectNote={onSelectNote}
               selectedNoteId={selectedNoteId}
@@ -316,6 +384,8 @@ export function LibraryView({
   libraryNotes,
   onCreateFolder,
   onCreateNote,
+  onCreateNoteInFolder,
+  onDeleteFolder,
   onDeleteNote,
   onSelectNote,
   selectedNoteId,
@@ -365,8 +435,18 @@ export function LibraryView({
           {folderEntries.map(([name, folderTree]) => (
             <FolderNode
               depth={0}
-              key={name}
-              name={name}
+              folder={
+                folderTree.folder ?? {
+                  directory: "",
+                  id: name,
+                  name,
+                  relativePath: name,
+                  updatedAtMs: 0,
+                }
+              }
+              key={folderTree.folder?.id ?? name}
+              onCreateNoteInFolder={onCreateNoteInFolder}
+              onDeleteFolder={onDeleteFolder}
               onDeleteNote={onDeleteNote}
               onSelectNote={onSelectNote}
               selectedNoteId={selectedNoteId}

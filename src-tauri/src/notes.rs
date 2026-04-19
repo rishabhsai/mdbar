@@ -354,9 +354,15 @@ fn slugify(title: &str) -> String {
     slug.trim_matches('-').to_string()
 }
 
-fn unique_library_path(root: &Path, title: &str) -> Result<PathBuf, String> {
-    let folder = library_root(root);
+fn unique_library_path(root: &Path, directory: Option<&str>, title: &str) -> Result<PathBuf, String> {
+    let mut folder = library_root(root);
     ensure_dir(&folder)?;
+
+    if let Some(directory) = directory.filter(|value| !value.trim().is_empty()) {
+        let relative = normalize_library_directory_relative_path(directory)?;
+        folder = folder.join(relative);
+        ensure_dir(&folder)?;
+    }
 
     let base = slugify(title);
     let base = if base.is_empty() {
@@ -533,10 +539,14 @@ pub fn open_library_note(folder_path: String, note_id: String) -> Result<NoteDoc
 }
 
 #[tauri::command(rename_all = "camelCase")]
-pub fn create_library_note(folder_path: String, title: String) -> Result<NoteDocument, String> {
+pub fn create_library_note(
+    folder_path: String,
+    title: String,
+    directory: Option<String>,
+) -> Result<NoteDocument, String> {
     let root = normalize_notebook_root(&folder_path)?;
     let notes_root = library_root(&root);
-    let path = unique_library_path(&root, &title)?;
+    let path = unique_library_path(&root, directory.as_deref(), &title)?;
 
     if !path.exists() {
         atomic_write(&path, "")?;
@@ -556,6 +566,21 @@ pub fn create_library_folder(folder_path: String, directory: String) -> Result<S
 
     ensure_dir(&path)?;
     Ok(normalize_path_string(&relative))
+}
+
+#[tauri::command(rename_all = "camelCase")]
+pub fn delete_library_folder(folder_path: String, directory: String) -> Result<(), String> {
+    let root = normalize_notebook_root(&folder_path)?;
+    let notes_root = library_root(&root);
+    let relative = normalize_library_directory_relative_path(&directory)?;
+    let path = notes_root.join(&relative);
+
+    if !path.exists() {
+        return Ok(());
+    }
+
+    fs::remove_dir_all(&path).map_err(|error| format!("Couldn't delete that folder: {error}"))?;
+    Ok(())
 }
 
 #[tauri::command(rename_all = "camelCase")]
@@ -682,9 +707,10 @@ pub fn open_note_in_default_app(file_path: String) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_markdown_asset_path, create_library_folder, delete_note, list_library_folders,
-        list_library_notes, normalize_library_directory_relative_path,
-        normalize_library_note_relative_path, note_assets_directory, save_pasted_image, slugify,
+        build_markdown_asset_path, create_library_folder, create_library_note, delete_library_folder,
+        delete_note, list_library_folders, list_library_notes,
+        normalize_library_directory_relative_path, normalize_library_note_relative_path,
+        note_assets_directory, save_pasted_image, slugify,
     };
     use std::{
         fs,
@@ -759,6 +785,28 @@ mod tests {
     }
 
     #[test]
+    fn create_library_note_can_target_nested_directory() {
+        let root = temporary_root("note-in-folder");
+        create_library_folder(
+            root.to_string_lossy().into_owned(),
+            "projects/client".to_string(),
+        )
+        .expect("folder should be created");
+
+        let created = create_library_note(
+            root.to_string_lossy().into_owned(),
+            "Roadmap".to_string(),
+            Some("projects/client".to_string()),
+        )
+        .expect("note should be created");
+
+        assert_eq!(created.relative_path, "projects/client/roadmap.md");
+        assert!(root.join("notes/projects/client/roadmap.md").exists());
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
     fn list_library_folders_includes_empty_nested_directories() {
         let root = temporary_root("folders-list");
         create_library_folder(
@@ -816,6 +864,32 @@ mod tests {
 
         assert!(!note_path.exists());
         assert!(!assets_dir.exists());
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn delete_library_folder_removes_nested_notes() {
+        let root = temporary_root("delete-folder");
+        create_library_folder(
+            root.to_string_lossy().into_owned(),
+            "projects/client".to_string(),
+        )
+        .expect("folder should be created");
+        create_library_note(
+            root.to_string_lossy().into_owned(),
+            "Roadmap".to_string(),
+            Some("projects/client".to_string()),
+        )
+        .expect("note should be created");
+
+        delete_library_folder(
+            root.to_string_lossy().into_owned(),
+            "projects".to_string(),
+        )
+        .expect("folder should delete");
+
+        assert!(!root.join("notes/projects").exists());
 
         let _ = fs::remove_dir_all(root);
     }

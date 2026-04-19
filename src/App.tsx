@@ -15,6 +15,7 @@ import {
   deleteNote,
   createLibraryFolder,
   createLibraryNote,
+  deleteLibraryFolder,
   listLibraryFolders,
   listLibraryNotes,
   openDailyNote,
@@ -83,6 +84,7 @@ function App() {
   const [composerKind, setComposerKind] = useState<ComposerKind>("note");
   const [newItemName, setNewItemName] = useState("");
   const [pendingDeleteNote, setPendingDeleteNote] = useState<NoteSummary | null>(null);
+  const [pendingDeleteFolder, setPendingDeleteFolder] = useState<FolderSummary | null>(null);
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
     resolveInitialSystemTheme,
   );
@@ -441,6 +443,26 @@ function App() {
     }
   }
 
+  async function handleCreateNoteInFolder(directory: string) {
+    if (!settings.notebookPath) return;
+
+    try {
+      const note = await createLibraryNote(settings.notebookPath, "", directory);
+      const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
+
+      setLibraryFolders(folders);
+      setLibraryNotes(notes);
+      setSelectedLibraryNoteId(note.id);
+      setCurrentNote(note);
+      setDraft(note.content);
+      setScreen("library-editor");
+      setSaveState("idle");
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   function handleDeleteCurrentNote() {
     if (!currentNote || currentNote.kind !== "library") return;
 
@@ -452,6 +474,13 @@ function App() {
       directory: currentNote.directory,
       updatedAtMs: currentNote.updatedAtMs,
     });
+  }
+
+  function noteLivesInFolder(note: NoteDocument | NoteSummary, folderPath: string) {
+    return (
+      note.directory === folderPath ||
+      note.relativePath.startsWith(`${folderPath}/`)
+    );
   }
 
   async function confirmDeletePendingNote() {
@@ -477,6 +506,40 @@ function App() {
       }
 
       setPendingDeleteNote(null);
+      setSaveState("idle");
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  async function confirmDeletePendingFolder() {
+    if (!settings.notebookPath || !pendingDeleteFolder) return;
+
+    try {
+      await deleteLibraryFolder(settings.notebookPath, pendingDeleteFolder.relativePath);
+      const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
+      const openNoteWasDeleted =
+        currentNote?.kind === "library" &&
+        noteLivesInFolder(currentNote, pendingDeleteFolder.relativePath);
+      const selectedNoteWasDeleted = selectedLibraryNoteId
+        ? notes.every((note) => note.id !== selectedLibraryNoteId)
+        : false;
+
+      setLibraryFolders(folders);
+      setLibraryNotes(notes);
+
+      if (selectedNoteWasDeleted) {
+        setSelectedLibraryNoteId(null);
+      }
+
+      if (openNoteWasDeleted) {
+        setCurrentNote(null);
+        setDraft("");
+        setScreen("library");
+      }
+
+      setPendingDeleteFolder(null);
       setSaveState("idle");
       setErrorMessage(null);
     } catch (error) {
@@ -727,6 +790,8 @@ function App() {
             libraryNotes={libraryNotes}
             onCreateFolder={() => openComposer("folder")}
             onCreateNote={() => openComposer("note")}
+            onCreateNoteInFolder={(directory) => void handleCreateNoteInFolder(directory)}
+            onDeleteFolder={setPendingDeleteFolder}
             onDeleteNote={setPendingDeleteNote}
             onSelectNote={handleLibrarySelectNote}
             selectedNoteId={selectedLibraryNoteId}
@@ -826,6 +891,26 @@ function App() {
               </button>
               <button className="primary-button danger-button" onClick={() => void confirmDeletePendingNote()} type="button">
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingDeleteFolder ? (
+        <div className="sheet-backdrop" onClick={() => setPendingDeleteFolder(null)} role="presentation">
+          <div className="composer-modal composer-modal-delete" onClick={(event) => event.stopPropagation()}>
+            <p className="empty-kicker">Delete folder</p>
+            <h2>Delete &quot;{pendingDeleteFolder.name}&quot;?</h2>
+            <p className="composer-helper">
+              This removes the folder and everything nested inside it, including notes, subfolders, and pasted images.
+            </p>
+            <div className="composer-actions">
+              <button className="secondary-button" onClick={() => setPendingDeleteFolder(null)} type="button">
+                Cancel
+              </button>
+              <button className="primary-button danger-button" onClick={() => void confirmDeletePendingFolder()} type="button">
+                Delete folder
               </button>
             </div>
           </div>
