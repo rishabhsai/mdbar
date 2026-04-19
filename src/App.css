@@ -516,222 +516,256 @@ code {
   50% { opacity: 0.3; }
 }
 
-/* ── Editor host (CM mounts directly here) ── */
+/* ── Tiptap editor host ── */
 
-.ink-editor-host {
+.tiptap-editor-host {
   flex: 1;
   display: flex;
-  min-width: 0;
+  flex-direction: column;
   min-height: 0;
-  width: 100%;
   overflow: hidden;
-  text-align: left;
 }
 
-.ink-editor-host.is-loading {
+.tiptap-editor-host.is-loading {
   opacity: 0.72;
+  pointer-events: none;
 }
 
-.ink-editor-host > .cm-editor {
+.tiptap-editor-host > .tiptap {
   flex: 1;
-  min-height: 0;
-  min-width: 0;
-  width: 100%;
-}
-
-.ink-editor-host .cm-scroller {
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
 }
 
-.ink-editor-host .cm-content {
-  min-width: 0;
-  max-width: 100%;
-  text-align: left;
+/* Scrollbar on the tiptap editor */
+.tiptap-editor-host > .tiptap {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
 }
 
-.ink-editor-host .cm-lineWrapping {
-  min-width: 0;
-  max-width: 100%;
-  word-break: break-word;
+.tiptap-editor-host > .tiptap:hover {
+  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
 }
 
-/* ── CodemMirror markdown presentation ── */
-
-.ink-editor-host .cm-line {
-  position: relative;
-  padding-bottom: 1px;
-  padding-right: 8px;
-  text-indent: 0;
+.tiptap-editor-host > .tiptap::-webkit-scrollbar {
+  width: 8px;
 }
 
-.ink-editor-host .cm-link,
-.ink-editor-host .cm-url {
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--ink) 18%, transparent);
-  text-underline-offset: 0.16em;
+.tiptap-editor-host > .tiptap::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.ink-editor-host .cm-code,
-.ink-editor-host .cm-codeblock {
-  font-size: 0.94em;
+.tiptap-editor-host > .tiptap::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 0%, transparent);
+  background-clip: padding-box;
 }
 
-.ink-editor-host .cm-line.cm-blockquote {
-  color: color-mix(in srgb, var(--ink) 72%, var(--muted));
+.tiptap-editor-host > .tiptap:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink) 20%, transparent);
+  background-clip: padding-box;
 }
 
-.ink-editor-host .cm-preview-heading {
+.tiptap-editor-host > .tiptap::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink) 38%, transparent);
+  background-clip: padding-box;
+}
+
+/* ── Tiptap content area ── */
+
+.tiptap-content {
+  padding: 16px 20px 40px;
+  outline: none;
+  color: var(--ink);
+  font-family: var(--editor-font-family, var(--sans));
+  font-size: var(--editor-font-size, 15px);
+  line-height: var(--editor-line-height, 1.65);
+  min-height: 100%;
+}
+
+.tiptap-content > * + * {
+  margin-top: 0.4em;
+}
+
+/* Headings */
+.tiptap-content h1,
+.tiptap-content h2,
+.tiptap-content h3,
+.tiptap-content h4,
+.tiptap-content h5,
+.tiptap-content h6 {
   font-family: var(--display);
   font-weight: 520;
   letter-spacing: -0.025em;
+  line-height: 1.3;
+  margin: 0.6em 0 0.2em;
+  color: var(--ink);
 }
 
-.ink-editor-host .cm-preview-heading-1 {
-  font-size: 1.42em;
-  line-height: 1.34;
-}
-
-.ink-editor-host .cm-preview-heading-2 {
-  font-size: 1.24em;
-  line-height: 1.38;
-}
-
-.ink-editor-host .cm-preview-heading-3 {
-  font-size: 1.14em;
-  line-height: 1.44;
-}
-
-.ink-editor-host .cm-preview-heading-4,
-.ink-editor-host .cm-preview-heading-5,
-.ink-editor-host .cm-preview-heading-6 {
+.tiptap-content h1 { font-size: 1.5em; }
+.tiptap-content h2 { font-size: 1.28em; }
+.tiptap-content h3 { font-size: 1.12em; }
+.tiptap-content h4,
+.tiptap-content h5,
+.tiptap-content h6 {
   font-size: 1em;
-  line-height: 1.5;
+  font-weight: 600;
 }
 
-.ink-editor-host .cm-preview-heading-1,
-.ink-editor-host .cm-preview-heading-2,
-.ink-editor-host .cm-preview-heading-3 {
-  padding-top: 0.18rem;
+/* Paragraphs */
+.tiptap-content p {
+  margin: 0;
 }
 
-.ink-editor-host .cm-preview-list-marker {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.tiptap-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
   color: var(--muted);
-  white-space: nowrap;
+  pointer-events: none;
+  height: 0;
 }
 
-.ink-editor-host .cm-preview-number-marker {
-  justify-content: flex-end;
-  padding-right: 0.2rem;
+/* Lists */
+.tiptap-content ul,
+.tiptap-content ol {
+  margin: 0.3em 0;
+  padding-left: 1.4em;
 }
 
-.ink-editor-host .cm-preview-list-line,
-.ink-editor-host .cm-preview-task-line {
-  min-height: 1.5rem;
+.tiptap-content li {
+  margin: 0.15em 0;
 }
 
-.ink-editor-host .cm-preview-task-marker {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.tiptap-content li > p {
+  margin: 0;
 }
 
-.ink-editor-host .cm-preview-task-toggle {
-  width: 0.92rem;
-  height: 0.92rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
-  border-radius: 0.28rem;
+/* Task lists */
+.tiptap-content ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-content ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0.15em 0;
+}
+
+.tiptap-content ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-top: 0.25em;
+}
+
+.tiptap-content ul[data-type="taskList"] li > label input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid color-mix(in srgb, var(--ink) 28%, transparent);
   background: transparent;
-  color: transparent;
+  appearance: none;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 10%, transparent);
-  transition: background 120ms ease, border-color 120ms ease;
+  position: relative;
+  vertical-align: middle;
 }
 
-.ink-editor-host .cm-preview-task-toggle:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ink) 14%, transparent);
-  outline-offset: 2px;
-}
-
-.ink-editor-host .cm-preview-task-toggle::after {
-  content: "";
-  width: 0.28rem;
-  height: 0.5rem;
-  border-right: 1.5px solid transparent;
-  border-bottom: 1.5px solid transparent;
-  transform: rotate(45deg) translate(-0.02rem, -0.02rem);
-}
-
-.ink-editor-host .cm-preview-task-toggle.is-checked {
+.tiptap-content ul[data-type="taskList"] li > label input[type="checkbox"]:checked {
+  background: color-mix(in srgb, var(--ink) 78%, var(--panel));
   border-color: color-mix(in srgb, var(--ink) 52%, transparent);
-  background: color-mix(in srgb, var(--ink) 82%, var(--panel));
 }
 
-.ink-editor-host .cm-preview-task-toggle.is-checked::after {
-  border-right-color: var(--panel);
-  border-bottom-color: var(--panel);
+.tiptap-content ul[data-type="taskList"] li > label input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border-right: 1.5px solid var(--panel);
+  border-bottom: 1.5px solid var(--panel);
+  transform: rotate(45deg);
 }
 
-.ink-editor-host .cm-preview-task-line-checked {
-  color: color-mix(in srgb, var(--ink) 62%, var(--muted));
+.tiptap-content ul[data-type="taskList"] li > div {
+  flex: 1;
+  min-width: 0;
 }
 
-.ink-editor-host .cm-line.cm-hidden-html-break-line {
-  min-height: 0.9em;
+.tiptap-content ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 40%, transparent);
 }
 
-.ink-editor-host .cm-preview-quote-line {
-  padding-left: 0.8rem;
-  border-left: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+/* Blockquote */
+.tiptap-content blockquote {
+  margin: 0.4em 0;
+  padding: 0 0 0 0.9em;
+  border-left: 2px solid color-mix(in srgb, var(--ink) 14%, transparent);
   color: color-mix(in srgb, var(--ink) 72%, var(--muted));
 }
 
-.ink-editor-host .cm-preview-divider-line {
-  display: flex;
-  align-items: center;
-  min-height: 1.2rem;
-}
-
-.ink-editor-host .cm-preview-divider {
-  width: 100%;
-  display: inline-block;
+/* Horizontal rule */
+.tiptap-content hr {
+  border: none;
   height: 1px;
+  margin: 1em 0;
   background: linear-gradient(
     90deg,
     color-mix(in srgb, var(--ink) 4%, transparent) 0%,
-    color-mix(in srgb, var(--ink) 18%, transparent) 18%,
-    color-mix(in srgb, var(--ink) 18%, transparent) 82%,
+    color-mix(in srgb, var(--ink) 16%, transparent) 20%,
+    color-mix(in srgb, var(--ink) 16%, transparent) 80%,
     color-mix(in srgb, var(--ink) 4%, transparent) 100%
   );
 }
 
-.ink-editor-host .cm-activeLine {
-  background: transparent;
+/* Code */
+.tiptap-content code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  padding: 0.15em 0.35em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
-.ink-editor-host .cm-selectionBackground,
-.ink-editor-host .cm-content ::selection {
+.tiptap-content pre {
+  margin: 0.5em 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  overflow-x: auto;
+}
+
+.tiptap-content pre code {
+  padding: 0;
+  background: none;
+  font-size: 0.9em;
+  line-height: 1.55;
+}
+
+/* Links */
+.tiptap-content a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--ink) 22%, transparent);
+  text-underline-offset: 0.16em;
+}
+
+/* Selection */
+.tiptap-content ::selection {
   background: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
-.ink-editor-host .cm-placeholder {
-  color: var(--muted);
+/* Strong / Em */
+.tiptap-content strong {
+  font-weight: 600;
 }
 
-.daily-editor-placeholder {
-  display: block;
-  max-width: 19rem;
-  color: var(--muted);
-  line-height: var(--editor-line-height, 1.65);
-  white-space: normal;
+.tiptap-content em {
+  font-style: italic;
 }
 
 /* ── Inline message ── */
