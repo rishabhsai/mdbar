@@ -453,18 +453,7 @@ code {
   white-space: nowrap;
 }
 
-/* ── Editor shell ── */
-
-.ink-editor-shell {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  overflow: hidden;
-}
-
-.ink-editor-shell.is-loading {
-  opacity: 0.72;
-}
+/* ── Editor host (CM mounts directly here) ── */
 
 .ink-editor-host {
   flex: 1;
@@ -473,12 +462,18 @@ code {
   min-height: 0;
   width: 100%;
   overflow: hidden;
+  text-align: left;
+}
+
+.ink-editor-host.is-loading {
+  opacity: 0.72;
 }
 
 .ink-editor-host > .cm-editor {
   flex: 1;
   min-height: 0;
   min-width: 0;
+  width: 100%;
 }
 
 .ink-editor-host .cm-scroller {
@@ -487,10 +482,16 @@ code {
   overscroll-behavior: contain;
 }
 
-.ink-editor-host .cm-content,
+.ink-editor-host .cm-content {
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+}
+
 .ink-editor-host .cm-lineWrapping {
   min-width: 0;
   max-width: 100%;
+  word-break: break-word;
 }
 
 /* ── CodemMirror markdown presentation ── */

@@ -86,6 +86,7 @@ const markdownHighlightStyle = HighlightStyle.define([
 const editorTheme = EditorView.theme({
   "&": {
     height: "100%",
+    width: "100%",
     backgroundColor: "transparent",
     color: "var(--ink)",
     fontFamily: "var(--editor-font-family, var(--sans))",
@@ -101,17 +102,20 @@ const editorTheme = EditorView.theme({
     whiteSpace: "pre-wrap",
     caretColor: "var(--ink)",
     lineHeight: "var(--editor-line-height, 1.65)",
+    textAlign: "left",
   },
   ".cm-line": {
     padding: "0",
     paddingBottom: "1px",
     paddingRight: "8px",
+    textAlign: "left",
   },
   ".cm-focused": {
     outline: "none",
   },
   ".cm-editor": {
     height: "100%",
+    width: "100%",
   },
   ".cm-placeholder": {
     color: "var(--muted)",
@@ -266,12 +270,10 @@ export function InkMarkdownEditor({
   return (
     <div
       ref={hostRef}
-      className={["ink-editor-shell", isLoading ? "is-loading" : "", className]
+      className={["ink-editor-host", isLoading ? "is-loading" : "", className]
         .filter(Boolean)
         .join(" ")}
       style={style}
-    >
-      <div className="ink-editor-host" />
-    </div>
+    />
   );
 }

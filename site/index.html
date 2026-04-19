@@ -2,139 +2,178 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <title>mdbar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mdbar — Menu bar markdown for macOS</title>
     <meta
       name="description"
-      content="A fast macOS menu bar markdown notebook with daily notes, plain files, and a live rendered editor."
+      content="A fast macOS menu bar markdown notebook. Plain files, live rendered editor, daily notes. Open source."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400&display=swap"
+      rel="stylesheet"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <header class="site-header">
-        <div class="wordmark">
-          <span class="wordmark-dot"></span>
-          <span>mdbar</span>
+    <!-- ── Nav ── -->
+    <nav class="site-nav">
+      <a href="/" class="nav-wordmark">mdbar</a>
+      <div class="nav-links">
+        <a href="https://github.com/rishabhsai/mdbar">GitHub</a>
+        <a
+          href="https://github.com/rishabhsai/mdbar/releases"
+          class="nav-cta"
+          >Download</a
+        >
+      </div>
+    </nav>
+
+    <!-- ── Hero ── -->
+    <section class="hero">
+      <p class="hero-badge">Menu bar app for macOS</p>
+      <h1 class="hero-title">
+        Your daily<br />
+        markdown<br />
+        notebook
+      </h1>
+      <p class="hero-sub">
+        Plain files. Live rendered editor. Always one shortcut&nbsp;away.
+      </p>
+      <div class="hero-actions">
+        <a
+          href="https://github.com/rishabhsai/mdbar/releases"
+          class="btn btn-primary"
+          >Download for Mac</a
+        >
+        <a href="https://github.com/rishabhsai/mdbar" class="btn btn-ghost"
+          >View source</a
+        >
+      </div>
+    </section>
+
+    <!-- ── App preview ── -->
+    <section class="preview">
+      <div class="preview-window">
+        <div class="preview-titlebar">
+          <div class="preview-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="preview-title">mdbar</span>
         </div>
-        <nav class="site-nav">
-          <a href="#story">Story</a>
-          <a href="#features">Features</a>
-          <a href="https://github.com/rishabhsai/mdbar">GitHub</a>
-        </nav>
-      </header>
-
-      <main>
-        <section class="hero" id="story">
-          <div class="hero-copy">
-            <p class="eyebrow">Menu bar markdown for macOS</p>
-            <h1>Open one calm panel. Write today down before it disappears.</h1>
-            <p class="lede">
-              <strong>mdbar</strong> keeps your notes as plain markdown files,
-              opens from the menu bar, and edits markdown as a live rendered
-              surface instead of a dead textarea.
-            </p>
-            <div class="hero-actions">
-              <a class="button primary" href="https://github.com/rishabhsai/mdbar">
-                Explore the repo
-              </a>
-              <a class="button secondary" href="#features">
-                See what it solves
-              </a>
+        <div class="preview-body">
+          <div class="preview-header-row">
+            <span class="preview-nav-icon">‹</span>
+            <span class="preview-nav-icon preview-nav-active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 4.5v2.2M17 4.5v2.2M5.5 8.2h13M6.3 6.5h11.4a.8.8 0 0 1 .8.8v10a1.2 1.2 0 0 1-1.2 1.2H6.7a1.2 1.2 0 0 1-1.2-1.2v-10a.8.8 0 0 1 .8-.8Z"/>
+              </svg>
+            </span>
+            <span class="preview-nav-icon">›</span>
+            <span class="preview-date">Saturday, April 19</span>
+            <span class="preview-nav-icon preview-nav-right">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"/>
+                <path d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"/>
+              </svg>
+            </span>
+            <span class="preview-nav-icon preview-nav-right">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="2.2" stroke-width="1.4"/>
+                <path d="M12 8.7a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Zm9 3.3-.08-.88-2.2-.62a7.35 7.35 0 0 0-.58-1.4l1.1-2-1.76-1.77-2 1.1a7.34 7.34 0 0 0-1.4-.58l-.62-2.2L12 3l-.88.08-.62 2.2c-.49.13-.96.32-1.4.58l-2-1.1-1.77 1.76 1.1 2c-.26.44-.45.91-.58 1.4l-2.2.62L3 12l.08.88 2.2.62c.13.49.32.96.58 1.4l-1.1 2 1.76 1.77 2-1.1c.44.26.91.45 1.4.58l.62 2.2L12 21l.88-.08.62-2.2c.49-.13.96-.32 1.4-.58l2 1.1 1.77-1.76-1.1-2c.26-.44.45-.91.58-1.4l2.2-.62L21 12Z"/>
+              </svg>
+            </span>
+          </div>
+          <div class="preview-editor">
+            <p class="pv-h1">ship mdbar</p>
+            <p class="pv-h3">afternoon</p>
+            <div class="pv-task">
+              <span class="pv-check pv-checked"></span>
+              <span>build the menu bar shell</span>
+            </div>
+            <div class="pv-task">
+              <span class="pv-check pv-checked"></span>
+              <span>tune fonts and dark mode</span>
+            </div>
+            <div class="pv-task">
+              <span class="pv-check"></span>
+              <span>landing page that feels real</span>
+            </div>
+            <div class="pv-task">
+              <span class="pv-check"></span>
+              <span class="pv-cursor">write release notes</span>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
 
-          <div class="mock-scene">
-            <div class="orb orb-one"></div>
-            <div class="orb orb-two"></div>
-            <div class="mock-window">
-              <div class="mock-window-head">
-                <div>
-                  <p class="mini-label">mdbar</p>
-                  <h2>Saturday, April 18</h2>
-                </div>
-                <div class="pill-row">
-                  <span class="pill">Today</span>
-                  <span class="pill muted">Saved</span>
-                </div>
-              </div>
-              <div class="mock-window-body">
-                <aside class="mock-sidebar">
-                  <div class="sidebar-block">
-                    <p class="mini-label">Daily</p>
-                    <button class="sidebar-chip active">Today</button>
-                    <button class="sidebar-chip">Tomorrow</button>
-                    <button class="sidebar-chip">April 22</button>
-                  </div>
-                  <div class="sidebar-block">
-                    <p class="mini-label">Notes</p>
-                    <button class="sidebar-note active">
-                      <span>product brief</span>
-                      <small>2m ago</small>
-                    </button>
-                    <button class="sidebar-note">
-                      <span>launch copy</span>
-                      <small>1h ago</small>
-                    </button>
-                  </div>
-                </aside>
-                <article class="mock-editor">
-                  <p class="mini-label">Live markdown surface</p>
-                  <h3># ship mdbar</h3>
-                  <p class="divider"></p>
-                  <p>### afternoon</p>
-                  <ul>
-                    <li><span class="check checked"></span> build the menu bar shell</li>
-                    <li><span class="check"></span> tune fonts and dark mode</li>
-                    <li><span class="check"></span> make the landing page feel like a real product</li>
-                  </ul>
-                </article>
-              </div>
-            </div>
-          </div>
-        </section>
+    <!-- ── Features ── -->
+    <section class="features">
+      <div class="feature-grid">
+        <article class="feature-card">
+          <h2>Plain<br />files</h2>
+          <p>Notes live as <code>.md</code> on disk. No database, no lock-in, no export ceremony.</p>
+        </article>
+        <article class="feature-card">
+          <h2>Live<br />rendering</h2>
+          <p>Headings, lists, and checkboxes render in place. Your cursor reveals the markdown.</p>
+        </article>
+        <article class="feature-card">
+          <h2>Daily<br />notes</h2>
+          <p>One file per day, auto-created. Navigate dates with arrows or the calendar picker.</p>
+        </article>
+        <article class="feature-card">
+          <h2>Menu bar<br />native</h2>
+          <p>Lives in the macOS menu bar. One global shortcut to open, one to close.</p>
+        </article>
+        <article class="feature-card">
+          <h2>Notes<br />library</h2>
+          <p>Organize notes into folders inside <code>notes/</code>. mdbar browses them recursively.</p>
+        </article>
+        <article class="feature-card">
+          <h2>Blazing<br />fast</h2>
+          <p>Tauri + Rust backend. Sub-second launch, instant autosave, tiny memory footprint.</p>
+        </article>
+      </div>
+    </section>
 
-        <section class="feature-grid" id="features">
-          <article>
-            <p class="eyebrow">Plain files</p>
-            <h2>Your notes stay readable without the app.</h2>
-            <p>
-              Daily notes live in a folder you choose. Regular notes are just
-              markdown files too. No account, no hidden database, no export
-              ceremony.
-            </p>
-          </article>
-          <article>
-            <p class="eyebrow">Hybrid editing</p>
-            <h2>Markdown stays markdown, but it doesn’t look raw.</h2>
-            <p>
-              Headings, lists, and checkboxes render in place while you type, so
-              the editor feels close to the final document instead of making you
-              bounce between edit and preview.
-            </p>
-          </article>
-          <article>
-            <p class="eyebrow">Built for muscle memory</p>
-            <h2>Open it with one shortcut and keep moving.</h2>
-            <p>
-              mdbar lives in the menu bar, respects dark mode, supports tab
-              indentation, and gives the small preferences that make daily use
-              feel personal.
-            </p>
-          </article>
-        </section>
+    <!-- ── Closing ── -->
+    <section class="closing">
+      <p class="closing-label">Open source</p>
+      <h2 class="closing-title">
+        Built in public with an MIT license.
+      </h2>
+      <a
+        href="https://github.com/rishabhsai/mdbar"
+        class="btn btn-primary"
+        >View the source</a
+      >
+    </section>
 
-        <section class="closing">
-          <p class="eyebrow">Open source</p>
-          <h2>Built in public, with an MIT license and a commit history worth reading.</h2>
-          <a class="button primary" href="https://github.com/rishabhsai/mdbar">
-            View the source
-          </a>
-        </section>
-      </main>
-    </div>
+    <footer class="site-footer">
+      <span>mdbar</span>
+      <span>Made on a Mac.</span>
+    </footer>
+
+    <script>
+      // Intersection Observer for scroll-triggered entrance animations
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("in-view");
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.15 },
+      );
+
+      document
+        .querySelectorAll(".feature-card, .preview-window, .closing")
+        .forEach((el) => observer.observe(el));
+    </script>
   </body>
 </html>
