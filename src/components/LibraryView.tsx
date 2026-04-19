@@ -7,6 +7,7 @@ type LibraryViewProps = {
   libraryNotes: NoteSummary[];
   onCreateFolder: () => void;
   onCreateNote: () => void;
+  onDeleteNote: (note: NoteSummary) => void;
   onSelectNote: (noteId: string) => void;
   selectedNoteId: string | null;
 };
@@ -195,15 +196,32 @@ function NewFolderGlyph() {
   );
 }
 
+function TrashGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path
+        d="M8.2 8.8v8.3M12 8.8v8.3M15.8 8.8v8.3M5.5 6.6h13M9.2 4.8h5.6M7.2 6.6l.5 11a1.5 1.5 0 0 0 1.5 1.4h5.6a1.5 1.5 0 0 0 1.5-1.4l.5-11"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.35"
+      />
+    </svg>
+  );
+}
+
 function FolderNode({
   depth,
   name,
+  onDeleteNote,
   tree,
   onSelectNote,
   selectedNoteId,
 }: {
   depth: number;
   name: string;
+  onDeleteNote: (note: NoteSummary) => void;
   tree: FolderTree;
   onSelectNote: (noteId: string) => void;
   selectedNoteId: string | null;
@@ -251,6 +269,7 @@ function FolderNode({
               depth={depth + 1}
               key={childName}
               name={childName}
+              onDeleteNote={onDeleteNote}
               onSelectNote={onSelectNote}
               selectedNoteId={selectedNoteId}
               tree={childTree}
@@ -258,21 +277,33 @@ function FolderNode({
           ))}
 
           {sortedNotes.map((note) => (
-            <button
-              className={`lib-note-item${selectedNoteId === note.id ? " is-active" : ""}`}
+            <div
+              className={`lib-note-row${selectedNoteId === note.id ? " is-active" : ""}`}
               key={note.id}
-              onClick={() => onSelectNote(note.id)}
               style={{ "--depth": depth + 1 } as CSSProperties}
-              type="button"
             >
-              <span className="lib-note-icon" aria-hidden="true">
-                <NoteGlyph />
-              </span>
-              <span className="lib-note-info">
-                <span className="lib-note-title">{note.title}</span>
-                <span className="lib-note-meta">{formatTimestamp(note.updatedAtMs)}</span>
-              </span>
-            </button>
+              <button
+                className={`lib-note-item${selectedNoteId === note.id ? " is-active" : ""}`}
+                onClick={() => onSelectNote(note.id)}
+                type="button"
+              >
+                <span className="lib-note-icon" aria-hidden="true">
+                  <NoteGlyph />
+                </span>
+                <span className="lib-note-info">
+                  <span className="lib-note-title">{note.title}</span>
+                  <span className="lib-note-meta">{formatTimestamp(note.updatedAtMs)}</span>
+                </span>
+              </button>
+              <button
+                aria-label={`Delete ${note.title}`}
+                className="lib-note-delete"
+                onClick={() => onDeleteNote(note)}
+                type="button"
+              >
+                <TrashGlyph />
+              </button>
+            </div>
           ))}
         </div>
       ) : null}
@@ -285,6 +316,7 @@ export function LibraryView({
   libraryNotes,
   onCreateFolder,
   onCreateNote,
+  onDeleteNote,
   onSelectNote,
   selectedNoteId,
 }: LibraryViewProps) {
@@ -335,6 +367,7 @@ export function LibraryView({
               depth={0}
               key={name}
               name={name}
+              onDeleteNote={onDeleteNote}
               onSelectNote={onSelectNote}
               selectedNoteId={selectedNoteId}
               tree={folderTree}
@@ -342,21 +375,33 @@ export function LibraryView({
           ))}
 
           {rootNotes.map((note) => (
-            <button
-              className={`lib-note-item${selectedNoteId === note.id ? " is-active" : ""}`}
+            <div
+              className={`lib-note-row${selectedNoteId === note.id ? " is-active" : ""}`}
               key={note.id}
-              onClick={() => onSelectNote(note.id)}
               style={{ "--depth": 0 } as CSSProperties}
-              type="button"
             >
-              <span className="lib-note-icon" aria-hidden="true">
-                <NoteGlyph />
-              </span>
-              <span className="lib-note-info">
-                <span className="lib-note-title">{note.title}</span>
-                <span className="lib-note-meta">{formatTimestamp(note.updatedAtMs)}</span>
-              </span>
-            </button>
+              <button
+                className={`lib-note-item${selectedNoteId === note.id ? " is-active" : ""}`}
+                onClick={() => onSelectNote(note.id)}
+                type="button"
+              >
+                <span className="lib-note-icon" aria-hidden="true">
+                  <NoteGlyph />
+                </span>
+                <span className="lib-note-info">
+                  <span className="lib-note-title">{note.title}</span>
+                  <span className="lib-note-meta">{formatTimestamp(note.updatedAtMs)}</span>
+                </span>
+              </button>
+              <button
+                aria-label={`Delete ${note.title}`}
+                className="lib-note-delete"
+                onClick={() => onDeleteNote(note)}
+                type="button"
+              >
+                <TrashGlyph />
+              </button>
+            </div>
           ))}
         </div>
       )}

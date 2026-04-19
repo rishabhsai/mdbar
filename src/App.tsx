@@ -1,4 +1,4 @@
-import { confirm, open } from "@tauri-apps/plugin-dialog";
+import { open } from "@tauri-apps/plugin-dialog";
 import {
   isRegistered,
   register,
@@ -82,6 +82,7 @@ function App() {
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerKind, setComposerKind] = useState<ComposerKind>("note");
   const [newItemName, setNewItemName] = useState("");
+  const [pendingDeleteNote, setPendingDeleteNote] = useState<NoteSummary | null>(null);
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
     resolveInitialSystemTheme,
   );
@@ -440,29 +441,42 @@ function App() {
     }
   }
 
-  async function handleDeleteCurrentNote() {
-    if (!settings.notebookPath || !currentNote || currentNote.kind !== "library") return;
+  function handleDeleteCurrentNote() {
+    if (!currentNote || currentNote.kind !== "library") return;
 
-    const confirmed = await confirm(
-      `Delete "${currentNote.title}" and its pasted images? This cannot be undone.`,
-      {
-        title: "Delete note",
-        kind: "warning",
-      },
-    );
+    setPendingDeleteNote({
+      id: currentNote.id,
+      title: currentNote.title,
+      filePath: currentNote.filePath,
+      relativePath: currentNote.relativePath,
+      directory: currentNote.directory,
+      updatedAtMs: currentNote.updatedAtMs,
+    });
+  }
 
-    if (!confirmed) return;
+  async function confirmDeletePendingNote() {
+    if (!settings.notebookPath || !pendingDeleteNote) return;
 
     try {
-      await deleteNote(currentNote.filePath);
+      await deleteNote(pendingDeleteNote.filePath);
       const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
+      const deletedWasOpen = currentNote?.filePath === pendingDeleteNote.filePath;
+      const deletedWasSelected = selectedLibraryNoteId === pendingDeleteNote.id;
 
       setLibraryFolders(folders);
       setLibraryNotes(notes);
-      setSelectedLibraryNoteId(null);
-      setCurrentNote(null);
-      setDraft("");
-      setScreen("library");
+
+      if (deletedWasSelected) {
+        setSelectedLibraryNoteId(null);
+      }
+
+      if (deletedWasOpen) {
+        setCurrentNote(null);
+        setDraft("");
+        setScreen("library");
+      }
+
+      setPendingDeleteNote(null);
       setSaveState("idle");
       setErrorMessage(null);
     } catch (error) {
@@ -713,6 +727,7 @@ function App() {
             libraryNotes={libraryNotes}
             onCreateFolder={() => openComposer("folder")}
             onCreateNote={() => openComposer("note")}
+            onDeleteNote={setPendingDeleteNote}
             onSelectNote={handleLibrarySelectNote}
             selectedNoteId={selectedLibraryNoteId}
           />
@@ -791,6 +806,26 @@ function App() {
               </button>
               <button className="primary-button" onClick={handleComposerSubmit} type="button">
                 Create
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingDeleteNote ? (
+        <div className="sheet-backdrop" onClick={() => setPendingDeleteNote(null)} role="presentation">
+          <div className="composer-modal composer-modal-delete" onClick={(event) => event.stopPropagation()}>
+            <p className="empty-kicker">Delete note</p>
+            <h2>Delete &quot;{pendingDeleteNote.title}&quot;?</h2>
+            <p className="composer-helper">
+              This removes the markdown file and any pasted images stored next to it. You can&apos;t undo this.
+            </p>
+            <div className="composer-actions">
+              <button className="secondary-button" onClick={() => setPendingDeleteNote(null)} type="button">
+                Cancel
+              </button>
+              <button className="primary-button danger-button" onClick={() => void confirmDeletePendingNote()} type="button">
+                Delete
               </button>
             </div>
           </div>

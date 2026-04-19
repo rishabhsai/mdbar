@@ -429,13 +429,24 @@ code {
 
 /* ── Note item ── */
 
+.lib-note-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: calc(10px + var(--depth, 0) * 16px);
+}
+
+.lib-note-row.is-active {
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent-soft) 78%, var(--panel) 22%);
+}
+
 .lib-note-item {
   width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 11px;
-  padding-left: calc(10px + var(--depth, 0) * 16px);
   border: none;
   border-radius: 12px;
   background: transparent;
@@ -449,7 +460,7 @@ code {
 }
 
 .lib-note-item.is-active {
-  background: color-mix(in srgb, var(--accent-soft) 78%, var(--panel) 22%);
+  background: transparent;
 }
 
 .lib-note-icon {
@@ -486,6 +497,40 @@ code {
   flex: 0 0 auto;
   color: var(--muted);
   font-size: 10px;
+}
+
+.lib-note-delete {
+  opacity: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  transition:
+    opacity 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.lib-note-delete svg {
+  width: 13px;
+  height: 13px;
+}
+
+.lib-note-row:hover .lib-note-delete,
+.lib-note-row.is-active .lib-note-delete,
+.lib-note-delete:focus-visible {
+  opacity: 1;
+}
+
+.lib-note-delete:hover {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
 }
 
 /* ── Shortcut recorder ── */
@@ -903,6 +948,16 @@ code {
   background: color-mix(in srgb, var(--accent-strong) 88%, white 12%);
 }
 
+.danger-button {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--danger) 84%, var(--panel) 16%);
+  color: #fff7f4;
+}
+
+.danger-button:hover {
+  background: color-mix(in srgb, var(--danger) 92%, var(--panel) 8%);
+}
+
 .toolbar-button:active,
 .secondary-button:active,
 .ghost-button:active,
@@ -1048,6 +1103,10 @@ code {
   background: color-mix(in srgb, var(--panel) 96%, white 4%);
   box-shadow: var(--shadow);
   transform: translateX(-50%);
+}
+
+.composer-modal-delete {
+  width: min(calc(100vw - 28px), 408px);
 }
 
 .composer-modal h2 {
