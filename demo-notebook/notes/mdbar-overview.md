@@ -1,80 +1,42 @@
 # mdbar
 
-> A fast menu bar markdown notebook for macOS, built around plain files on disk.
+> A simple menu bar markdown notebook for macOS.
 
 ---
 
-## Why it exists
+## What it is
 
-mdbar is designed for one simple habit:
+mdbar gives you one small place to keep:
 
-- open instantly from the menu bar
-- land in today's note
-- type without context switching
-- keep everything as normal `.md` files
+- daily notes
+- quick ideas
+- simple project notes
 
-## What makes it different
+### A few nice things
 
-- **Menu bar first**: mdbar opens like a utility, not a full desktop app.
-- **Plain files**: every note lives in your own folder structure.
-- **Daily flow**: date-based notes are created automatically in `daily/`.
-- **Real notes library**: side notes live in `notes/` and support nested folders.
-- **Markdown that feels alive**: headings, lists, quotes, code blocks, links, images, and checklists render in place.
+- plain markdown files
+- fast open from the menu bar
+- clean writing surface
+- folders for side notes
 
-## A good setup
+### Tiny checklist
 
-1. Pick one notebook folder.
-2. Let mdbar handle `daily/`.
-3. Organize everything else inside `notes/`.
-4. Open it with a shortcut whenever something crosses your mind.
+- [x] open fast
+- [x] write today’s note
+- [x] keep everything in `.md`
+- [ ] ship it
 
-## Example use cases
-
-- planning the day
-- writing project notes
-- keeping lightweight docs
-- drafting ideas before moving them elsewhere
-
-## Current product checklist
-
-- [x] Menu bar app shell
-- [x] Daily notes
-- [x] Notes library with folders
-- [x] Dark mode
-- [x] Font controls
-- [x] Global shortcut
-- [x] Autosave
-- [ ] Ship the first public release
-
-## Notes format
-
-### Nested organization
-
-- Inbox
-- Projects
-  - mdbar
-  - client work
-- Ideas
-- Writing
-
-### Tiny snippet
+### Small code block
 
 ```bash
 npm install
 npm run tauri dev
 ```
 
-### Useful links
+### Link
 
-- GitHub: [rishabhsai/mdbar](https://github.com/rishabhsai/mdbar)
-- Releases: [download builds](https://github.com/rishabhsai/mdbar/releases)
+[GitHub repo](https://github.com/rishabhsai/mdbar)
 
-## Positioning
+### Closing note
 
-mdbar sits somewhere between:
-
-- a scratchpad
-- a daily note app
-- a lightweight markdown notebook
-
-It should feel fast, quiet, and always close at hand.
+Quiet, fast, and close at hand.
