@@ -179,115 +179,6 @@ code {
   align-items: center;
 }
 
-/* ── Split button (notes) ── */
-
-.header-split-button {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 1px;
-  border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  background: transparent;
-  transition:
-    background 140ms ease,
-    border-color 140ms ease;
-}
-
-.header-split-button.active,
-.header-split-button:hover:not(.disabled) {
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--ink) 10%, transparent);
-}
-
-.header-split-button.disabled {
-  opacity: 0.35;
-}
-
-.header-split-button-primary,
-.header-split-button-toggle {
-  border: none;
-  background: transparent;
-  color: var(--ink);
-}
-
-.header-split-button-primary {
-  width: 30px;
-  height: 26px;
-  padding: 0;
-  border-radius: 999px;
-}
-
-.header-split-button-toggle {
-  position: relative;
-  width: 22px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-}
-
-.header-split-button-toggle::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 1px;
-  background: var(--panel-border);
-}
-
-.header-split-button-toggle svg {
-  width: 11px;
-  height: 11px;
-  opacity: 0.8;
-}
-
-.header-split-button-mark {
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-split-button-mark svg {
-  width: 15px;
-  height: 15px;
-}
-
-/* ── Dropdowns ── */
-
-.header-menu-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 8;
-  min-width: 174px;
-  padding: 6px;
-  border: 1px solid var(--panel-border);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--panel) 98%, white 2%);
-  box-shadow: 0 18px 34px rgba(24, 24, 24, 0.14);
-  backdrop-filter: blur(18px);
-}
-
-.header-menu-item {
-  width: 100%;
-  padding: 8px 10px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--ink);
-  font-size: 12px;
-  text-align: left;
-}
-
-.header-menu-item:hover {
-  background: var(--accent-soft);
-}
-
 /* ── Panel body ── */
 
 .panel-body {
@@ -300,157 +191,329 @@ code {
 
 /* ── Scrollbar (auto-hiding, thin, translucent) ── */
 
-.note-picker-popover,
+.library-view,
 .ink-editor-host .cm-scroller,
 .settings-view {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
 }
 
-.note-picker-popover:hover,
+.library-view:hover,
 .ink-editor-host .cm-scroller:hover,
 .settings-view:hover {
   scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
 }
 
-.note-picker-popover::-webkit-scrollbar,
+.library-view::-webkit-scrollbar,
 .ink-editor-host .cm-scroller::-webkit-scrollbar,
 .settings-view::-webkit-scrollbar {
   width: 8px;
 }
 
-.note-picker-popover::-webkit-scrollbar-track,
+.library-view::-webkit-scrollbar-track,
 .ink-editor-host .cm-scroller::-webkit-scrollbar-track,
 .settings-view::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.note-picker-popover::-webkit-scrollbar-thumb,
+.library-view::-webkit-scrollbar-thumb,
 .ink-editor-host .cm-scroller::-webkit-scrollbar-thumb,
 .settings-view::-webkit-scrollbar-thumb {
   border: 2px solid transparent;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ink) 0%, transparent);
   background-clip: padding-box;
-  transition: background 200ms ease;
 }
 
-.note-picker-popover:hover::-webkit-scrollbar-thumb,
+.library-view:hover::-webkit-scrollbar-thumb,
 .ink-editor-host .cm-scroller:hover::-webkit-scrollbar-thumb,
 .settings-view:hover::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--ink) 20%, transparent);
   background-clip: padding-box;
 }
 
-.note-picker-popover::-webkit-scrollbar-thumb:hover,
+.library-view::-webkit-scrollbar-thumb:hover,
 .ink-editor-host .cm-scroller::-webkit-scrollbar-thumb:hover,
 .settings-view::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--ink) 38%, transparent);
   background-clip: padding-box;
 }
 
-/* ── Note picker popover ── */
+/* ── Library view ── */
 
-.note-picker-popover {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  left: auto;
-  width: 286px;
-  z-index: 10;
-  display: grid;
-  gap: 8px;
-  max-height: 320px;
-  padding: 10px;
-  overflow: auto;
-  border: 1px solid var(--panel-border);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--panel) 96%, black 4%);
-  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(18px);
-}
-
-.note-picker-popover-copy {
-  display: grid;
-  gap: 4px;
-  padding: 2px 4px 0;
-}
-
-.note-picker-popover-copy code {
-  font-size: 0.92em;
-}
-
-.note-picker-popover-actions {
+.library-view {
   display: flex;
-  gap: 8px;
-}
-
-.note-picker-popover-actions .toolbar-button {
   flex: 1;
-  min-height: 32px;
-  padding: 0 11px;
-  border-radius: 11px;
-  border-color: color-mix(in srgb, var(--panel-border) 88%, transparent);
-  background: color-mix(in srgb, var(--panel) 88%, black 12%);
-  font-size: 11px;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
 }
 
-.note-picker-empty {
-  margin: 0;
-  padding: 10px 8px 4px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.note-picker-item {
-  width: 100%;
-  display: grid;
-  gap: 3px;
-  padding: 11px 12px;
-  border: 1px solid color-mix(in srgb, var(--panel-border) 70%, transparent);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--panel) 88%, black 12%);
-  color: var(--ink);
-  text-align: left;
-}
-
-.note-picker-item:hover,
-.note-picker-item.is-active {
-  background: color-mix(in srgb, var(--accent-soft) 68%, var(--panel) 32%);
-  border-color: color-mix(in srgb, var(--ink) 14%, transparent);
-}
-
-.note-picker-item-row {
+.lib-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.lib-header-row {
+  display: flex;
+  align-items: baseline;
   gap: 8px;
 }
 
-.note-picker-item-icon {
-  width: 14px;
-  flex: 0 0 14px;
-  color: var(--muted);
+.lib-header-label {
   font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lib-header-count {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lib-header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.lib-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.lib-action-button:hover {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.lib-tree {
+  padding: 6px;
+}
+
+.lib-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 40px 20px;
   text-align: center;
 }
 
-.note-picker-item-title {
-  display: block;
-  overflow: hidden;
+.lib-empty-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+.lib-empty-copy {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Folder node ── */
+
+.lib-folder {
+  border-radius: 10px;
+}
+
+.lib-folder-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  padding-left: calc(10px + var(--depth, 0) * 16px);
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
   font-size: 12px;
   font-weight: 600;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.lib-folder-toggle:hover {
+  background: var(--accent-soft);
+}
+
+.lib-folder-chevron {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+  transform: rotate(0deg);
+  transition: transform 140ms ease;
+}
+
+.lib-folder-toggle.is-open .lib-folder-chevron {
+  transform: rotate(90deg);
+}
+
+.lib-folder-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.lib-folder-name {
+  flex: 1;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.note-picker-item-meta,
-.sheet-subcopy {
-  display: block;
-  overflow: hidden;
+.lib-folder-count {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.lib-folder-children {
+  margin: 0;
+}
+
+/* ── Note item ── */
+
+.lib-note-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  padding-left: calc(10px + var(--depth, 0) * 16px);
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.lib-note-item:hover {
+  background: var(--accent-soft);
+}
+
+.lib-note-item.is-active {
+  background: color-mix(in srgb, var(--accent-soft) 78%, var(--panel) 22%);
+}
+
+.lib-note-icon {
+  font-size: 13px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.lib-note-info {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.lib-note-title {
+  flex: 1;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lib-note-meta {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+/* ── Shortcut recorder ── */
+
+.shortcut-recorder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shortcut-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--panel) 92%, white 8%);
+}
+
+.shortcut-keys {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.shortcut-raw {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shortcut-record-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.shortcut-record-button:hover {
+  background: var(--accent-soft);
+}
+
+.shortcut-record-button.is-recording {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  color: var(--danger);
+}
+
+.shortcut-record-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--danger);
+  animation: pulse-dot 1s ease infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
 /* ── Editor host (CM mounts directly here) ── */

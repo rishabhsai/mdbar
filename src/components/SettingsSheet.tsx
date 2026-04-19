@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppSettings, EditorFont, ThemePreference } from "../lib/types";
 
 type SettingsViewProps = {
@@ -40,6 +41,72 @@ const fontOptions: Array<{
   },
 ];
 
+/* ── Shortcut recorder helpers ── */
+
+const MODIFIER_KEYS = new Set([
+  "Meta",
+  "Control",
+  "Alt",
+  "Shift",
+]);
+
+function keyEventToAccelerator(event: KeyboardEvent): string | null {
+  if (MODIFIER_KEYS.has(event.key)) {
+    return null; // only modifiers pressed, wait for a real key
+  }
+
+  const parts: string[] = [];
+
+  if (event.metaKey || event.ctrlKey) {
+    parts.push("CommandOrControl");
+  }
+
+  if (event.altKey) {
+    parts.push("Alt");
+  }
+
+  if (event.shiftKey) {
+    parts.push("Shift");
+  }
+
+  // Normalize key name
+  let key = event.key;
+
+  if (key.length === 1) {
+    key = key.toUpperCase();
+  } else {
+    // Map some common keys to Tauri accelerator names
+    const keyMap: Record<string, string> = {
+      ArrowUp: "Up",
+      ArrowDown: "Down",
+      ArrowLeft: "Left",
+      ArrowRight: "Right",
+      " ": "Space",
+      Escape: "Escape",
+      Enter: "Enter",
+      Backspace: "Backspace",
+      Delete: "Delete",
+      Tab: "Tab",
+    };
+
+    key = keyMap[key] ?? key;
+  }
+
+  parts.push(key);
+
+  return parts.join("+");
+}
+
+function formatAcceleratorForDisplay(accelerator: string): string {
+  return accelerator
+    .replace(/CommandOrControl/g, "⌘")
+    .replace(/Shift/g, "⇧")
+    .replace(/Alt/g, "⌥")
+    .replace(/\+/g, " ");
+}
+
+/* ── Component ── */
+
 export function SettingsView({
   onChange,
   onChooseFolder,
@@ -47,6 +114,41 @@ export function SettingsView({
   settings,
   shortcutStatus,
 }: SettingsViewProps) {
+  const [isRecording, setIsRecording] = useState(false);
+  const recorderRef = useRef<HTMLButtonElement | null>(null);
+
+  const handleStartRecording = useCallback(() => {
+    setIsRecording(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isRecording) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      // Escape cancels recording
+      if (event.key === "Escape") {
+        setIsRecording(false);
+        return;
+      }
+
+      const accelerator = keyEventToAccelerator(event);
+
+      if (accelerator) {
+        onChange({ shortcut: accelerator });
+        setIsRecording(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, [isRecording, onChange]);
+
   return (
     <section className="settings-view" aria-label="Settings">
       <div className="settings-panel">
@@ -163,35 +265,42 @@ export function SettingsView({
           </div>
         </details>
 
-        <details className="settings-subsection">
-          <summary className="settings-subsection-trigger">
-            <span className="settings-label">Shortcut</span>
-            <span className="settings-subsection-chevron" aria-hidden="true">
-              ›
-            </span>
-          </summary>
-          <div className="settings-subsection-content">
-            <label className="settings-sublabel" htmlFor="shortcut">
-              Global shortcut
-            </label>
-            <input
-              id="shortcut"
-              onChange={(event) =>
-                onChange({ shortcut: event.currentTarget.value })
-              }
-              placeholder="CommandOrControl+Shift+M"
-              type="text"
-              value={settings.shortcut}
-            />
-            <p className="settings-hint">
-              Uses Tauri accelerator syntax like{" "}
-              <code>CommandOrControl+Shift+M</code>.
+        <div className="settings-section" aria-label="Shortcut">
+          <div className="settings-section-header">
+            <span className="settings-label">Global shortcut</span>
+          </div>
+          <div className="settings-section-body">
+            <p className="settings-hint" style={{ margin: "0 0 10px" }}>
+              Press the button, then type the key combo you want.
             </p>
+            <div className="shortcut-recorder">
+              <div className="shortcut-display">
+                <span className="shortcut-keys">
+                  {formatAcceleratorForDisplay(settings.shortcut)}
+                </span>
+                <span className="shortcut-raw">{settings.shortcut}</span>
+              </div>
+              <button
+                ref={recorderRef}
+                className={`shortcut-record-button ${isRecording ? "is-recording" : ""}`}
+                onClick={handleStartRecording}
+                type="button"
+              >
+                {isRecording ? (
+                  <>
+                    <span className="shortcut-record-dot" />
+                    Press keys…
+                  </>
+                ) : (
+                  "Record"
+                )}
+              </button>
+            </div>
             {shortcutStatus ? (
               <p className="field-status">{shortcutStatus}</p>
             ) : null}
           </div>
-        </details>
+        </div>
 
         <details className="settings-subsection">
           <summary className="settings-subsection-trigger">
@@ -201,11 +310,11 @@ export function SettingsView({
             </span>
           </summary>
           <div className="settings-subsection-content">
-            <p className="settings-hint">
-              mdbar is a tiny menu bar notebook for one single habit: keep a
+            <p className="settings-hint" style={{ margin: 0 }}>
+              mdbar is a tiny menu bar notebook for one simple habit: keep a
               plain markdown note for each day.
             </p>
-            <p className="settings-hint">
+            <p className="settings-hint" style={{ margin: 0 }}>
               Everything saves automatically to normal <code>.md</code> files,
               so your notes stay easy to browse in Finder and edit anywhere.
             </p>
@@ -223,7 +332,7 @@ export function SettingsView({
               </span>
               <span className="settings-shortcut">
                 <kbd>←</kbd>
-                <span>Previous day</span>
+                <span>Prev day</span>
               </span>
               <span className="settings-shortcut">
                 <kbd>→</kbd>
