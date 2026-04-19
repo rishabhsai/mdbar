@@ -603,6 +603,18 @@ code {
   font-size: 0.94em;
 }
 
+.ink-editor-host .cm-preview-code-line {
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--accent-soft) 56%, transparent);
+  color: color-mix(in srgb, var(--ink) 94%, transparent);
+  font-family: var(--mono);
+  font-size: 0.93em;
+}
+
+.ink-editor-host .cm-line.cm-hidden-code-fence-line {
+  display: none;
+}
+
 .ink-editor-host .cm-line.cm-blockquote {
   color: color-mix(in srgb, var(--ink) 72%, var(--muted));
 }

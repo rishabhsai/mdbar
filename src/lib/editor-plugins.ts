@@ -166,13 +166,69 @@ const hiddenInlineMark = Decoration.replace({});
 const hiddenHtmlBreak = Decoration.replace({});
 
 const hiddenHtmlBreakLine = getLineClassDecoration("cm-hidden-html-break-line");
+const hiddenCodeFenceLine = getLineClassDecoration("cm-hidden-code-fence-line");
+const previewCodeLine = getLineClassDecoration("cm-preview-code-line");
 const previewDividerLine = getLineClassDecoration("cm-preview-divider-line");
 const previewQuoteLine = getLineClassDecoration("cm-preview-quote-line");
+
+function collectCodeBlockLines(view: EditorView, activeLines: Set<number>) {
+  const codeBlockLines = new Set<number>();
+  const hiddenFenceLines = new Set<number>();
+  const processedBlocks = new Set<string>();
+
+  for (const visibleRange of view.visibleRanges) {
+    syntaxTree(view.state).iterate({
+      from: visibleRange.from,
+      to: visibleRange.to,
+      enter: (node) => {
+        if (node.name !== "FencedCode") {
+          return;
+        }
+
+        const blockKey = `${node.from}:${node.to}`;
+
+        if (processedBlocks.has(blockKey)) {
+          return false;
+        }
+
+        processedBlocks.add(blockKey);
+
+        const startLineNumber = view.state.doc.lineAt(node.from).number;
+        const endLineNumber = view.state.doc.lineAt(Math.max(node.from, node.to - 1)).number;
+
+        for (
+          let lineNumber = startLineNumber;
+          lineNumber <= endLineNumber;
+          lineNumber += 1
+        ) {
+          codeBlockLines.add(lineNumber);
+        }
+
+        if (!activeLines.has(startLineNumber)) {
+          hiddenFenceLines.add(startLineNumber);
+        }
+
+        if (!activeLines.has(endLineNumber)) {
+          hiddenFenceLines.add(endLineNumber);
+        }
+
+        return false;
+      },
+    });
+  }
+
+  return {
+    codeBlockLines,
+    hiddenFenceLines,
+  };
+}
 
 function buildLineDecorations(
   builder: RangeSetBuilder<Decoration>,
   view: EditorView,
   activeLines: Set<number>,
+  codeBlockLines: Set<number>,
+  hiddenFenceLines: Set<number>,
 ) {
   for (const visibleRange of view.visibleRanges) {
     let position = visibleRange.from;
@@ -180,6 +236,19 @@ function buildLineDecorations(
     while (position <= visibleRange.to) {
       const line = view.state.doc.lineAt(position);
       const isActiveLine = activeLines.has(line.number);
+
+      if (hiddenFenceLines.has(line.number)) {
+        builder.add(line.from, line.from, hiddenCodeFenceLine);
+        builder.add(line.from, line.to, hiddenStructuralMark);
+        position = line.to + 1;
+        continue;
+      }
+
+      if (codeBlockLines.has(line.number)) {
+        builder.add(line.from, line.from, previewCodeLine);
+        position = line.to + 1;
+        continue;
+      }
 
       if (/^\s*<\/?br\s*\/?>\s*$/i.test(line.text)) {
         if (!isActiveLine) {
@@ -328,8 +397,9 @@ function buildInlineDecorations(
 function buildMarkdownPresentationDecorations(view: EditorView): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
   const activeLines = getActiveLineNumbers(view);
+  const { codeBlockLines, hiddenFenceLines } = collectCodeBlockLines(view, activeLines);
 
-  buildLineDecorations(builder, view, activeLines);
+  buildLineDecorations(builder, view, activeLines, codeBlockLines, hiddenFenceLines);
   buildInlineDecorations(builder, view, activeLines);
 
   return builder.finish();

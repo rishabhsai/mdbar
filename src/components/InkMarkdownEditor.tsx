@@ -1,6 +1,15 @@
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import {
+  HighlightStyle,
+  indentUnit,
+  syntaxHighlighting,
+} from "@codemirror/language";
 import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import {
   EditorView,
@@ -14,6 +23,8 @@ import {
   type CSSProperties,
   type MutableRefObject,
 } from "react";
+
+import { markdownPresentationExtension } from "../lib/editor-plugins";
 
 type InkMarkdownEditorProps = {
   className?: string;
@@ -140,10 +151,12 @@ function buildExtensions(
   onChangeRef: MutableRefObject<(value: string) => void>,
 ): Extension[] {
   return [
-    keymap.of([...defaultKeymap, ...historyKeymap]),
+    keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
     history(),
+    indentUnit.of("  "),
     markdown({ base: markdownLanguage }),
     EditorView.lineWrapping,
+    markdownPresentationExtension,
     syntaxHighlighting(markdownHighlightStyle),
     editorTheme,
     EditorView.contentAttributes.of({
