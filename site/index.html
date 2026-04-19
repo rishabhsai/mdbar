@@ -148,31 +148,6 @@ npm run tauri dev
       </div>
     </section>
 
-    <section class="performance">
-      <div class="performance-copy">
-        <p class="closing-label">Performance</p>
-        <h2 class="performance-title">Built to stay lightweight in the menu bar.</h2>
-      </div>
-      <div class="performance-grid">
-        <a href="https://imgur.com/DJ2pN4i" class="performance-card">
-          <img
-            src="https://i.imgur.com/DJ2pN4i.png"
-            alt="mdbar CPU usage in Activity Monitor"
-            class="performance-image"
-          />
-          <span class="performance-label">CPU usage</span>
-        </a>
-        <a href="https://imgur.com/NByPVNy" class="performance-card">
-          <img
-            src="https://i.imgur.com/NByPVNy.png"
-            alt="mdbar memory usage in Activity Monitor"
-            class="performance-image"
-          />
-          <span class="performance-label">Memory usage</span>
-        </a>
-      </div>
-    </section>
-
     <section class="features" id="features">
       <div class="feature-grid">
         <article class="feature-card">
@@ -221,11 +196,28 @@ npm run tauri dev
       </div>
     </section>
 
-    <section class="site-shot site-shot-last">
-      <div class="performance-copy">
-        <p class="closing-label">Screenshot</p>
-        <h2 class="performance-title">mdbar in its actual menu bar panel.</h2>
+    <section class="performance performance-last">
+      <div class="performance-grid">
+        <a href="https://imgur.com/DJ2pN4i" class="performance-card">
+          <img
+            src="https://i.imgur.com/DJ2pN4i.png"
+            alt="mdbar CPU usage in Activity Monitor"
+            class="performance-image"
+          />
+          <span class="performance-label">CPU usage</span>
+        </a>
+        <a href="https://imgur.com/NByPVNy" class="performance-card">
+          <img
+            src="https://i.imgur.com/NByPVNy.png"
+            alt="mdbar memory usage in Activity Monitor"
+            class="performance-image"
+          />
+          <span class="performance-label">Memory usage</span>
+        </a>
       </div>
+    </section>
+
+    <section class="site-shot site-shot-last">
       <a href="https://imgur.com/bRB0KrG" class="site-shot-link">
         <img
           src="https://i.imgur.com/bRB0KrG.png"
@@ -240,30 +232,46 @@ npm run tauri dev
       <span><a href="https://github.com/rishabhsai/mdbar">GitHub</a></span>
       <span><a href="https://github.com/rishabhsai/mdbar/releases">Releases</a></span>
       <span><a href="https://daily.raz.lol/">Inspired by Daily</a></span>
-      <span>Made on a Mac.</span>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
-    <script>
+    <script type="module">
+      import { Editor } from "https://esm.sh/@tiptap/core@3.22.4";
+      import StarterKit from "https://esm.sh/@tiptap/starter-kit@3.22.4";
+      import TaskList from "https://esm.sh/@tiptap/extension-task-list@3.22.4";
+      import TaskItem from "https://esm.sh/@tiptap/extension-task-item@3.22.4";
+      import { Markdown } from "https://esm.sh/tiptap-markdown@0.9.0";
+
       const previewInput = document.querySelector("#preview-input");
       const previewRendered = document.querySelector("#preview-rendered");
+      let previewEditor = null;
 
       function renderPreview() {
-        if (!previewInput || !previewRendered || !window.marked || !window.DOMPurify) {
+        if (!previewInput || !previewRendered || !previewEditor) {
           return;
         }
 
-        const raw = previewInput.value;
-        const html = window.marked.parse(raw, {
-          breaks: true,
-          gfm: true,
-        });
-
-        previewRendered.innerHTML = window.DOMPurify.sanitize(html);
+        previewEditor.commands.setContent(previewInput.value);
       }
 
       if (previewInput) {
+        previewEditor = new Editor({
+          element: previewRendered,
+          editable: false,
+          extensions: [
+            StarterKit.configure({
+              heading: { levels: [1, 2, 3, 4, 5, 6] },
+            }),
+            TaskList,
+            TaskItem.configure({ nested: true }),
+            Markdown.configure({
+              html: false,
+              transformCopiedText: false,
+              transformPastedText: false,
+            }),
+          ],
+          content: previewInput.value,
+        });
+
         previewInput.addEventListener("input", renderPreview);
         renderPreview();
       }

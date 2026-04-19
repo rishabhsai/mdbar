@@ -372,59 +372,70 @@ code {
   font-family: "DM Sans", "Helvetica Neue", sans-serif;
 }
 
-.preview-rendered > *:first-child {
+.preview-rendered .ProseMirror {
+  min-height: 100%;
+  outline: none;
+  color: #f0ece4;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.preview-rendered .ProseMirror > *:first-child {
   margin-top: 0;
 }
 
-.preview-rendered h1,
-.preview-rendered h2,
-.preview-rendered h3 {
+.preview-rendered .ProseMirror h1,
+.preview-rendered .ProseMirror h2,
+.preview-rendered .ProseMirror h3,
+.preview-rendered .ProseMirror h4,
+.preview-rendered .ProseMirror h5,
+.preview-rendered .ProseMirror h6 {
   font-family: "Newsreader", Georgia, serif;
   color: #f0ece4;
   letter-spacing: -0.03em;
 }
 
-.preview-rendered h1 {
+.preview-rendered .ProseMirror h1 {
   font-size: 28px;
   margin: 0 0 10px;
 }
 
-.preview-rendered h2 {
+.preview-rendered .ProseMirror h2 {
   font-size: 22px;
   margin: 18px 0 8px;
 }
 
-.preview-rendered h3 {
+.preview-rendered .ProseMirror h3 {
   font-size: 18px;
   margin: 16px 0 8px;
 }
 
-.preview-rendered p,
-.preview-rendered li {
+.preview-rendered .ProseMirror p,
+.preview-rendered .ProseMirror li {
   color: rgba(232, 227, 219, 0.76);
 }
 
-.preview-rendered ul,
-.preview-rendered ol {
+.preview-rendered .ProseMirror ul,
+.preview-rendered .ProseMirror ol {
   padding-left: 1.2rem;
   margin: 10px 0;
 }
 
-.preview-rendered blockquote {
+.preview-rendered .ProseMirror blockquote {
   margin: 12px 0;
   padding-left: 14px;
   border-left: 2px solid rgba(255, 255, 255, 0.14);
   color: rgba(232, 227, 219, 0.62);
 }
 
-.preview-rendered hr {
+.preview-rendered .ProseMirror hr {
   border: none;
   height: 1px;
   margin: 16px 0;
   background: rgba(255, 255, 255, 0.08);
 }
 
-.preview-rendered pre {
+.preview-rendered .ProseMirror pre {
   margin: 14px 0;
   padding: 12px 14px;
   overflow: auto;
@@ -432,23 +443,42 @@ code {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.preview-rendered pre code {
+.preview-rendered .ProseMirror pre code {
   padding: 0;
   background: transparent;
 }
 
-.preview-rendered code {
+.preview-rendered .ProseMirror code {
   font-family: "JetBrains Mono", "SF Mono", monospace;
 }
 
-.preview-rendered a {
+.preview-rendered .ProseMirror a {
   color: #f0ece4;
   text-decoration: underline;
   text-decoration-color: rgba(255, 255, 255, 0.24);
 }
 
+.preview-rendered .ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.preview-rendered .ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.preview-rendered .ProseMirror ul[data-type="taskList"] li > label {
+  margin-top: 2px;
+}
+
+.preview-rendered .ProseMirror ul[data-type="taskList"] li > div {
+  min-width: 0;
+}
+
 .site-shot {
-  max-width: 760px;
+  max-width: 620px;
   margin: 0 auto;
   padding: 0 24px 80px;
 }
@@ -475,6 +505,10 @@ code {
   max-width: 1160px;
   margin: 0 auto;
   padding: 0 24px 80px;
+}
+
+.performance-last {
+  padding-top: 8px;
 }
 
 .performance-copy {
