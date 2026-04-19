@@ -134,6 +134,32 @@ code {
   animation: fadeUp 0.8s 0.3s ease both;
 }
 
+.hero-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 18px;
+  font-size: 13px;
+  color: rgba(232, 227, 219, 0.56);
+  animation: fadeUp 0.8s 0.36s ease both;
+}
+
+.hero-links a {
+  transition: color 180ms ease;
+}
+
+.hero-links a:hover {
+  color: #e8e3db;
+}
+
+.hero-footnote {
+  margin-top: 14px;
+  color: rgba(232, 227, 219, 0.38);
+  font-size: 12px;
+  animation: fadeUp 0.8s 0.42s ease both;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -437,10 +463,19 @@ code {
   max-width: 18ch;
 }
 
+.closing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
 .site-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
   padding: 20px 32px;
   border-top: 1px solid rgba(255, 255, 255, 0.04);
   font-size: 12px;
@@ -482,6 +517,12 @@ code {
   }
 
   .hero-actions .btn {
+    width: 100%;
+  }
+
+  .hero-links,
+  .closing-actions {
+    flex-direction: column;
     width: 100%;
   }
 
