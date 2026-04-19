@@ -10,9 +10,9 @@
   --accent-strong: rgba(31, 26, 23, 0.92);
   --danger: #8d453e;
   --shadow: 0 24px 72px rgba(33, 23, 16, 0.18);
-  --scrollbar-track: rgba(45, 36, 30, 0.08);
-  --scrollbar-thumb: rgba(247, 241, 232, 0.22);
-  --scrollbar-thumb-hover: rgba(247, 241, 232, 0.34);
+  --scrollbar-track: rgba(16, 12, 10, 0.1);
+  --scrollbar-thumb: rgba(18, 14, 12, 0.54);
+  --scrollbar-thumb-hover: rgba(10, 8, 7, 0.7);
   --sans: "Avenir Next", "Helvetica Neue", "Segoe UI", sans-serif;
   --display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", serif;
   --mono: "SF Mono", "IBM Plex Mono", monospace;
@@ -79,9 +79,9 @@ code {
   --accent-strong: rgba(247, 243, 237, 0.96);
   --danger: #d28d83;
   --shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
-  --scrollbar-track: rgba(255, 255, 255, 0.06);
-  --scrollbar-thumb: rgba(247, 241, 232, 0.22);
-  --scrollbar-thumb-hover: rgba(247, 241, 232, 0.34);
+  --scrollbar-track: rgba(255, 255, 255, 0.04);
+  --scrollbar-thumb: rgba(2, 2, 2, 0.72);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.9);
   background:
     radial-gradient(circle at top, rgba(62, 60, 58, 0.56), transparent 42%),
     linear-gradient(180deg, rgba(24, 22, 20, 0.96), rgba(17, 16, 15, 0.98));
@@ -465,6 +465,7 @@ code {
 }
 
 .note-picker-popover,
+.ink-editor-host .mdxeditor-root-contenteditable,
 .ink-editor-host .cm-scroller,
 .settings-sheet {
   scrollbar-width: thin;
@@ -472,18 +473,21 @@ code {
 }
 
 .note-picker-popover::-webkit-scrollbar,
+.ink-editor-host .mdxeditor-root-contenteditable::-webkit-scrollbar,
 .ink-editor-host .cm-scroller::-webkit-scrollbar,
 .settings-sheet::-webkit-scrollbar {
-  width: 10px;
+  width: 11px;
 }
 
 .note-picker-popover::-webkit-scrollbar-track,
+.ink-editor-host .mdxeditor-root-contenteditable::-webkit-scrollbar-track,
 .ink-editor-host .cm-scroller::-webkit-scrollbar-track,
 .settings-sheet::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
 }
 
 .note-picker-popover::-webkit-scrollbar-thumb,
+.ink-editor-host .mdxeditor-root-contenteditable::-webkit-scrollbar-thumb,
 .ink-editor-host .cm-scroller::-webkit-scrollbar-thumb,
 .settings-sheet::-webkit-scrollbar-thumb {
   border: 3px solid transparent;
@@ -493,6 +497,7 @@ code {
 }
 
 .note-picker-popover::-webkit-scrollbar-thumb:hover,
+.ink-editor-host .mdxeditor-root-contenteditable::-webkit-scrollbar-thumb:hover,
 .ink-editor-host .cm-scroller::-webkit-scrollbar-thumb:hover,
 .settings-sheet::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
@@ -566,217 +571,253 @@ code {
   overflow: hidden;
 }
 
-.ink-editor-host > .cm-editor {
+.ink-editor-host .mdbar-editor.mdxeditor {
+  --accentBase: color-mix(in srgb, var(--accent-soft) 86%, transparent);
+  --accentBgSubtle: color-mix(in srgb, var(--accent-soft) 82%, transparent);
+  --accentBg: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+  --accentBgHover: color-mix(in srgb, var(--accent-soft) 82%, black 18%);
+  --accentBgActive: color-mix(in srgb, var(--accent-soft) 76%, black 24%);
+  --accentLine: color-mix(in srgb, var(--panel-border) 88%, transparent);
+  --accentBorder: color-mix(in srgb, var(--panel-border) 92%, transparent);
+  --accentBorderHover: color-mix(in srgb, var(--ink) 12%, transparent);
+  --accentSolid: color-mix(in srgb, var(--ink) 18%, var(--panel));
+  --accentSolidHover: color-mix(in srgb, var(--ink) 24%, var(--panel));
+  --accentText: var(--ink);
+  --accentTextContrast: var(--panel);
+  --basePageBg: transparent;
+  --baseBase: transparent;
+  --baseBgSubtle: color-mix(in srgb, var(--panel) 90%, black 10%);
+  --baseBg: color-mix(in srgb, var(--panel) 94%, black 6%);
+  --baseBgHover: color-mix(in srgb, var(--panel) 90%, black 10%);
+  --baseBgActive: color-mix(in srgb, var(--panel) 86%, black 14%);
+  --baseLine: color-mix(in srgb, var(--panel-border) 88%, transparent);
+  --baseBorder: color-mix(in srgb, var(--panel-border) 92%, transparent);
+  --baseBorderHover: color-mix(in srgb, var(--ink) 12%, transparent);
+  --baseSolid: color-mix(in srgb, var(--ink) 18%, var(--panel));
+  --baseSolidHover: color-mix(in srgb, var(--ink) 24%, var(--panel));
+  --baseText: var(--muted);
+  --baseTextContrast: var(--ink);
+  --font-body: var(--editor-font-family, var(--sans));
+  --font-heading: var(--display);
+  --font-mono: var(--mono);
   flex: 1;
   min-width: 0;
   min-height: 0;
+  height: 100%;
+  background: transparent;
+  color: var(--ink);
 }
 
-.ink-editor-host .cm-scroller {
+.ink-editor-host .mdbar-editor.mdxeditor:focus-within {
+  outline: none;
+}
+
+.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable {
+  min-height: 100%;
+  padding: 14px 18px 28px;
   overflow-y: auto;
   overflow-x: hidden;
+  color: var(--ink);
+  font-family: var(--editor-font-family, var(--sans));
+  font-size: var(--editor-font-size, 15px);
+  line-height: var(--editor-line-height, 1.65);
+  caret-color: var(--ink);
   overscroll-behavior: contain;
 }
 
-.ink-editor-host .cm-content,
-.ink-editor-host .cm-lineWrapping {
-  min-width: 0;
-  max-width: 100%;
+.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable:focus {
+  outline: none;
 }
 
-.ink-editor-host .cm-line {
-  position: relative;
-  padding-bottom: 1px;
-  padding-right: 8px;
-  text-indent: 0;
+.ink-editor-host .mdbar-prose {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.ink-editor-host .cm-link,
-.ink-editor-host .cm-url {
+.ink-editor-host .mdbar-prose > :first-child {
+  margin-top: 0;
+}
+
+.ink-editor-host .mdbar-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.ink-editor-host .mdbar-prose p,
+.ink-editor-host .mdbar-prose ul,
+.ink-editor-host .mdbar-prose ol,
+.ink-editor-host .mdbar-prose blockquote,
+.ink-editor-host .mdbar-prose pre,
+.ink-editor-host .mdbar-prose table,
+.ink-editor-host .mdbar-prose hr {
+  margin: 0 0 0.95rem;
+}
+
+.ink-editor-host .mdbar-prose h1,
+.ink-editor-host .mdbar-prose h2,
+.ink-editor-host .mdbar-prose h3,
+.ink-editor-host .mdbar-prose h4,
+.ink-editor-host .mdbar-prose h5,
+.ink-editor-host .mdbar-prose h6 {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+  font-family: var(--display);
+  font-weight: 520;
+  letter-spacing: -0.03em;
+}
+
+.ink-editor-host .mdbar-prose h1 {
+  font-size: calc(var(--editor-font-size, 15px) * 2.35);
+  line-height: 1.08;
+}
+
+.ink-editor-host .mdbar-prose h2 {
+  font-size: calc(var(--editor-font-size, 15px) * 1.82);
+  line-height: 1.14;
+}
+
+.ink-editor-host .mdbar-prose h3 {
+  font-size: calc(var(--editor-font-size, 15px) * 1.46);
+  line-height: 1.2;
+}
+
+.ink-editor-host .mdbar-prose h4,
+.ink-editor-host .mdbar-prose h5,
+.ink-editor-host .mdbar-prose h6 {
+  font-size: calc(var(--editor-font-size, 15px) * 1.18);
+  line-height: 1.28;
+}
+
+.ink-editor-host .mdbar-prose ul,
+.ink-editor-host .mdbar-prose ol {
+  padding-left: 1.45rem;
+}
+
+.ink-editor-host .mdbar-prose li + li {
+  margin-top: 0.22rem;
+}
+
+.ink-editor-host .mdbar-prose li > ul,
+.ink-editor-host .mdbar-prose li > ol {
+  margin-top: 0.28rem;
+  margin-bottom: 0;
+}
+
+.ink-editor-host .mdbar-prose a {
+  color: var(--ink);
   text-decoration: underline;
-  text-decoration-color: rgba(24, 24, 24, 0.14);
+  text-decoration-color: color-mix(in srgb, var(--ink) 18%, transparent);
   text-underline-offset: 0.16em;
 }
 
-.ink-editor-host .cm-code,
-.ink-editor-host .cm-codeblock {
-  font-size: 0.94em;
-}
-
-.ink-editor-host .cm-preview-code-line {
-  padding: 0 12px;
-  background: color-mix(in srgb, var(--accent-soft) 56%, transparent);
-  color: color-mix(in srgb, var(--ink) 94%, transparent);
-  font-family: var(--mono);
-  font-size: 0.93em;
-}
-
-.ink-editor-host .cm-line.cm-hidden-code-fence-line {
-  display: none;
-}
-
-.ink-editor-host .cm-line.cm-blockquote {
-  color: color-mix(in srgb, var(--ink) 72%, var(--muted));
-}
-
-.ink-editor-host .cm-preview-heading {
-  font-family: var(--display);
-  font-weight: 520;
-  letter-spacing: -0.025em;
-}
-
-.ink-editor-host .cm-preview-heading-1 {
-  padding-top: 0.18rem;
-  font-size: 1.42em;
-  line-height: 1.34;
-}
-
-.ink-editor-host .cm-preview-heading-2 {
-  padding-top: 0.18rem;
-  font-size: 1.24em;
-  line-height: 1.38;
-}
-
-.ink-editor-host .cm-preview-heading-3 {
-  padding-top: 0.18rem;
-  font-size: 1.14em;
-  line-height: 1.44;
-}
-
-.ink-editor-host .cm-preview-heading-4,
-.ink-editor-host .cm-preview-heading-5,
-.ink-editor-host .cm-preview-heading-6 {
-  font-size: 1em;
-  line-height: 1.5;
-}
-
-.ink-editor-host .cm-preview-list-marker {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.ink-editor-host .cm-preview-number-marker {
-  justify-content: flex-end;
-  padding-right: 0.2rem;
-}
-
-.ink-editor-host .cm-preview-list-line,
-.ink-editor-host .cm-preview-task-line {
-  min-height: 1.5rem;
-}
-
-.ink-editor-host .cm-preview-task-marker {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ink-editor-host .cm-preview-task-toggle {
-  width: 0.92rem;
-  height: 0.92rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent);
-  border-radius: 0.28rem;
-  background: transparent;
-  color: transparent;
-  cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
-  transition: background 120ms ease, border-color 120ms ease;
-}
-
-.ink-editor-host .cm-preview-task-toggle:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ink) 14%, transparent);
-  outline-offset: 2px;
-}
-
-.ink-editor-host .cm-preview-task-toggle::after {
-  content: "";
-  width: 0.42rem;
-  height: 0.22rem;
-  border-left: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  transform: rotate(-45deg) translateY(-0.04rem);
-  opacity: 0;
-}
-
-.ink-editor-host .cm-preview-task-toggle.is-checked {
-  border-color: var(--accent-strong);
-  background: var(--accent-strong);
-  color: var(--panel);
-}
-
-.ink-editor-host .cm-preview-task-toggle.is-checked::after {
-  opacity: 1;
-}
-
-.ink-editor-host .cm-preview-task-line-checked {
-  color: color-mix(in srgb, var(--muted) 78%, transparent);
-}
-
-.ink-editor-host .cm-line.cm-hidden-html-break-line {
-  display: none;
-}
-
-.ink-editor-host .cm-preview-quote-line {
-  margin-left: 0.1rem;
-  padding-left: 0.9rem;
+.ink-editor-host .mdbar-prose blockquote {
+  padding-left: 0.95rem;
   border-left: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  color: color-mix(in srgb, var(--ink) 76%, var(--muted));
 }
 
-.ink-editor-host .cm-preview-divider-line {
-  padding-top: 0.5rem;
-  padding-bottom: 0.55rem;
-}
-
-.ink-editor-host .cm-preview-divider {
-  display: block;
-  width: 100%;
+.ink-editor-host .mdbar-prose hr {
   height: 1px;
+  border: 0;
   background: color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
-.ink-editor-host .cm-activeLine {
+.ink-editor-host .mdbar-prose code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+.ink-editor-host .mdbar-prose code:not(pre code) {
+  padding: 0.12rem 0.34rem;
+  border: 1px solid color-mix(in srgb, var(--panel-border) 84%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent-soft) 74%, transparent);
+}
+
+.ink-editor-host .mdbar-prose pre {
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--panel-border) 88%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 88%, black 12%);
+  overflow: auto;
+}
+
+.ink-editor-host .mdbar-prose pre code {
+  padding: 0;
+  border: 0;
   background: transparent;
 }
 
-.ink-editor-host .cm-selectionBackground,
-.ink-editor-host .cm-content ::selection {
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
+.ink-editor-host .mdbar-prose table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.ink-editor-host .cm-tooltip {
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
+.ink-editor-host .mdbar-prose th,
+.ink-editor-host .mdbar-prose td {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--panel-border) 84%, transparent);
+  text-align: left;
+  vertical-align: top;
 }
 
-.ink-editor-host .cm-placeholder,
-.daily-editor-placeholder {
+.ink-editor-host .mdbar-prose th {
+  color: var(--ink);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--accent-soft) 66%, transparent);
+}
+
+.ink-editor-host .mdbar-editor .cm-editor {
+  margin: 0.9rem 0 1rem;
+  border: 1px solid color-mix(in srgb, var(--panel-border) 88%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 82%, black 18%);
+  font-family: var(--mono);
+  font-size: 0.92em;
+}
+
+.ink-editor-host .mdbar-editor .cm-scroller {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.ink-editor-host .mdbar-editor .cm-content,
+.ink-editor-host .mdbar-editor .cm-lineWrapping {
+  max-width: 100%;
+}
+
+.ink-editor-host .mdbar-editor .cm-gutters {
+  border-right: 1px solid color-mix(in srgb, var(--panel-border) 78%, transparent);
   color: var(--muted);
+  background: color-mix(in srgb, var(--panel) 86%, black 14%);
 }
 
-.ink-editor-host .cm-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  max-width: 19rem;
-  white-space: normal;
-  pointer-events: none;
+.ink-editor-host .mdbar-editor .cm-activeLine,
+.ink-editor-host .mdbar-editor .cm-activeLineGutter {
+  background: transparent;
 }
 
-.ink-editor-host .cm-cursor {
+.ink-editor-host .mdbar-editor .cm-selectionBackground,
+.ink-editor-host .mdbar-editor .cm-content ::selection,
+.ink-editor-host .mdbar-prose ::selection {
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.ink-editor-host .mdbar-editor .cm-cursor {
   border-left-width: 1.5px;
   border-left-color: var(--ink);
 }
 
+.ink-editor-host .mdbar-editor .cm-tooltip {
+  border: 1px solid color-mix(in srgb, var(--panel-border) 92%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel) 96%, black 4%);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+}
+
 .daily-editor-placeholder {
   display: block;
   max-width: 19rem;
+  color: var(--muted);
   line-height: var(--editor-line-height, 1.65);
   white-space: normal;
 }

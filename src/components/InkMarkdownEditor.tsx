@@ -1,30 +1,22 @@
-import {
-  defaultKeymap,
-  history,
-  historyKeymap,
-  indentWithTab,
-} from "@codemirror/commands";
-import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
-import {
-  HighlightStyle,
-  indentUnit,
-  syntaxHighlighting,
-} from "@codemirror/language";
-import { Compartment, EditorState, type Extension } from "@codemirror/state";
-import {
-  EditorView,
-  keymap,
-  placeholder as placeholderExtension,
-} from "@codemirror/view";
-import { tags } from "@lezer/highlight";
-import {
-  useEffect,
-  useRef,
-  type CSSProperties,
-  type MutableRefObject,
-} from "react";
+import "@mdxeditor/editor/style.css";
 
-import { markdownPresentationExtension } from "../lib/editor-plugins";
+import { languages } from "@codemirror/language-data";
+import {
+  codeBlockPlugin,
+  codeMirrorPlugin,
+  headingsPlugin,
+  linkDialogPlugin,
+  linkPlugin,
+  listsPlugin,
+  markdownShortcutPlugin,
+  MDXEditor,
+  type MDXEditorMethods,
+  quotePlugin,
+  tablePlugin,
+  thematicBreakPlugin,
+  type RealmPlugin,
+} from "@mdxeditor/editor";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 type InkMarkdownEditorProps = {
   className?: string;
@@ -35,143 +27,22 @@ type InkMarkdownEditorProps = {
   value: string;
 };
 
-const editableCompartment = new Compartment();
-const placeholderCompartment = new Compartment();
-
-const markdownHighlightStyle = HighlightStyle.define([
-  {
-    tag: tags.heading,
-    color: "var(--ink)",
-    fontFamily: "var(--display)",
-    fontWeight: "520",
-  },
-  {
-    tag: tags.heading1,
-    color: "var(--ink)",
-    fontFamily: "var(--display)",
-    fontSize: "1.42em",
-    fontWeight: "520",
-  },
-  {
-    tag: tags.heading2,
-    color: "var(--ink)",
-    fontFamily: "var(--display)",
-    fontSize: "1.24em",
-    fontWeight: "520",
-  },
-  {
-    tag: tags.heading3,
-    color: "var(--ink)",
-    fontFamily: "var(--display)",
-    fontSize: "1.14em",
-    fontWeight: "520",
-  },
-  {
-    tag: tags.strong,
-    fontWeight: "600",
-  },
-  {
-    tag: tags.emphasis,
-    fontStyle: "italic",
-  },
-  {
-    tag: [tags.link, tags.url],
-    color: "var(--ink)",
-    textDecoration: "underline",
-    textDecorationColor: "rgba(24, 24, 24, 0.14)",
-    textUnderlineOffset: "0.16em",
-  },
-  {
-    tag: tags.monospace,
-    fontFamily: "var(--mono)",
-    fontSize: "0.94em",
-  },
-  {
-    tag: tags.quote,
-    color: "color-mix(in srgb, var(--ink) 72%, var(--muted))",
-  },
-  {
-    tag: tags.processingInstruction,
-    color: "var(--muted)",
-  },
-]);
-
-const editorTheme = EditorView.theme({
-  "&": {
-    height: "100%",
-    backgroundColor: "transparent",
-    color: "var(--ink)",
-    fontFamily: "var(--editor-font-family, var(--sans))",
-    fontSize: "var(--editor-font-size, 15px)",
-  },
-  ".cm-scroller": {
-    overflow: "auto",
-    padding: "8px 14px 18px",
-  },
-  ".cm-content": {
-    minHeight: "100%",
-    padding: "0",
-    whiteSpace: "pre-wrap",
-    caretColor: "var(--ink)",
-    lineHeight: "var(--editor-line-height, 1.65)",
-  },
-  ".cm-line": {
-    padding: "0",
-    lineHeight: "var(--editor-line-height, 1.65)",
-  },
-  ".cm-focused": {
-    outline: "none",
-  },
-  ".cm-editor": {
-    height: "100%",
-  },
-  ".cm-placeholder": {
-    color: "var(--muted)",
-    whiteSpace: "pre-wrap",
-  },
-  ".cm-cursor, .cm-dropCursor": {
-    borderLeftColor: "var(--ink)",
-  },
-  ".cm-selectionBackground, ::selection": {
-    backgroundColor: "rgba(24, 24, 24, 0.12)",
-  },
-});
-
-function createPlaceholder(loading: boolean) {
-  const placeholder = document.createElement("div");
-  placeholder.className = "daily-editor-placeholder";
-  placeholder.textContent = loading
-    ? "Loading note..."
-    : "Start with a heading, a checklist, or whatever is on your mind.";
-  return placeholder;
-}
-
-function buildExtensions(
-  isLoading: boolean,
-  onChangeRef: MutableRefObject<(value: string) => void>,
-): Extension[] {
-  return [
-    keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
-    history(),
-    indentUnit.of("  "),
-    markdown({ base: markdownLanguage }),
-    EditorView.lineWrapping,
-    markdownPresentationExtension,
-    syntaxHighlighting(markdownHighlightStyle),
-    editorTheme,
-    EditorView.contentAttributes.of({
-      spellcheck: "true",
-      autocapitalize: "sentences",
-    }),
-    EditorView.updateListener.of((update) => {
-      if (update.docChanged) {
-        onChangeRef.current(update.state.doc.toString());
-      }
-    }),
-    editableCompartment.of(EditorView.editable.of(!isLoading)),
-    placeholderCompartment.of(placeholderExtension(createPlaceholder(isLoading))),
-  ];
-}
+const editorPlugins: RealmPlugin[] = [
+  headingsPlugin(),
+  listsPlugin(),
+  quotePlugin(),
+  thematicBreakPlugin(),
+  linkPlugin(),
+  linkDialogPlugin(),
+  tablePlugin(),
+  codeBlockPlugin({
+    defaultCodeBlockLanguage: "txt",
+  }),
+  codeMirrorPlugin({
+    codeBlockLanguages: languages,
+  }),
+  markdownShortcutPlugin(),
+];
 
 export function InkMarkdownEditor({
   className,
@@ -181,102 +52,33 @@ export function InkMarkdownEditor({
   style,
   value,
 }: InkMarkdownEditorProps) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const editorViewRef = useRef<EditorView | null>(null);
-  const activeDocumentKeyRef = useRef(documentKey);
-  const initialLoadingRef = useRef(isLoading);
-  const latestValueRef = useRef(value);
-  const onChangeRef = useRef(onChange);
+  const editorRef = useRef<MDXEditorMethods | null>(null);
+  const lastAppliedValueRef = useRef(value);
+  const isPushingExternalValueRef = useRef(false);
 
   useEffect(() => {
-    onChangeRef.current = (nextValue: string) => {
-      latestValueRef.current = nextValue;
-      onChange(nextValue);
-    };
-  }, [onChange]);
-
-  useEffect(() => {
-    latestValueRef.current = value;
-  }, [value]);
-
-  useEffect(() => {
-    const host = hostRef.current;
-
-    if (!host || editorViewRef.current) {
-      return;
-    }
-
-    const state = EditorState.create({
-      doc: latestValueRef.current,
-      extensions: buildExtensions(initialLoadingRef.current, onChangeRef),
-    });
-
-    const view = new EditorView({
-      parent: host,
-      state,
-    });
-
-    editorViewRef.current = view;
-    activeDocumentKeyRef.current = documentKey;
-
-    return () => {
-      view.destroy();
-      editorViewRef.current = null;
-    };
+    lastAppliedValueRef.current = value;
   }, [documentKey]);
 
   useEffect(() => {
-    const view = editorViewRef.current;
+    const editor = editorRef.current;
 
-    if (!view) {
+    if (!editor || isPushingExternalValueRef.current) {
       return;
     }
 
-    view.dispatch({
-      effects: [
-        editableCompartment.reconfigure(EditorView.editable.of(!isLoading)),
-        placeholderCompartment.reconfigure(
-          placeholderExtension(createPlaceholder(isLoading)),
-        ),
-      ],
+    if (value === lastAppliedValueRef.current) {
+      return;
+    }
+
+    isPushingExternalValueRef.current = true;
+    lastAppliedValueRef.current = value;
+    editor.setMarkdown(value);
+
+    queueMicrotask(() => {
+      isPushingExternalValueRef.current = false;
     });
-  }, [isLoading]);
-
-  useEffect(() => {
-    const view = editorViewRef.current;
-
-    if (!view) {
-      return;
-    }
-
-    const isDocumentSwitch = activeDocumentKeyRef.current !== documentKey;
-
-    if (!isDocumentSwitch && latestValueRef.current === value) {
-      return;
-    }
-
-    const currentValue = view.state.doc.toString();
-    if (currentValue !== value) {
-      const currentSelection = view.state.selection;
-      const hadFocus = view.hasFocus;
-
-      view.dispatch({
-        changes: {
-          from: 0,
-          to: currentValue.length,
-          insert: value,
-        },
-        selection: isDocumentSwitch ? undefined : currentSelection,
-      });
-
-      if (hadFocus && !isLoading) {
-        view.focus();
-      }
-    }
-
-    activeDocumentKeyRef.current = documentKey;
-    latestValueRef.current = value;
-  }, [documentKey, isLoading, value]);
+  }, [value]);
 
   return (
     <div
@@ -285,7 +87,43 @@ export function InkMarkdownEditor({
         .join(" ")}
       style={style}
     >
-      <div className="ink-editor-host" ref={hostRef} />
+      <div className="ink-editor-host">
+        <MDXEditor
+          key={documentKey}
+          ref={editorRef}
+          className="mdbar-editor"
+          contentEditableClassName="mdbar-prose"
+          markdown={value}
+          onChange={(nextValue, initialMarkdownNormalize) => {
+            lastAppliedValueRef.current = nextValue;
+
+            if (isPushingExternalValueRef.current || initialMarkdownNormalize) {
+              return;
+            }
+
+            onChange(nextValue);
+          }}
+          placeholder={
+            <div className="daily-editor-placeholder">
+              {isLoading
+                ? "Loading note..."
+                : "Start with a heading, a checklist, or whatever is on your mind."}
+            </div>
+          }
+          plugins={editorPlugins}
+          readOnly={isLoading}
+          spellCheck
+          toMarkdownOptions={{
+            bullet: "-",
+            emphasis: "*",
+            fence: "`",
+            listItemIndent: "one",
+            rule: "-",
+            ruleRepetition: 3,
+            strong: "*",
+          }}
+        />
+      </div>
     </div>
   );
 }

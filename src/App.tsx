@@ -4,9 +4,15 @@ import {
   register,
   unregisterAll,
 } from "@tauri-apps/plugin-global-shortcut";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 
-import { InkMarkdownEditor } from "./components/InkMarkdownEditor";
 import { SettingsSheet } from "./components/SettingsSheet";
 import { formatDateLabel, shiftDateKey, todayKey } from "./lib/dates";
 import { loadSettings, saveSettings } from "./lib/settings";
@@ -41,6 +47,13 @@ const onboardingTree = `your-notebook/
     ideas.md
     projects/
       mdbar-roadmap.md`;
+
+const InkMarkdownEditor = lazy(async () => {
+  const module = await import("./components/InkMarkdownEditor");
+  return {
+    default: module.InkMarkdownEditor,
+  };
+});
 
 function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
@@ -643,19 +656,28 @@ function App() {
                 </div>
               </div>
             ) : currentNote ? (
-              <InkMarkdownEditor
-                documentKey={editorDocumentKey}
-                isLoading={isLoadingNote}
-                onChange={setDraft}
-                style={
-                  {
-                    "--editor-font-family": editorFontFamily,
-                    "--editor-font-size": `${settings.fontSize}px`,
-                    "--editor-line-height": `${settings.lineHeight}`,
-                  } as CSSProperties
+              <Suspense
+                fallback={
+                  <div className="editor-empty-state">
+                    <p className="empty-kicker">Loading editor</p>
+                    <h2>Preparing the markdown editor.</h2>
+                  </div>
                 }
-                value={draft}
-              />
+              >
+                <InkMarkdownEditor
+                  documentKey={editorDocumentKey}
+                  isLoading={isLoadingNote}
+                  onChange={setDraft}
+                  style={
+                    {
+                      "--editor-font-family": editorFontFamily,
+                      "--editor-font-size": `${settings.fontSize}px`,
+                      "--editor-line-height": `${settings.lineHeight}`,
+                    } as CSSProperties
+                  }
+                  value={draft}
+                />
+              </Suspense>
             ) : (
               <div className="editor-empty-state">
                 <p className="empty-kicker">{isLoadingNote ? "Loading note" : "Nothing selected"}</p>
