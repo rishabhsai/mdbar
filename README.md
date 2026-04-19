@@ -4,11 +4,21 @@ mdbar is a macOS menu bar markdown notebook built around plain files on disk.
 
 Press `Cmd+Shift+M`, drop into today’s note, and start typing. Everything stays in a normal folder you can browse with Finder, Git, Obsidian, or any editor you want.
 
-## Screenshot
-
-[Open screenshot](https://imgur.com/bRB0KrG)
-
 ![mdbar screenshot](https://i.imgur.com/bRB0KrG.png)
+
+## Performance
+
+CPU usage:
+
+[Open CPU screenshot](https://imgur.com/DJ2pN4i)
+
+![mdbar CPU usage](https://i.imgur.com/DJ2pN4i.png)
+
+Memory usage:
+
+[Open memory screenshot](https://imgur.com/NByPVNy)
+
+![mdbar memory usage](https://i.imgur.com/NByPVNy.png)
 
 ## What mdbar does
 
