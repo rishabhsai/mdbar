@@ -50,10 +50,23 @@ code {
 }
 
 .nav-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-weight: 600;
   font-size: 15px;
   letter-spacing: 0.06em;
   color: #e8e3db;
+}
+
+.nav-logo {
+  width: 28px;
+  height: 28px;
+  display: block;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 .nav-links {
@@ -106,6 +119,23 @@ code {
   text-transform: uppercase;
   margin-bottom: 32px;
   animation: fadeUp 0.8s ease both;
+}
+
+.hero-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+  animation: fadeUp 0.8s 0.05s ease both;
+}
+
+.hero-logo {
+  width: clamp(86px, 12vw, 118px);
+  height: auto;
+  display: block;
+  border-radius: 26px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 24px 72px rgba(0, 0, 0, 0.36);
 }
 
 .hero-title {
@@ -507,6 +537,11 @@ code {
     padding: 140px 20px 40px;
   }
 
+  .hero-logo {
+    width: 88px;
+    border-radius: 22px;
+  }
+
   .hero-title {
     font-size: clamp(2.6rem, 10vw, 3.8rem);
   }
@@ -553,6 +588,10 @@ code {
 
 @media (max-width: 480px) {
   .nav-links a:not(.nav-cta) {
+    display: none;
+  }
+
+  .nav-wordmark span {
     display: none;
   }
 
