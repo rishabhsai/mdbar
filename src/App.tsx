@@ -689,6 +689,7 @@ function App() {
                   documentKey={editorDocumentKey}
                   isLoading={isLoadingNote}
                   onChange={setDraft}
+                  theme={appearance}
                   style={
                     {
                       "--editor-font-family": editorFontFamily,

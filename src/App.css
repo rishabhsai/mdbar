@@ -601,29 +601,29 @@ code {
 }
 
 .ink-editor-host .mdbar-editor.mdxeditor {
-  --accentBase: color-mix(in srgb, var(--accent-soft) 86%, transparent);
-  --accentBgSubtle: color-mix(in srgb, var(--accent-soft) 82%, transparent);
-  --accentBg: color-mix(in srgb, var(--accent-soft) 70%, transparent);
-  --accentBgHover: color-mix(in srgb, var(--accent-soft) 82%, black 18%);
-  --accentBgActive: color-mix(in srgb, var(--accent-soft) 76%, black 24%);
-  --accentLine: color-mix(in srgb, var(--panel-border) 88%, transparent);
-  --accentBorder: color-mix(in srgb, var(--panel-border) 92%, transparent);
-  --accentBorderHover: color-mix(in srgb, var(--ink) 12%, transparent);
-  --accentSolid: color-mix(in srgb, var(--ink) 18%, var(--panel));
-  --accentSolidHover: color-mix(in srgb, var(--ink) 24%, var(--panel));
+  --accentBase: color-mix(in srgb, var(--accent-soft) 80%, transparent);
+  --accentBgSubtle: color-mix(in srgb, var(--accent-soft) 72%, transparent);
+  --accentBg: color-mix(in srgb, var(--accent-soft) 62%, transparent);
+  --accentBgHover: color-mix(in srgb, var(--accent-soft) 70%, black 12%);
+  --accentBgActive: color-mix(in srgb, var(--accent-soft) 66%, black 18%);
+  --accentLine: color-mix(in srgb, var(--panel-border) 84%, transparent);
+  --accentBorder: color-mix(in srgb, var(--panel-border) 88%, transparent);
+  --accentBorderHover: color-mix(in srgb, var(--ink) 20%, transparent);
+  --accentSolid: color-mix(in srgb, var(--ink) 12%, var(--panel));
+  --accentSolidHover: color-mix(in srgb, var(--ink) 18%, var(--panel));
   --accentText: var(--ink);
   --accentTextContrast: var(--panel);
   --basePageBg: transparent;
   --baseBase: transparent;
-  --baseBgSubtle: color-mix(in srgb, var(--panel) 90%, black 10%);
-  --baseBg: color-mix(in srgb, var(--panel) 94%, black 6%);
-  --baseBgHover: color-mix(in srgb, var(--panel) 90%, black 10%);
-  --baseBgActive: color-mix(in srgb, var(--panel) 86%, black 14%);
-  --baseLine: color-mix(in srgb, var(--panel-border) 88%, transparent);
-  --baseBorder: color-mix(in srgb, var(--panel-border) 92%, transparent);
-  --baseBorderHover: color-mix(in srgb, var(--ink) 12%, transparent);
-  --baseSolid: color-mix(in srgb, var(--ink) 18%, var(--panel));
-  --baseSolidHover: color-mix(in srgb, var(--ink) 24%, var(--panel));
+  --baseBgSubtle: color-mix(in srgb, var(--panel) 94%, black 6%);
+  --baseBg: color-mix(in srgb, var(--panel) 97%, black 3%);
+  --baseBgHover: color-mix(in srgb, var(--panel) 92%, black 8%);
+  --baseBgActive: color-mix(in srgb, var(--panel) 88%, black 12%);
+  --baseLine: color-mix(in srgb, var(--panel-border) 84%, transparent);
+  --baseBorder: color-mix(in srgb, var(--panel-border) 88%, transparent);
+  --baseBorderHover: color-mix(in srgb, var(--ink) 18%, transparent);
+  --baseSolid: color-mix(in srgb, var(--ink) 14%, var(--panel));
+  --baseSolidHover: color-mix(in srgb, var(--ink) 20%, var(--panel));
   --baseText: var(--muted);
   --baseTextContrast: var(--ink);
   --font-body: var(--editor-font-family, var(--sans));
@@ -640,10 +640,16 @@ code {
   color: var(--ink);
 }
 
+.ink-editor-host .mdbar-editor.dark-theme {
+  --baseBgSubtle: color-mix(in srgb, var(--panel) 92%, black 8%);
+  --baseBg: color-mix(in srgb, var(--panel) 95%, black 5%);
+}
+
 .ink-editor-host .mdbar-editor.mdxeditor:focus-within {
   outline: none;
 }
 
+.ink-editor-host .mdbar-editor > div,
 .ink-editor-host .mdbar-editor [class*="_editorWrapper_"] {
   flex: 1;
   min-height: 0;
@@ -651,13 +657,11 @@ code {
   flex-direction: column;
 }
 
-.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable,
-.ink-editor-host .mdbar-editor [class*="_contentEditable_"] {
+.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable {
   flex: 1;
   min-height: 0;
   height: 100%;
-  min-height: 100%;
-  padding: 14px 18px 28px;
+  padding: 16px 18px 30px;
   overflow-y: auto;
   overflow-x: hidden;
   color: var(--ink);
@@ -668,8 +672,7 @@ code {
   overscroll-behavior: contain;
 }
 
-.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable:focus,
-.ink-editor-host .mdbar-editor [class*="_contentEditable_"]:focus {
+.ink-editor-host .mdbar-editor .mdxeditor-root-contenteditable:focus {
   outline: none;
 }
 
@@ -692,7 +695,7 @@ code {
 .ink-editor-host .mdbar-prose pre,
 .ink-editor-host .mdbar-prose table,
 .ink-editor-host .mdbar-prose hr {
-  margin: 0 0 0.95rem;
+  margin: 0 0 1rem;
 }
 
 .ink-editor-host .mdbar-prose h1,
@@ -732,68 +735,49 @@ code {
 
 .ink-editor-host .mdbar-prose ul,
 .ink-editor-host .mdbar-prose ol {
-  padding-left: 1.45rem;
-}
-
-.ink-editor-host .mdbar-prose ul ul,
-.ink-editor-host .mdbar-prose ul ol,
-.ink-editor-host .mdbar-prose ol ul,
-.ink-editor-host .mdbar-prose ol ol {
-  padding-left: 1.2rem;
-}
-
-.ink-editor-host .mdbar-prose li + li {
-  margin-top: 0.22rem;
-}
-
-.ink-editor-host .mdbar-prose li > ul,
-.ink-editor-host .mdbar-prose li > ol {
-  margin-top: 0.28rem;
-  margin-bottom: 0;
+  padding-left: 1.35rem;
 }
 
 .ink-editor-host .mdbar-editor [class*="_listitem_"] {
-  margin: 0.24rem 0;
+  margin: 0.28rem 0;
 }
 
 .ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"],
 .ink-editor-host .mdbar-editor [class*="_listItemChecked_"] {
-  min-height: 1.6rem;
-  margin-inline-start: 0;
-  padding-left: 2rem;
-  padding-right: 0;
-  list-style-type: none;
+  min-height: 1.52rem;
+  margin-inline-start: -0.1rem;
+  padding-left: 1.9rem;
+  padding-right: 0.1rem;
   cursor: pointer;
 }
 
 .ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"]::before,
 .ink-editor-host .mdbar-editor [class*="_listItemChecked_"]::before {
-  width: 1.14rem;
-  height: 1.14rem;
-  top: 0.34em;
+  width: 1rem;
+  height: 1rem;
+  top: 0.28rem;
   left: 0;
-  border-radius: 0.34rem;
-  box-sizing: border-box;
+  border-radius: 0.28rem;
   cursor: pointer;
 }
 
 .ink-editor-host .mdbar-editor [class*="_listItemUnchecked_"]::before {
-  border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent);
-  background: color-mix(in srgb, var(--panel) 84%, black 16%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  background: color-mix(in srgb, var(--panel) 90%, black 10%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
 }
 
 .ink-editor-host .mdbar-editor [class*="_listItemChecked_"]::before {
-  border: 1px solid color-mix(in srgb, var(--ink) 18%, transparent);
-  background: color-mix(in srgb, var(--ink) 88%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  background: color-mix(in srgb, var(--ink) 82%, var(--panel));
 }
 
 .ink-editor-host .mdbar-editor [class*="_listItemChecked_"]::after {
-  top: 0.62em;
-  left: 0.41rem;
-  width: 0.28rem;
-  height: 0.54rem;
-  border-width: 0 1.7px 1.7px 0;
+  top: 0.44rem;
+  left: 0.34rem;
+  width: 0.24rem;
+  height: 0.5rem;
+  border-width: 0 1.8px 1.8px 0;
   border-color: var(--panel);
   cursor: pointer;
 }
@@ -807,11 +791,12 @@ code {
 
 .ink-editor-host .mdbar-prose blockquote {
   margin-left: 0;
-  padding: 0.72rem 0.9rem 0.72rem 1rem;
-  border-left: 2px solid color-mix(in srgb, var(--ink) 18%, transparent);
-  border-radius: 0 12px 12px 0;
-  background: color-mix(in srgb, var(--accent-soft) 44%, transparent);
-  color: color-mix(in srgb, var(--ink) 78%, var(--muted));
+  padding: 0.72rem 0.9rem 0.76rem 1rem;
+  border-left: 3px solid color-mix(in srgb, var(--ink) 20%, transparent);
+  border-radius: 0 14px 14px 0;
+  background: color-mix(in srgb, var(--panel) 84%, white 16%);
+  color: color-mix(in srgb, var(--ink) 88%, var(--muted));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 6%, transparent);
 }
 
 .ink-editor-host .mdbar-prose blockquote p:last-child {
@@ -819,9 +804,16 @@ code {
 }
 
 .ink-editor-host .mdbar-prose hr {
+  display: block;
   height: 1px;
   border: 0;
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--ink) 24%, transparent) 18%,
+    color-mix(in srgb, var(--ink) 24%, transparent) 82%,
+    transparent 100%
+  );
 }
 
 .ink-editor-host .mdbar-prose code {
@@ -831,16 +823,16 @@ code {
 
 .ink-editor-host .mdbar-prose code:not(pre code) {
   padding: 0.12rem 0.34rem;
-  border: 1px solid color-mix(in srgb, var(--panel-border) 84%, transparent);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--accent-soft) 74%, transparent);
+  border: 1px solid color-mix(in srgb, var(--panel-border) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 90%, black 10%);
 }
 
 .ink-editor-host .mdbar-prose pre {
   padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--panel-border) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--panel-border) 84%, transparent);
   border-radius: 14px;
-  background: color-mix(in srgb, var(--panel) 88%, black 12%);
+  background: color-mix(in srgb, var(--panel) 82%, black 18%);
   overflow: auto;
 }
 
@@ -870,8 +862,8 @@ code {
 }
 
 .ink-editor-host .mdbar-editor .cm-editor {
-  margin: 0.9rem 0 1rem;
-  border: 1px solid color-mix(in srgb, var(--panel-border) 88%, transparent);
+  margin: 0.95rem 0 1rem;
+  border: 1px solid color-mix(in srgb, var(--panel-border) 82%, transparent);
   border-radius: 14px;
   background: color-mix(in srgb, var(--panel) 82%, black 18%);
   font-family: var(--mono);
@@ -880,8 +872,8 @@ code {
 
 .ink-editor-host .mdbar-editor [class*="_codeMirrorWrapper_"] {
   margin-bottom: 1rem;
-  border-color: color-mix(in srgb, var(--panel-border) 88%, transparent);
-  background: color-mix(in srgb, var(--panel) 86%, black 14%);
+  border-color: color-mix(in srgb, var(--panel-border) 82%, transparent);
+  background: color-mix(in srgb, var(--panel) 84%, black 16%);
 }
 
 .ink-editor-host .mdbar-editor .cm-scroller {

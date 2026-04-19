@@ -24,6 +24,7 @@ type InkMarkdownEditorProps = {
   documentKey: string;
   isLoading: boolean;
   onChange: (value: string) => void;
+  theme: "light" | "dark";
   style?: CSSProperties;
   value: string;
 };
@@ -86,9 +87,11 @@ export function InkMarkdownEditor({
   documentKey,
   isLoading,
   onChange,
+  theme,
   style,
   value,
 }: InkMarkdownEditorProps) {
+  const shellRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<MDXEditorMethods | null>(null);
   const lastAppliedValueRef = useRef(value);
   const isPushingExternalValueRef = useRef(false);
@@ -117,8 +120,38 @@ export function InkMarkdownEditor({
     });
   }, [value]);
 
+  useEffect(() => {
+    const contentEditable = shellRef.current?.querySelector(".mdxeditor-root-contenteditable");
+
+    if (!(contentEditable instanceof HTMLElement)) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key !== "Tab" ||
+        event.defaultPrevented ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      editorRef.current?.insertMarkdown("  ");
+    };
+
+    contentEditable.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      contentEditable.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [documentKey]);
+
   return (
     <div
+      ref={shellRef}
       className={["ink-editor-shell", isLoading ? "is-loading" : "", className]
         .filter(Boolean)
         .join(" ")}
@@ -128,7 +161,9 @@ export function InkMarkdownEditor({
         <MDXEditor
           key={documentKey}
           ref={editorRef}
-          className="mdbar-editor"
+          className={["mdbar-editor", theme === "dark" ? "dark-theme" : "", className]
+            .filter(Boolean)
+            .join(" ")}
           contentEditableClassName="mdbar-prose"
           markdown={value}
           onChange={(nextValue, initialMarkdownNormalize) => {
