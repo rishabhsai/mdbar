@@ -19,6 +19,7 @@ body {
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 a {
@@ -203,18 +204,18 @@ code {
 .preview {
   display: flex;
   justify-content: center;
-  padding: 32px 24px 80px;
+  padding: 24px 24px 88px;
 }
 
 .preview-window {
   width: 100%;
-  max-width: 980px;
+  max-width: 452px;
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
+  border-radius: 18px;
   background: rgba(255, 255, 255, 0.03);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.03),
-    0 24px 80px rgba(0, 0, 0, 0.4),
+    0 28px 90px rgba(0, 0, 0, 0.42),
     0 0 120px rgba(240, 236, 228, 0.03);
   overflow: hidden;
   opacity: 0;
@@ -231,7 +232,7 @@ code {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 10px 13px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   background: rgba(255, 255, 255, 0.02);
 }
@@ -263,19 +264,19 @@ code {
   display: flex;
   align-items: center;
   gap: 2px;
-  padding: 8px 12px;
+  padding: 7px 9px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .preview-nav-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: rgba(232, 227, 219, 0.3);
   font-size: 14px;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .preview-nav-active {
@@ -295,32 +296,28 @@ code {
   flex: 1;
   text-align: center;
   font-family: "Newsreader", Georgia, serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
   color: rgba(232, 227, 219, 0.6);
   letter-spacing: -0.02em;
 }
 
-.preview-editor {
-  padding: 16px 20px 28px;
-}
-
 .preview-editor-shell {
-  min-height: 420px;
+  min-height: 560px;
 }
 
 .preview-editor-host {
-  min-height: 380px;
-  padding: 16px 20px 28px;
+  min-height: 560px;
+  padding: 18px 18px 24px;
 }
 
 .preview-editor-host .ProseMirror {
-  min-height: 360px;
+  min-height: 518px;
   outline: none;
   color: #f0ece4;
   font-family: "DM Sans", "Helvetica Neue", sans-serif;
-  font-size: 17px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.72;
   caret-color: #f0ece4;
 }
 
@@ -340,18 +337,18 @@ code {
 }
 
 .preview-editor-host .ProseMirror h1 {
-  font-size: 42px;
-  margin: 0 0 14px;
+  font-size: 28px;
+  margin: 0 0 10px;
 }
 
 .preview-editor-host .ProseMirror h2 {
-  font-size: 30px;
-  margin: 24px 0 10px;
+  font-size: 22px;
+  margin: 20px 0 9px;
 }
 
 .preview-editor-host .ProseMirror h3 {
-  font-size: 22px;
-  margin: 18px 0 8px;
+  font-size: 18px;
+  margin: 16px 0 8px;
 }
 
 .preview-editor-host .ProseMirror p,
@@ -385,6 +382,8 @@ code {
   overflow: auto;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.04);
+}
+
 .preview-editor-host .ProseMirror pre code {
   padding: 0;
   background: transparent;
@@ -412,7 +411,14 @@ code {
 }
 
 .preview-editor-host .ProseMirror ul[data-type="taskList"] li > label {
-  margin-top: 2px;
+  display: inline-flex;
+  margin-top: 3px;
+}
+
+.preview-editor-host .ProseMirror ul[data-type="taskList"] li > label input {
+  width: 14px;
+  height: 14px;
+  accent-color: #f0ece4;
 }
 
 .preview-editor-host .ProseMirror ul[data-type="taskList"] li > div {
@@ -451,25 +457,6 @@ code {
 
 .performance-last {
   padding-top: 8px;
-}
-
-.performance-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.performance-title {
-  font-family: "Newsreader", Georgia, serif;
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 400;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  color: #f0ece4;
-  max-width: 16ch;
 }
 
 .performance-grid {
@@ -666,7 +653,7 @@ code {
   }
 
   .preview-window {
-    max-width: 100%;
+    max-width: min(100%, 452px);
   }
 
   .features {
