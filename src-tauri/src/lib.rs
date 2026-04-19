@@ -1,6 +1,9 @@
 mod notes;
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Mutex,
+};
 
 use font_kit::source::SystemSource;
 use tauri::{
@@ -9,12 +12,14 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     ActivationPolicy, AppHandle, Manager, PhysicalPosition, Runtime, WebviewWindow, WindowEvent,
 };
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 const MAIN_WINDOW_LABEL: &str = "main";
 const TRAY_ID: &str = "mdbar-tray";
 const QUIT_ID: &str = "quit";
 
 struct PanelAutoHide(AtomicBool);
+struct RegisteredGlobalShortcut(Mutex<Option<String>>);
 
 #[tauri::command(rename_all = "camelCase")]
 fn set_panel_auto_hide(app: AppHandle, enabled: bool) -> Result<(), String> {
@@ -35,6 +40,49 @@ fn toggle_main_window(app: AppHandle) -> Result<(), String> {
 
     reveal_panel(&app, &window);
     Ok(())
+}
+
+#[tauri::command(rename_all = "camelCase")]
+fn sync_global_shortcut(app: AppHandle, shortcut: String) -> Result<String, String> {
+    let shortcut = shortcut.trim().to_string();
+    if shortcut.is_empty() {
+        return Err("Choose a shortcut first.".to_string());
+    }
+
+    let global_shortcut = app.global_shortcut();
+    let shortcut_state = app.state::<RegisteredGlobalShortcut>();
+    let mut registered = shortcut_state.0.lock().unwrap();
+
+    if registered.as_deref() == Some(shortcut.as_str()) && global_shortcut.is_registered(shortcut.as_str()) {
+        return Ok(format!("Active: {shortcut}"));
+    }
+
+    if let Some(previous) = registered.as_deref() {
+        if previous != shortcut && global_shortcut.is_registered(previous) {
+            global_shortcut
+                .unregister(previous)
+                .map_err(|error| format!("Couldn't clear the previous shortcut: {error}"))?;
+        }
+    }
+
+    global_shortcut
+        .on_shortcut(shortcut.as_str(), move |app, _shortcut, event| {
+            if event.state != ShortcutState::Pressed {
+                return;
+            }
+
+            if let Ok(window) = get_main_window(app) {
+                if window.is_visible().unwrap_or(false) {
+                    let _ = window.hide();
+                } else {
+                    reveal_panel(app, &window);
+                }
+            }
+        })
+        .map_err(|error| error.to_string())?;
+
+    *registered = Some(shortcut.clone());
+    Ok(format!("Active: {shortcut}"))
 }
 
 #[tauri::command]
@@ -187,11 +235,13 @@ fn build_tray<R: Runtime>(app: &mut tauri::App<R>) -> tauri::Result<()> {
 pub fn run() {
     tauri::Builder::default()
         .manage(PanelAutoHide(AtomicBool::new(true)))
+        .manage(RegisteredGlobalShortcut(Mutex::new(None)))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             toggle_main_window,
+            sync_global_shortcut,
             set_panel_auto_hide,
             list_system_fonts,
             notes::open_daily_note,

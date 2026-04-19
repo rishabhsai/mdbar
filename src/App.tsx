@@ -1,9 +1,4 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import {
-  isRegistered,
-  register,
-  unregisterAll,
-} from "@tauri-apps/plugin-global-shortcut";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import { SettingsView } from "./components/SettingsSheet";
@@ -23,7 +18,7 @@ import {
   renameLibraryNote,
   saveNote,
   setPanelAutoHide,
-  toggleMainWindow,
+  syncGlobalShortcut,
 } from "./lib/tauri";
 import type {
   AppSettings,
@@ -330,20 +325,9 @@ function App() {
 
     async function syncShortcut() {
       try {
-        await unregisterAll();
-        await register(settings.shortcut, async (event) => {
-          if (event.state !== "Pressed") {
-            return;
-          }
-
-          await toggleMainWindow();
-        });
-
         if (!disposed) {
-          const registered = await isRegistered(settings.shortcut);
-          setShortcutStatus(
-            registered ? `Active: ${settings.shortcut}` : "Shortcut is not available.",
-          );
+          const status = await syncGlobalShortcut(settings.shortcut);
+          setShortcutStatus(status);
         }
       } catch (error) {
         if (!disposed) {

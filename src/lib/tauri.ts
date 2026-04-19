@@ -113,6 +113,12 @@ export function toggleMainWindow() {
   return invoke("toggle_main_window");
 }
 
+export function syncGlobalShortcut(shortcut: string) {
+  return invoke<string>("sync_global_shortcut", {
+    shortcut,
+  });
+}
+
 export function setPanelAutoHide(enabled: boolean) {
   return invoke("set_panel_auto_hide", {
     enabled,
