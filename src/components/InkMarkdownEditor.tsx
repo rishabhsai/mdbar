@@ -15,8 +15,6 @@ import {
   type MutableRefObject,
 } from "react";
 
-import { markdownPresentationExtension } from "../lib/editor-plugins";
-
 type InkMarkdownEditorProps = {
   className?: string;
   documentKey: string;
@@ -148,7 +146,6 @@ function buildExtensions(
     EditorView.lineWrapping,
     syntaxHighlighting(markdownHighlightStyle),
     editorTheme,
-    markdownPresentationExtension,
     EditorView.contentAttributes.of({
       spellcheck: "true",
       autocapitalize: "sentences",

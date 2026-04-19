@@ -276,30 +276,6 @@ code {
   overflow: hidden;
 }
 
-.panel-toolbar {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px 8px;
-  border-bottom: 1px solid var(--panel-border);
-}
-
-.panel-toolbar-center {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.panel-toolbar-actions {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .view-switch {
   display: inline-flex;
   align-items: center;
@@ -443,44 +419,6 @@ code {
   color: var(--danger);
 }
 
-.note-picker {
-  position: relative;
-  width: min(188px, 100%);
-}
-
-.note-picker-trigger {
-  width: 100%;
-  min-height: 38px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px 8px 12px;
-  border: 1px solid var(--panel-border);
-  border-radius: 13px;
-  background: color-mix(in srgb, var(--panel) 93%, white 7%);
-  color: var(--ink);
-  text-align: left;
-}
-
-.note-picker-trigger:hover:not(:disabled),
-.note-picker-trigger.is-open {
-  background: color-mix(in srgb, var(--accent-soft) 76%, var(--panel) 24%);
-}
-
-.note-picker-trigger:disabled {
-  opacity: 0.46;
-  cursor: default;
-}
-
-.note-picker-trigger svg {
-  width: 14px;
-  height: 14px;
-  color: var(--muted);
-}
-
-.note-picker-trigger-label,
-.note-picker-trigger-meta,
 .note-picker-item-title,
 .note-picker-item-meta,
 .option-card-title,
@@ -490,7 +428,6 @@ code {
   display: block;
 }
 
-.note-picker-trigger-label,
 .note-picker-item-title {
   overflow: hidden;
   font-size: 12px;
@@ -499,7 +436,6 @@ code {
   white-space: nowrap;
 }
 
-.note-picker-trigger-meta,
 .note-picker-item-meta,
 .sheet-subcopy {
   overflow: hidden;
@@ -512,8 +448,9 @@ code {
 .note-picker-popover {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
   right: 0;
+  left: auto;
+  width: 240px;
   z-index: 10;
   display: grid;
   gap: 6px;
@@ -576,6 +513,29 @@ code {
 .note-picker-item.is-active {
   background: color-mix(in srgb, var(--accent-soft) 76%, var(--panel) 24%);
   border-color: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.note-picker-popover-header {
+  width: 252px;
+}
+
+.note-picker-popover-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.note-picker-popover-actions .toolbar-button {
+  flex: 1;
+  min-height: 30px;
+  padding: 0 10px;
+  font-size: 11px;
+}
+
+.note-picker-empty {
+  margin: 0;
+  padding: 8px 6px 2px;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .inline-message {

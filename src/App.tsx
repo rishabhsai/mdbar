@@ -33,34 +33,6 @@ function resolveInitialSystemTheme() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function noteCaption(note: NoteDocument | null) {
-  return note?.relativePath ?? "No file selected";
-}
-
-function saveStateLabel(
-  saveState: "idle" | "saving" | "saved",
-  isLoadingNote: boolean,
-  errorMessage: string | null,
-) {
-  if (errorMessage) {
-    return "Issue";
-  }
-
-  if (isLoadingNote) {
-    return "Loading";
-  }
-
-  if (saveState === "saving") {
-    return "Saving";
-  }
-
-  if (saveState === "saved") {
-    return "Saved";
-  }
-
-  return "Ready";
-}
-
 const onboardingTree = `your-notebook/
   daily/
     2026-04-18.md
@@ -79,7 +51,7 @@ function App() {
   const [currentNote, setCurrentNote] = useState<NoteDocument | null>(null);
   const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const [, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [shortcutStatus, setShortcutStatus] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
@@ -160,8 +132,7 @@ function App() {
     currentNote?.filePath ??
     `${mode}:${dailyDateKey}:${selectedLibraryNoteId ?? "no-library-note"}`;
   const todayDateKey = todayKey();
-  const title = mode === "daily" ? formatDateLabel(dailyDateKey) : "Notes";
-  const statusLabel = saveStateLabel(saveState, isLoadingNote, errorMessage);
+  const title = mode === "daily" ? formatDateLabel(dailyDateKey) : currentNote?.title ?? "Notes";
   const disablePrevious = !settings.notebookPath || mode !== "daily";
   const disableNext =
     !settings.notebookPath || mode !== "daily" || dailyDateKey >= todayDateKey;
@@ -427,6 +398,13 @@ function App() {
     void handleCreateNote();
   }
 
+  function handleNotesButtonClick() {
+    setMode("library");
+    if (libraryNotes.length > 0) {
+      setIsNotePickerOpen((current) => !current);
+    }
+  }
+
   return (
     <main className={`app-shell ${appearance === "dark" ? "theme-dark" : "theme-light"}`}>
       <section className="panel-frame">
@@ -505,31 +483,76 @@ function App() {
           </h1>
 
           <div className="header-side header-side-right">
-            <button
-              aria-label="Open notes"
-              className={`header-icon${mode === "library" ? " active" : ""}`}
-              onClick={() => setMode("library")}
-              type="button"
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24">
-                <path
-                  d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.45"
-                />
-                <path
-                  d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.45"
-                />
-              </svg>
-            </button>
+            <div className="header-menu-wrap" ref={notePickerRef}>
+              <button
+                aria-expanded={isNotePickerOpen}
+                aria-label="Open notes"
+                className={`header-icon${mode === "library" ? " active" : ""}`}
+                onClick={handleNotesButtonClick}
+                type="button"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path
+                    d="M7.2 6.25h6.1l3.45 3.4v7.15A1.2 1.2 0 0 1 15.55 18H7.2A1.2 1.2 0 0 1 6 16.8v-9.35a1.2 1.2 0 0 1 1.2-1.2Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.45"
+                  />
+                  <path
+                    d="M13.3 6.25v3.4h3.45M8.7 12.2h5.1M8.7 14.8h5.1"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.45"
+                  />
+                </svg>
+              </button>
+
+              {isNotePickerOpen ? (
+                <div className="note-picker-popover note-picker-popover-header">
+                  <div className="note-picker-popover-actions">
+                    <button
+                      className="toolbar-button"
+                      onClick={() => openComposer("note")}
+                      type="button"
+                    >
+                      New note
+                    </button>
+                    <button
+                      className="toolbar-button"
+                      onClick={() => openComposer("folder")}
+                      type="button"
+                    >
+                      New folder
+                    </button>
+                  </div>
+                  {libraryNotes.length === 0 ? (
+                    <p className="note-picker-empty">No notes yet.</p>
+                  ) : (
+                    libraryNotes.map((note) => (
+                      <button
+                        className={`note-picker-item${
+                          selectedLibraryNoteId === note.id ? " is-active" : ""
+                        }`}
+                        key={note.id}
+                        onClick={() => {
+                          setSelectedLibraryNoteId(note.id);
+                          setMode("library");
+                          setIsNotePickerOpen(false);
+                        }}
+                        type="button"
+                      >
+                        <span className="note-picker-item-title">{note.title}</span>
+                        <span className="note-picker-item-meta">{note.relativePath}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              ) : null}
+            </div>
 
             <button
               aria-label="Open settings"
@@ -600,103 +623,6 @@ function App() {
           </section>
         ) : (
           <section className="panel-body">
-            <div className="panel-toolbar">
-              <div className="view-switch">
-                <button
-                  className={mode === "daily" ? "is-active" : ""}
-                  onClick={() => setMode("daily")}
-                  type="button"
-                >
-                  Daily
-                </button>
-                <button
-                  className={mode === "library" ? "is-active" : ""}
-                  onClick={() => setMode("library")}
-                  type="button"
-                >
-                  Notes
-                </button>
-              </div>
-
-              <div className="panel-toolbar-center">
-                {mode === "library" ? (
-                  <div className="note-picker" ref={notePickerRef}>
-                    <button
-                      aria-expanded={isNotePickerOpen}
-                      className={`note-picker-trigger${isNotePickerOpen ? " is-open" : ""}`}
-                      disabled={libraryNotes.length === 0}
-                      onClick={() => setIsNotePickerOpen((current) => !current)}
-                      type="button"
-                    >
-                      <span className="note-picker-trigger-label">
-                        {currentNote?.title ?? "Choose a note"}
-                      </span>
-                      <span className="note-picker-trigger-meta">
-                        {currentNote?.relativePath ?? "Browse your notes folder"}
-                      </span>
-                      <svg aria-hidden="true" viewBox="0 0 24 24">
-                        <path
-                          d="m8 10 4 4 4-4"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="1.6"
-                        />
-                      </svg>
-                    </button>
-
-                    {isNotePickerOpen ? (
-                      <div className="note-picker-popover">
-                        {libraryNotes.map((note) => (
-                          <button
-                            className={`note-picker-item${
-                              selectedLibraryNoteId === note.id ? " is-active" : ""
-                            }`}
-                            key={note.id}
-                            onClick={() => {
-                              setSelectedLibraryNoteId(note.id);
-                              setIsNotePickerOpen(false);
-                            }}
-                            type="button"
-                          >
-                            <span className="note-picker-item-title">{note.title}</span>
-                            <span className="note-picker-item-meta">{note.relativePath}</span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p className="note-caption">{noteCaption(currentNote)}</p>
-                )}
-              </div>
-
-              <div className="panel-toolbar-actions">
-                {mode === "library" ? (
-                  <>
-                    <button
-                      className="toolbar-button"
-                      onClick={() => openComposer("note")}
-                      type="button"
-                    >
-                      Note
-                    </button>
-                    <button
-                      className="toolbar-button"
-                      onClick={() => openComposer("folder")}
-                      type="button"
-                    >
-                      Folder
-                    </button>
-                  </>
-                ) : null}
-                <p className={`status-pill${statusLabel === "Issue" ? " is-error" : ""}`}>
-                  {statusLabel}
-                </p>
-              </div>
-            </div>
-
             {errorMessage ? <p className="inline-message error">{errorMessage}</p> : null}
 
             {mode === "library" && libraryNotes.length === 0 ? (
