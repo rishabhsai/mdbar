@@ -83,6 +83,10 @@ const onboardingTree = `your-notebook/
     projects/
       mdbar-roadmap.md`;
 
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 function App() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [screen, setScreen] = useState<Screen>("daily");
@@ -103,6 +107,7 @@ function App() {
   const [newItemName, setNewItemName] = useState("");
   const [pendingDeleteNote, setPendingDeleteNote] = useState<NoteSummary | null>(null);
   const [pendingDeleteFolder, setPendingDeleteFolder] = useState<FolderSummary | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isRenamingTitle, setIsRenamingTitle] = useState(false);
   const [renamingTitle, setRenamingTitle] = useState("");
   const [systemTheme, setSystemTheme] = useState<"light" | "dark">(
@@ -250,7 +255,23 @@ function App() {
           : currentNote?.title ?? "Note";
   const disablePrevious = !settings.notebookPath || screen !== "daily";
   const disableNext =
-    !settings.notebookPath || screen !== "daily" || dailyDateKey >= todayDateKey;
+    !settings.notebookPath || screen !== "daily" || dailyDateKey > todayDateKey;
+  const nextPlansTomorrow =
+    Boolean(settings.notebookPath) && screen === "daily" && dailyDateKey === todayDateKey;
+  const pendingDeleteFolderNoteCount = pendingDeleteFolder
+    ? libraryNotes.filter((note) => noteLivesInFolder(note, pendingDeleteFolder.relativePath)).length
+    : 0;
+  const pendingDeleteFolderChildCount = pendingDeleteFolder
+    ? libraryFolders.filter(
+        (folder) =>
+          folder.relativePath !== pendingDeleteFolder.relativePath &&
+          noteLivesInFolder(folder, pendingDeleteFolder.relativePath),
+      ).length
+    : 0;
+  const pendingDeleteFolderContents = [
+    pendingDeleteFolderNoteCount > 0 ? pluralize(pendingDeleteFolderNoteCount, "note") : null,
+    pendingDeleteFolderChildCount > 0 ? pluralize(pendingDeleteFolderChildCount, "folder") : null,
+  ].filter(Boolean).join(" and ");
 
   useEffect(() => {
     if (!isRenamingTitle) {
@@ -537,7 +558,7 @@ function App() {
   }
 
   function handleNext() {
-    if (screen === "daily" && dailyDateKey < todayDateKey) {
+    if (screen === "daily" && dailyDateKey <= todayDateKey) {
       setDailyDateKey((current) => shiftDateKey(current, 1));
     }
   }
@@ -613,6 +634,7 @@ function App() {
   function handleDeleteCurrentNote() {
     if (!currentNote || currentNote.kind !== "library") return;
 
+    setIsDeleting(false);
     setPendingDeleteNote({
       id: currentNote.id,
       title: currentNote.title,
@@ -621,6 +643,16 @@ function App() {
       directory: currentNote.directory,
       updatedAtMs: currentNote.updatedAtMs,
     });
+  }
+
+  function requestDeleteNote(note: NoteSummary) {
+    setIsDeleting(false);
+    setPendingDeleteNote(note);
+  }
+
+  function requestDeleteFolder(folder: FolderSummary) {
+    setIsDeleting(false);
+    setPendingDeleteFolder(folder);
   }
 
   function startTitleRename() {
@@ -687,7 +719,7 @@ function App() {
     }
   }
 
-  function noteLivesInFolder(note: NoteDocument | NoteSummary, folderPath: string) {
+  function noteLivesInFolder(note: NoteDocument | NoteSummary | FolderSummary, folderPath: string) {
     return (
       note.directory === folderPath ||
       note.relativePath.startsWith(`${folderPath}/`)
@@ -695,9 +727,10 @@ function App() {
   }
 
   async function confirmDeletePendingNote() {
-    if (!settings.notebookPath || !pendingDeleteNote) return;
+    if (!settings.notebookPath || !pendingDeleteNote || isDeleting) return;
 
     try {
+      setIsDeleting(true);
       await deleteNote(pendingDeleteNote.filePath);
       const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
       const deletedWasOpen = currentNote?.filePath === pendingDeleteNote.filePath;
@@ -723,13 +756,16 @@ function App() {
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsDeleting(false);
     }
   }
 
   async function confirmDeletePendingFolder() {
-    if (!settings.notebookPath || !pendingDeleteFolder) return;
+    if (!settings.notebookPath || !pendingDeleteFolder || isDeleting) return;
 
     try {
+      setIsDeleting(true);
       await deleteLibraryFolder(settings.notebookPath, pendingDeleteFolder.relativePath);
       const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
       const openNoteWasDeleted =
@@ -759,6 +795,8 @@ function App() {
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -773,6 +811,10 @@ function App() {
       }
 
       if (isRenamingTitle) {
+        return;
+      }
+
+      if (isDeleting) {
         return;
       }
 
@@ -807,6 +849,7 @@ function App() {
     };
   }, [
     isComposerOpen,
+    isDeleting,
     isRenamingTitle,
     pendingDeleteFolder,
     pendingDeleteNote,
@@ -891,10 +934,11 @@ function App() {
                 </button>
 
                 <button
-                  aria-label="Next day"
-                  className="header-icon"
+                  aria-label={nextPlansTomorrow ? "Plan tomorrow" : "Next day"}
+                  className={`header-icon${nextPlansTomorrow ? " is-muted-clickable" : ""}`}
                   disabled={disableNext}
                   onClick={handleNext}
+                  title={nextPlansTomorrow ? "Plan tomorrow" : "Next day"}
                   type="button"
                 >
                   <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -1114,8 +1158,8 @@ function App() {
             onCreateFolder={() => openComposer("folder")}
             onCreateNote={() => openComposer("note")}
             onCreateNoteInFolder={(directory) => void handleCreateNoteInFolder(directory)}
-            onDeleteFolder={setPendingDeleteFolder}
-            onDeleteNote={setPendingDeleteNote}
+            onDeleteFolder={requestDeleteFolder}
+            onDeleteNote={requestDeleteNote}
             onSelectNote={handleLibrarySelectNote}
             selectedNoteId={selectedLibraryNoteId}
           />
@@ -1202,19 +1246,54 @@ function App() {
       ) : null}
 
       {pendingDeleteNote ? (
-        <div className="sheet-backdrop" onClick={() => setPendingDeleteNote(null)} role="presentation">
+        <div
+          className="sheet-backdrop"
+          onClick={() => {
+            if (!isDeleting) {
+              setPendingDeleteNote(null);
+            }
+          }}
+          role="presentation"
+        >
           <div className="composer-modal composer-modal-delete" onClick={(event) => event.stopPropagation()}>
-            <p className="empty-kicker">Delete note</p>
-            <h2>Delete &quot;{pendingDeleteNote.title}&quot;?</h2>
+            <div className="delete-modal-heading">
+              <span className="delete-modal-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M8.2 8.8v8.3M12 8.8v8.3M15.8 8.8v8.3M5.5 6.6h13M9.2 4.8h5.6M7.2 6.6l.5 11a1.5 1.5 0 0 0 1.5 1.4h5.6a1.5 1.5 0 0 0 1.5-1.4l.5-11"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.35"
+                  />
+                </svg>
+              </span>
+              <div>
+                <p className="empty-kicker">Delete note</p>
+                <h2>Delete &quot;{pendingDeleteNote.title}&quot;?</h2>
+              </div>
+            </div>
+            <p className="delete-target-path">{pendingDeleteNote.relativePath}</p>
             <p className="composer-helper">
               This removes the markdown file and any pasted images stored next to it. You can&apos;t undo this.
             </p>
             <div className="composer-actions">
-              <button className="secondary-button" onClick={() => setPendingDeleteNote(null)} type="button">
+              <button
+                className="secondary-button"
+                disabled={isDeleting}
+                onClick={() => setPendingDeleteNote(null)}
+                type="button"
+              >
                 Cancel
               </button>
-              <button className="primary-button danger-button" onClick={() => void confirmDeletePendingNote()} type="button">
-                Delete
+              <button
+                className="primary-button danger-button"
+                disabled={isDeleting}
+                onClick={() => void confirmDeletePendingNote()}
+                type="button"
+              >
+                {isDeleting ? "Deleting..." : "Delete note"}
               </button>
             </div>
           </div>
@@ -1222,19 +1301,68 @@ function App() {
       ) : null}
 
       {pendingDeleteFolder ? (
-        <div className="sheet-backdrop" onClick={() => setPendingDeleteFolder(null)} role="presentation">
+        <div
+          className="sheet-backdrop"
+          onClick={() => {
+            if (!isDeleting) {
+              setPendingDeleteFolder(null);
+            }
+          }}
+          role="presentation"
+        >
           <div className="composer-modal composer-modal-delete" onClick={(event) => event.stopPropagation()}>
-            <p className="empty-kicker">Delete folder</p>
-            <h2>Delete &quot;{pendingDeleteFolder.name}&quot;?</h2>
+            <div className="delete-modal-heading">
+              <span className="delete-modal-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path
+                    d="M3.8 8.25c0-1.02.83-1.85 1.85-1.85h4.16l1.52 1.78h6.99c1.02 0 1.85.83 1.85 1.85v1.03"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.35"
+                    opacity="0.68"
+                  />
+                  <path
+                    d="M6.65 11.38c.23-.52.75-.86 1.33-.86h11.05c.98 0 1.69.94 1.4 1.86l-1.49 4.72a1.45 1.45 0 0 1-1.38 1.01H5.36c-1.01 0-1.72-1.03-1.33-1.96l2.62-4.77Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.35"
+                  />
+                </svg>
+              </span>
+              <div>
+                <p className="empty-kicker">Delete folder</p>
+                <h2>Delete &quot;{pendingDeleteFolder.name}&quot;?</h2>
+              </div>
+            </div>
+            <p className="delete-target-path">{pendingDeleteFolder.relativePath}</p>
+            {pendingDeleteFolderContents ? (
+              <p className="delete-footprint">Contains {pendingDeleteFolderContents}.</p>
+            ) : (
+              <p className="delete-footprint">This folder is empty.</p>
+            )}
             <p className="composer-helper">
               This removes the folder and everything nested inside it, including notes, subfolders, and pasted images.
             </p>
             <div className="composer-actions">
-              <button className="secondary-button" onClick={() => setPendingDeleteFolder(null)} type="button">
+              <button
+                className="secondary-button"
+                disabled={isDeleting}
+                onClick={() => setPendingDeleteFolder(null)}
+                type="button"
+              >
                 Cancel
               </button>
-              <button className="primary-button danger-button" onClick={() => void confirmDeletePendingFolder()} type="button">
-                Delete folder
+              <button
+                className="primary-button danger-button"
+                disabled={isDeleting}
+                onClick={() => void confirmDeletePendingFolder()}
+                type="button"
+              >
+                {isDeleting ? "Deleting..." : "Delete folder"}
               </button>
             </div>
           </div>

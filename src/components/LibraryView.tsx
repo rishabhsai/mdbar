@@ -112,6 +112,39 @@ function formatTimestamp(ms: number) {
   });
 }
 
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function normalizeSearch(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function isWithinPath(path: string, parentPath: string) {
+  if (!parentPath) {
+    return true;
+  }
+
+  return path === parentPath || path.startsWith(`${parentPath}/`);
+}
+
+function addAncestorFolders(path: string, folders: Set<string>) {
+  let current = "";
+
+  for (const part of path.split("/").filter(Boolean)) {
+    current = current ? `${current}/${part}` : part;
+    folders.add(current);
+  }
+}
+
+function noteMatchesQuery(note: NoteSummary, query: string) {
+  return `${note.title} ${note.relativePath} ${note.directory}`.toLowerCase().includes(query);
+}
+
+function folderMatchesQuery(folder: FolderSummary, query: string) {
+  return `${folder.name} ${folder.relativePath}`.toLowerCase().includes(query);
+}
+
 function FolderGlyph({ isOpen }: { isOpen: boolean }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -245,6 +278,36 @@ function AddGlyph() {
   );
 }
 
+function SearchGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path
+        d="M10.85 18.2a7.35 7.35 0 1 0 0-14.7 7.35 7.35 0 0 0 0 14.7ZM16.2 16.2l4.3 4.3"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.55"
+      />
+    </svg>
+  );
+}
+
+function ClearGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24">
+      <path
+        d="m7.25 7.25 9.5 9.5M16.75 7.25l-9.5 9.5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.7"
+      />
+    </svg>
+  );
+}
+
 function FolderNode({
   folder,
   depth,
@@ -305,6 +368,7 @@ function FolderNode({
             aria-label={`Add note in ${folder.name}`}
             className="lib-folder-action"
             onClick={() => onCreateNoteInFolder(folder.relativePath)}
+            title={`Add note in ${folder.name}`}
             type="button"
           >
             <AddGlyph />
@@ -313,6 +377,7 @@ function FolderNode({
             aria-label={`Delete folder ${folder.name}`}
             className="lib-folder-action lib-folder-action-delete"
             onClick={() => onDeleteFolder(folder)}
+            title={`Delete folder ${folder.name}`}
             type="button"
           >
             <TrashGlyph />
@@ -367,6 +432,7 @@ function FolderNode({
                 aria-label={`Delete ${note.title}`}
                 className="lib-note-delete"
                 onClick={() => onDeleteNote(note)}
+                title={`Delete ${note.title}`}
                 type="button"
               >
                 <TrashGlyph />
@@ -390,9 +456,59 @@ export function LibraryView({
   onSelectNote,
   selectedNoteId,
 }: LibraryViewProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const normalizedQuery = normalizeSearch(searchQuery);
+  const isSearching = normalizedQuery.length > 0;
+  const visibleLibrary = useMemo(() => {
+    if (!isSearching) {
+      return {
+        folders: libraryFolders,
+        notes: libraryNotes,
+      };
+    }
+
+    const matchedFolderPaths = new Set(
+      libraryFolders
+        .filter((folder) => folderMatchesQuery(folder, normalizedQuery))
+        .map((folder) => folder.relativePath),
+    );
+    const matchedFolderList = Array.from(matchedFolderPaths);
+    const notes = libraryNotes.filter(
+      (note) =>
+        noteMatchesQuery(note, normalizedQuery) ||
+        matchedFolderList.some((folderPath) => isWithinPath(note.relativePath, folderPath)),
+    );
+    const visibleFolderPaths = new Set<string>();
+
+    for (const note of notes) {
+      addAncestorFolders(note.directory, visibleFolderPaths);
+    }
+
+    for (const folder of libraryFolders) {
+      const belongsToMatchedFolder = matchedFolderList.some(
+        (folderPath) =>
+          isWithinPath(folder.relativePath, folderPath) ||
+          isWithinPath(folderPath, folder.relativePath),
+      );
+      const containsVisibleNote = Array.from(visibleFolderPaths).some(
+        (noteFolderPath) =>
+          folder.relativePath === noteFolderPath ||
+          isWithinPath(noteFolderPath, folder.relativePath),
+      );
+
+      if (folderMatchesQuery(folder, normalizedQuery) || belongsToMatchedFolder || containsVisibleNote) {
+        addAncestorFolders(folder.relativePath, visibleFolderPaths);
+      }
+    }
+
+    return {
+      folders: libraryFolders.filter((folder) => visibleFolderPaths.has(folder.relativePath)),
+      notes,
+    };
+  }, [isSearching, libraryFolders, libraryNotes, normalizedQuery]);
   const tree = useMemo(
-    () => buildTree(libraryNotes, libraryFolders),
-    [libraryNotes, libraryFolders],
+    () => buildTree(visibleLibrary.notes, visibleLibrary.folders),
+    [visibleLibrary],
   );
 
   const folderEntries = Array.from(tree.folders.entries()).sort(([left], [right]) =>
@@ -402,6 +518,12 @@ export function LibraryView({
     left.title.localeCompare(right.title),
   );
   const isEmpty = libraryNotes.length === 0 && libraryFolders.length === 0;
+  const hasVisibleResults = visibleLibrary.notes.length > 0 || visibleLibrary.folders.length > 0;
+  const visibleResultCount = visibleLibrary.notes.length + visibleLibrary.folders.length;
+  const headerCount = [
+    pluralize(libraryNotes.length, "file"),
+    libraryFolders.length > 0 ? pluralize(libraryFolders.length, "folder") : null,
+  ].filter(Boolean).join(" • ");
 
   return (
     <section className="library-view">
@@ -409,8 +531,9 @@ export function LibraryView({
         <div className="lib-header-row">
           <span className="lib-header-label">Notes</span>
           <span className="lib-header-count">
-            {libraryNotes.length} files
-            {libraryFolders.length > 0 ? ` • ${libraryFolders.length} folders` : ""}
+            {isSearching
+              ? `${pluralize(visibleResultCount, "result")} found`
+              : headerCount}
           </span>
         </div>
         <div className="lib-header-actions">
@@ -425,10 +548,43 @@ export function LibraryView({
         </div>
       </div>
 
+      {!isEmpty ? (
+        <div className="lib-search-row">
+          <label className="lib-search" htmlFor="library-search">
+            <span className="lib-search-icon">
+              <SearchGlyph />
+            </span>
+            <input
+              autoComplete="off"
+              id="library-search"
+              onChange={(event) => setSearchQuery(event.currentTarget.value)}
+              placeholder="Search notes"
+              type="search"
+              value={searchQuery}
+            />
+            {isSearching ? (
+              <button
+                aria-label="Clear search"
+                className="lib-search-clear"
+                onClick={() => setSearchQuery("")}
+                type="button"
+              >
+                <ClearGlyph />
+              </button>
+            ) : null}
+          </label>
+        </div>
+      ) : null}
+
       {isEmpty ? (
         <div className="lib-empty">
           <p className="lib-empty-title">No notes yet</p>
           <p className="lib-empty-copy">Create a note or folder to get started.</p>
+        </div>
+      ) : !hasVisibleResults ? (
+        <div className="lib-empty">
+          <p className="lib-empty-title">No matches</p>
+          <p className="lib-empty-copy">Try another title or folder.</p>
         </div>
       ) : (
         <div className="lib-tree">
@@ -477,6 +633,7 @@ export function LibraryView({
                 aria-label={`Delete ${note.title}`}
                 className="lib-note-delete"
                 onClick={() => onDeleteNote(note)}
+                title={`Delete ${note.title}`}
                 type="button"
               >
                 <TrashGlyph />
