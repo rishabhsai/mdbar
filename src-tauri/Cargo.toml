@@ -1,6 +1,6 @@
 [package]
 name = "mdbar"
-version = "0.1.0"
+version = "0.1.1"
 description = "A menu bar markdown notebook for macOS."
 authors = ["Rishabh Sai"]
 edition = "2021"
