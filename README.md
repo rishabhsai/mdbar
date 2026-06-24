@@ -60,12 +60,11 @@ There is no database. Your notes stay as plain `.md` files.
 
 ## Download
 
-- Landing page: [site/index.html](/Users/rishabhsai/Desktop/better%20inbuilt%20markdown%20browser/mdbar/site/index.html)
-- Static download artifact: [site/downloads/mdbar-0.1.0-aarch64.dmg](/Users/rishabhsai/Desktop/better%20inbuilt%20markdown%20browser/mdbar/site/downloads/mdbar-0.1.0-aarch64.dmg)
+- Website: [mdbar.run](https://mdbar.run/)
 - GitHub repo: [github.com/rishabhsai/mdbar](https://github.com/rishabhsai/mdbar)
 - Releases: [github.com/rishabhsai/mdbar/releases](https://github.com/rishabhsai/mdbar/releases)
 
-Current checked artifact is an Apple Silicon macOS DMG.
+Use the GitHub Releases page for the current signed and notarized macOS build.
 
 ## Development
 
@@ -93,6 +92,15 @@ Build the macOS bundle:
 npm run tauri build
 ```
 
+Publish a signed and notarized macOS release:
+
+```bash
+./scripts/release-macos.sh
+```
+
+The release script refuses to publish unless a Developer ID Application
+certificate and Apple notarization credentials are available.
+
 ## Project structure
 
 - `src/`: React app for the mdbar panel UI
@@ -101,15 +109,8 @@ npm run tauri build
 
 ## Shipping the landing page
 
-The landing page is the standalone static site in `site/`.
-
-If you want to host it on Vercel, point Vercel at that directory or copy its contents into the deployment root. The current download button is wired to:
-
-```text
-./downloads/mdbar-0.1.0-aarch64.dmg
-```
-
-So the `site/downloads/` folder needs to be deployed with the page.
+The landing page is the standalone static site in `site/`. Its download buttons
+link to GitHub Releases so the website never needs to ship a stale DMG.
 
 ## Stack
 

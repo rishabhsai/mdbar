@@ -71,7 +71,7 @@ function describeShortcutError(error: unknown, shortcut: string) {
     return `That shortcut is already taken by macOS or another app. Try a different combo.`;
   }
 
-  return message || "Could not register that shortcut.";
+  return "mdbar couldn't update that shortcut. Try another key combination.";
 }
 
 const onboardingTree = `your-notebook/
@@ -1098,7 +1098,24 @@ function App() {
           </div>
         </header>
 
-        {!settings.notebookPath ? (
+        {screen === "settings" ? (
+          <SettingsView
+            onChange={(patch) => setSettings((existing) => ({ ...existing, ...patch }))}
+            onChooseFolder={chooseNotebookFolder}
+            onClose={() => {
+              if (!goBack()) {
+                navigateTo("daily", {
+                  dailyDateKey: todayDateKey,
+                  focusEditor: true,
+                  pushHistory: false,
+                  resetHistory: true,
+                });
+              }
+            }}
+            settings={settings}
+            shortcutStatus={shortcutStatus}
+          />
+        ) : !settings.notebookPath ? (
           <section className="empty-state onboarding-state">
             <p className="empty-kicker">Welcome to mdbar</p>
             <h2>Choose one folder on your Mac and mdbar turns it into a plain markdown notebook.</h2>
@@ -1134,23 +1151,6 @@ function App() {
               </button>
             </div>
           </section>
-        ) : screen === "settings" ? (
-          <SettingsView
-            onChange={(patch) => setSettings((existing) => ({ ...existing, ...patch }))}
-            onChooseFolder={chooseNotebookFolder}
-            onClose={() => {
-              if (!goBack()) {
-                navigateTo("daily", {
-                  dailyDateKey: todayDateKey,
-                  focusEditor: true,
-                  pushHistory: false,
-                  resetHistory: true,
-                });
-              }
-            }}
-            settings={settings}
-            shortcutStatus={shortcutStatus}
-          />
         ) : screen === "library" ? (
           <LibraryView
             libraryFolders={libraryFolders}
