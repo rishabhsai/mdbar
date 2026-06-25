@@ -64,7 +64,7 @@ There is no database. Your notes stay as plain `.md` files.
 - GitHub repo: [github.com/rishabhsai/mdbar](https://github.com/rishabhsai/mdbar)
 - Releases: [github.com/rishabhsai/mdbar/releases](https://github.com/rishabhsai/mdbar/releases)
 
-Use the GitHub Releases page for the current signed and notarized macOS build.
+Use the GitHub Releases page for the current macOS build.
 
 ## Development
 
