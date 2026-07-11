@@ -6,6 +6,7 @@ import { defaultSettings, type AppSettings, type ThemePreference } from "../lib/
 type SettingsViewProps = {
   onChange: (patch: Partial<AppSettings>) => void;
   onChooseFolder: () => void;
+  onUseICloud: () => void;
   onClose: () => void;
   settings: AppSettings;
   shortcutStatus: string | null;
@@ -174,6 +175,7 @@ function formatAcceleratorForDisplay(accelerator: string): string[] {
 export function SettingsView({
   onChange,
   onChooseFolder,
+  onUseICloud,
   onClose,
   settings,
   shortcutStatus,
@@ -270,6 +272,13 @@ export function SettingsView({
             <span className="notebook-path-action">
               {settings.notebookPath ? "Change" : "Choose"}
             </span>
+          </button>
+          <button className="icloud-notebook-button" onClick={onUseICloud} type="button">
+            <span>
+              <strong>Use iCloud</strong>
+              <small>Sync this notebook with mdbar on iPhone and widgets.</small>
+            </span>
+            <span aria-hidden="true">→</span>
           </button>
           <p className="settings-hint settings-card-hint">
             Daily notes go in <code>daily/</code>; everything else goes in{" "}

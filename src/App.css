@@ -199,7 +199,7 @@ code {
 .lib-folder-toggle:focus-visible,
 .lib-folder-action:focus-visible,
 .lib-note-item:focus-visible,
-.lib-note-delete:focus-visible,
+.lib-note-actions:focus-visible,
 .lib-search-clear:focus-visible {
   outline: none;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent);
@@ -334,12 +334,13 @@ code {
 }
 
 .lib-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 14px 10px;
-  border-bottom: 1px solid var(--panel-border);
+  min-height: 36px;
+  padding: 6px 10px 2px 14px;
 }
 
 .lib-header-row {
@@ -357,6 +358,73 @@ code {
 .lib-header-count {
   font-size: 11px;
   color: var(--muted);
+}
+
+.lib-create-menu {
+  position: relative;
+}
+
+.lib-create-menu summary {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.lib-create-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.lib-create-menu summary:hover,
+.lib-create-menu[open] summary {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.lib-create-menu summary svg {
+  width: 14px;
+  height: 14px;
+}
+
+.lib-create-popover {
+  position: fixed;
+  z-index: 100;
+  top: 72px;
+  right: 12px;
+  width: 142px;
+  padding: 5px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+}
+
+.lib-create-popover button {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.lib-create-popover button:hover {
+  background: var(--accent-soft);
+}
+
+.lib-create-popover svg {
+  width: 14px;
+  height: 14px;
 }
 
 .lib-header-actions {
@@ -703,7 +771,7 @@ code {
   font-size: 10px;
 }
 
-.lib-note-delete {
+.lib-note-actions {
   width: 24px;
   height: 24px;
   display: inline-flex;
@@ -714,26 +782,24 @@ code {
   border-radius: 7px;
   background: transparent;
   color: color-mix(in srgb, var(--muted) 88%, var(--ink));
+  font-size: 10px;
+  text-align: center;
+  appearance: none;
   opacity: 0.36;
   transform: translateX(0);
   transition: background 70ms ease-out, opacity 70ms ease-out, color 70ms ease-out;
 }
 
-.lib-note-delete svg {
-  width: 13px;
-  height: 13px;
-}
-
-.lib-note-row:hover .lib-note-delete,
-.lib-note-row:focus-within .lib-note-delete,
-.lib-note-row.is-active .lib-note-delete,
-.lib-note-delete:focus-visible {
+.lib-note-row:hover .lib-note-actions,
+.lib-note-row:focus-within .lib-note-actions,
+.lib-note-row.is-active .lib-note-actions,
+.lib-note-actions:focus-visible {
   opacity: 1;
 }
 
-.lib-note-delete:hover {
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
-  color: var(--danger);
+.lib-note-actions:hover {
+  background: var(--accent-soft);
+  color: var(--ink);
 }
 
 /* ── Tiptap editor host ── */
@@ -1504,6 +1570,41 @@ code {
   color: var(--panel);
   font-size: 9px;
   font-weight: 700;
+}
+
+.icloud-notebook-button {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 8px 11px;
+  border: 1px solid color-mix(in srgb, var(--ink) 7%, transparent);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.icloud-notebook-button:hover {
+  background: var(--accent-soft);
+}
+
+.icloud-notebook-button span:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.icloud-notebook-button strong {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.icloud-notebook-button small {
+  color: var(--muted);
+  font-size: 10px;
 }
 
 .settings-hint {

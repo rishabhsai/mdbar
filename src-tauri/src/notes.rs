@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{Duration, NaiveDate};
 use serde::Serialize;
 use std::{
     ffi::OsStr,
@@ -127,6 +127,54 @@ fn build_daily_path(root: &Path, date_key: &str) -> Result<PathBuf, String> {
     let folder = daily_root(root);
     ensure_dir(&folder)?;
     Ok(folder.join(format!("{date_key}.md")))
+}
+
+fn rollover_task_lines(content: &str) -> Vec<String> {
+    content
+        .lines()
+        .filter_map(|line| {
+            let trimmed = line.trim_start();
+            let lowercase = trimmed.to_ascii_lowercase();
+            let is_task = ["- [", "* [", "+ ["]
+                .iter()
+                .any(|prefix| lowercase.starts_with(prefix));
+            if !is_task {
+                return None;
+            }
+            let completed = lowercase.contains("[x]");
+            let repeats = lowercase.contains("#reuse") || lowercase.contains("[reuse]");
+            let carries = lowercase.contains("#carry") || lowercase.contains("[carry]");
+            if !repeats && !(carries && !completed) {
+                return None;
+            }
+            Some(line.replacen("[x]", "[ ]", 1).replacen("[X]", "[ ]", 1))
+        })
+        .collect()
+}
+
+fn append_unique_task_lines(content: &str, additions: &[String]) -> String {
+    let normalized = |line: &str| {
+        line.to_ascii_lowercase()
+            .replace("[x]", "[]")
+            .replace("[ ]", "[]")
+            .trim()
+            .to_string()
+    };
+    let existing = content
+        .lines()
+        .map(normalized)
+        .collect::<std::collections::HashSet<_>>();
+    let additions = additions
+        .iter()
+        .filter(|line| !existing.contains(&normalized(line)))
+        .cloned()
+        .collect::<Vec<_>>();
+    if additions.is_empty() {
+        return content.to_string();
+    }
+    let trimmed = content.trim_end_matches('\n');
+    let separator = if trimmed.trim().is_empty() { "" } else { "\n" };
+    format!("{trimmed}{separator}{}\n", additions.join("\n"))
 }
 
 fn normalize_path_string(path: &Path) -> String {
@@ -354,7 +402,11 @@ fn slugify(title: &str) -> String {
     slug.trim_matches('-').to_string()
 }
 
-fn unique_library_path(root: &Path, directory: Option<&str>, title: &str) -> Result<PathBuf, String> {
+fn unique_library_path(
+    root: &Path,
+    directory: Option<&str>,
+    title: &str,
+) -> Result<PathBuf, String> {
     let mut folder = library_root(root);
     ensure_dir(&folder)?;
 
@@ -388,7 +440,11 @@ fn unique_library_path(root: &Path, directory: Option<&str>, title: &str) -> Res
     }
 }
 
-fn rewritten_asset_markdown_paths(content: &str, old_note_path: &Path, new_note_path: &Path) -> String {
+fn rewritten_asset_markdown_paths(
+    content: &str,
+    old_note_path: &Path,
+    new_note_path: &Path,
+) -> String {
     let Ok(old_assets) = note_assets_directory(old_note_path) else {
         return content.to_string();
     };
@@ -463,8 +519,7 @@ fn collect_library_notes(
     folder: &Path,
     notes: &mut Vec<NoteSummary>,
 ) -> Result<(), String> {
-    let entries =
-        fs::read_dir(folder).map_err(|error| format!("Couldn't scan notes: {error}"))?;
+    let entries = fs::read_dir(folder).map_err(|error| format!("Couldn't scan notes: {error}"))?;
 
     for entry in entries {
         let entry = entry.map_err(|error| format!("Couldn't scan notes: {error}"))?;
@@ -514,7 +569,18 @@ pub fn open_daily_note(folder_path: String, date_key: String) -> Result<NoteDocu
     let path = build_daily_path(&root, &date_key)?;
 
     if !path.exists() {
-        atomic_write(&path, "")?;
+        let date = NaiveDate::parse_from_str(&date_key, "%Y-%m-%d")
+            .map_err(|_| "That daily note date is invalid.".to_string())?;
+        let previous_path = build_daily_path(
+            &root,
+            &(date - Duration::days(1)).format("%Y-%m-%d").to_string(),
+        )?;
+        let additions = if previous_path.exists() {
+            rollover_task_lines(&load_text(&previous_path)?)
+        } else {
+            Vec::new()
+        };
+        atomic_write(&path, &append_unique_task_lines("", &additions))?;
     }
 
     build_daily_document(&path)
@@ -608,7 +674,11 @@ pub fn rename_library_note(
     let directory = library_directory(&notes_root, &current_path);
     let next_path = unique_library_path(
         &root,
-        if directory.is_empty() { None } else { Some(directory.as_str()) },
+        if directory.is_empty() {
+            None
+        } else {
+            Some(directory.as_str())
+        },
         &title,
     )?;
 
@@ -617,7 +687,8 @@ pub fn rename_library_note(
     }
 
     let current_content = load_text(&current_path)?;
-    let rewritten_content = rewritten_asset_markdown_paths(&current_content, &current_path, &next_path);
+    let rewritten_content =
+        rewritten_asset_markdown_paths(&current_content, &current_path, &next_path);
     let current_assets = note_assets_directory(&current_path).ok();
     let next_assets = note_assets_directory(&next_path).ok();
     let should_move_assets = matches!(
@@ -654,6 +725,64 @@ pub fn rename_library_note(
             }
             let _ = fs::rename(&next_path, &current_path);
             return Err(error);
+        }
+    }
+
+    build_library_document(&notes_root, &next_path)
+}
+
+#[tauri::command(rename_all = "camelCase")]
+pub fn move_library_note(
+    folder_path: String,
+    note_id: String,
+    directory: Option<String>,
+) -> Result<NoteDocument, String> {
+    let root = normalize_notebook_root(&folder_path)?;
+    let notes_root = library_root(&root);
+    let relative = normalize_library_note_relative_path(&note_id)?;
+    let current_path = notes_root.join(relative);
+
+    if !current_path.exists() {
+        return Err("That note could not be found. It may have been moved or deleted.".to_string());
+    }
+
+    let mut destination_folder = notes_root.clone();
+    if let Some(directory) = directory.filter(|value| !value.trim().is_empty()) {
+        destination_folder =
+            destination_folder.join(normalize_library_directory_relative_path(&directory)?);
+    }
+    ensure_dir(&destination_folder)?;
+
+    let file_name = current_path
+        .file_name()
+        .ok_or_else(|| "mdbar couldn't read that note name.".to_string())?;
+    let next_path = destination_folder.join(file_name);
+    if next_path == current_path {
+        return build_library_document(&notes_root, &current_path);
+    }
+    if next_path.exists() {
+        return Err("A note with that name already exists in the destination folder.".to_string());
+    }
+
+    let current_assets = note_assets_directory(&current_path).ok();
+    let next_assets = note_assets_directory(&next_path).ok();
+    if let Some(next_assets) = &next_assets {
+        if next_assets.exists() {
+            return Err(
+                "A pasted-image folder with that note name already exists there.".to_string(),
+            );
+        }
+    }
+
+    fs::rename(&current_path, &next_path)
+        .map_err(|error| format!("Couldn't move that note: {error}"))?;
+
+    if let (Some(current_assets), Some(next_assets)) = (&current_assets, &next_assets) {
+        if current_assets.exists() {
+            if let Err(error) = fs::rename(current_assets, next_assets) {
+                let _ = fs::rename(&next_path, &current_path);
+                return Err(format!("Couldn't move that note's image folder: {error}"));
+            }
         }
     }
 
@@ -723,7 +852,8 @@ pub fn save_pasted_image(
         .unwrap_or(0);
     let asset_path = assets_dir.join(format!("pasted-{nonce}.{extension}"));
 
-    fs::write(&asset_path, bytes).map_err(|error| format!("Couldn't save the pasted image: {error}"))?;
+    fs::write(&asset_path, bytes)
+        .map_err(|error| format!("Couldn't save the pasted image: {error}"))?;
 
     Ok(SavedImageAsset {
         file_path: asset_path.to_string_lossy().into_owned(),
@@ -799,10 +929,11 @@ pub fn open_note_in_default_app(file_path: String) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_markdown_asset_path, create_library_folder, create_library_note, delete_library_folder,
-        delete_note, list_library_folders, list_library_notes, rename_library_note,
-        normalize_library_directory_relative_path, normalize_library_note_relative_path,
-        note_assets_directory, save_pasted_image, slugify,
+        append_unique_task_lines, build_markdown_asset_path, create_library_folder,
+        create_library_note, delete_library_folder, delete_note, list_library_folders,
+        list_library_notes, move_library_note, normalize_library_directory_relative_path,
+        normalize_library_note_relative_path, note_assets_directory, rename_library_note,
+        rollover_task_lines, save_pasted_image, slugify,
     };
     use std::{
         fs,
@@ -828,6 +959,32 @@ mod tests {
     #[test]
     fn slugify_falls_back_when_empty() {
         assert_eq!(slugify("!!!"), "");
+    }
+
+    #[test]
+    fn rollover_tasks_respects_reuse_and_carry() {
+        let source = [
+            "- [x] Morning pages #reuse",
+            "- [ ] Ship build #carry",
+            "- [x] Already shipped #carry",
+            "- [ ] Normal task",
+        ]
+        .join("\n");
+        assert_eq!(
+            rollover_task_lines(&source),
+            vec![
+                "- [ ] Morning pages #reuse".to_string(),
+                "- [ ] Ship build #carry".to_string(),
+            ]
+        );
+        let appended = append_unique_task_lines(
+            "- [ ] Morning pages #reuse\n",
+            &rollover_task_lines(&source),
+        );
+        assert_eq!(
+            appended,
+            "- [ ] Morning pages #reuse\n- [ ] Ship build #carry\n"
+        );
     }
 
     #[test]
@@ -895,6 +1052,33 @@ mod tests {
         assert_eq!(created.relative_path, "projects/client/roadmap.md");
         assert!(root.join("notes/projects/client/roadmap.md").exists());
 
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn move_library_note_moves_note_and_assets() {
+        let root = temporary_root("move-note");
+        let note = create_library_note(
+            root.to_string_lossy().into_owned(),
+            "Roadmap".to_string(),
+            None,
+        )
+        .expect("note should be created");
+        fs::create_dir_all(root.join("notes/roadmap.assets")).expect("assets should exist");
+        fs::write(root.join("notes/roadmap.assets/image.png"), b"png").expect("image should exist");
+
+        let moved = move_library_note(
+            root.to_string_lossy().into_owned(),
+            note.id,
+            Some("projects".to_string()),
+        )
+        .expect("note should move");
+
+        assert_eq!(moved.relative_path, "projects/roadmap.md");
+        assert!(root.join("notes/projects/roadmap.md").exists());
+        assert!(root
+            .join("notes/projects/roadmap.assets/image.png")
+            .exists());
         let _ = fs::remove_dir_all(root);
     }
 
@@ -975,11 +1159,8 @@ mod tests {
         )
         .expect("note should be created");
 
-        delete_library_folder(
-            root.to_string_lossy().into_owned(),
-            "projects".to_string(),
-        )
-        .expect("folder should delete");
+        delete_library_folder(root.to_string_lossy().into_owned(), "projects".to_string())
+            .expect("folder should delete");
 
         assert!(!root.join("notes/projects").exists());
 
@@ -989,17 +1170,18 @@ mod tests {
     #[test]
     fn rename_library_note_moves_assets_and_rewrites_paths() {
         let root = temporary_root("rename-note");
-        let note = create_library_note(root.to_string_lossy().into_owned(), "Roadmap".to_string(), None)
-            .expect("note should be created");
+        let note = create_library_note(
+            root.to_string_lossy().into_owned(),
+            "Roadmap".to_string(),
+            None,
+        )
+        .expect("note should be created");
         let note_path = PathBuf::from(&note.file_path);
         let assets_dir = note_assets_directory(&note_path).expect("assets dir");
         fs::create_dir_all(&assets_dir).expect("assets dir should exist");
         fs::write(assets_dir.join("diagram.png"), b"png").expect("asset should write");
-        fs::write(
-            &note_path,
-            "![Diagram](./roadmap.assets/diagram.png)",
-        )
-        .expect("note should write");
+        fs::write(&note_path, "![Diagram](./roadmap.assets/diagram.png)")
+            .expect("note should write");
 
         let renamed = rename_library_note(
             root.to_string_lossy().into_owned(),
@@ -1012,7 +1194,8 @@ mod tests {
         assert!(root.join("notes/project-brief.md").exists());
         assert!(root.join("notes/project-brief.assets/diagram.png").exists());
         assert_eq!(
-            fs::read_to_string(root.join("notes/project-brief.md")).expect("renamed note should read"),
+            fs::read_to_string(root.join("notes/project-brief.md"))
+                .expect("renamed note should read"),
             "![Diagram](./project-brief.assets/diagram.png)"
         );
 

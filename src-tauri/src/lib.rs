@@ -1,8 +1,12 @@
 mod notes;
 
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Mutex,
+use std::{
+    fs,
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    },
 };
 
 use font_kit::source::SystemSource;
@@ -49,6 +53,21 @@ fn hide_main_window(app: AppHandle) -> Result<(), String> {
     window.hide().map_err(|error| error.to_string())
 }
 
+#[tauri::command]
+fn icloud_notebook_path() -> Result<String, String> {
+    let home = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .ok_or_else(|| "mdbar couldn't locate your home folder.".to_string())?;
+    let path = home
+        .join("Library")
+        .join("Mobile Documents")
+        .join("iCloud~run~mdbar~app")
+        .join("Documents");
+    fs::create_dir_all(&path)
+        .map_err(|error| format!("mdbar couldn't prepare its iCloud folder: {error}"))?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
 #[tauri::command(rename_all = "camelCase")]
 fn sync_global_shortcut(app: AppHandle, shortcut: String) -> Result<String, String> {
     let shortcut = shortcut.trim().to_string();
@@ -60,7 +79,9 @@ fn sync_global_shortcut(app: AppHandle, shortcut: String) -> Result<String, Stri
     let shortcut_state = app.state::<RegisteredGlobalShortcut>();
     let mut registered = shortcut_state.0.lock().unwrap();
 
-    if registered.as_deref() == Some(shortcut.as_str()) && global_shortcut.is_registered(shortcut.as_str()) {
+    if registered.as_deref() == Some(shortcut.as_str())
+        && global_shortcut.is_registered(shortcut.as_str())
+    {
         return Ok(format!("Active: {shortcut}"));
     }
 
@@ -144,13 +165,11 @@ fn place_window_under_tray<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindo
         tray_origin.x.round() as i32 + ((tray_size.width - size.width as f64) / 2.0).round() as i32;
     let desired_y = tray_origin.y.round() as i32 + tray_size.height.round() as i32 + 10;
 
-    let max_x =
-        monitor_origin.x + monitor_size.width as i32 - size.width as i32 - 12;
+    let max_x = monitor_origin.x + monitor_size.width as i32 - size.width as i32 - 12;
     let min_x = monitor_origin.x + 12;
     let x = desired_x.clamp(min_x, max_x.max(min_x));
 
-    let max_y =
-        monitor_origin.y + monitor_size.height as i32 - size.height as i32 - 12;
+    let max_y = monitor_origin.y + monitor_size.height as i32 - size.height as i32 - 12;
     let y = desired_y.min(max_y.max(monitor_origin.y + 12));
 
     let _ = window.set_position(PhysicalPosition::new(x, y));
@@ -253,6 +272,7 @@ pub fn run() {
             sync_global_shortcut,
             set_panel_auto_hide,
             list_system_fonts,
+            icloud_notebook_path,
             notes::open_daily_note,
             notes::list_library_notes,
             notes::list_library_folders,
@@ -260,6 +280,7 @@ pub fn run() {
             notes::create_library_note,
             notes::create_library_folder,
             notes::rename_library_note,
+            notes::move_library_note,
             notes::delete_library_folder,
             notes::save_note,
             notes::save_pasted_image,

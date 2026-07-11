@@ -15,6 +15,8 @@ import {
   listLibraryFolders,
   listLibraryNotes,
   hideMainWindow,
+  iCloudNotebookPath,
+  moveLibraryNote,
   openDailyNote,
   openLibraryNote,
   renameLibraryNote,
@@ -491,6 +493,22 @@ function App() {
     }
   }
 
+  async function useICloudNotebook() {
+    try {
+      const notebookPath = await iCloudNotebookPath();
+      setSettings((existing) => ({ ...existing, notebookPath }));
+      navigateTo("daily", {
+        dailyDateKey: todayKey(),
+        focusEditor: true,
+        pushHistory: false,
+        resetHistory: true,
+      });
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   function openComposer(kind: ComposerKind) {
     setComposerKind(kind);
     setNewItemName("");
@@ -625,6 +643,32 @@ function App() {
         selectedLibraryNoteId: note.id,
       });
       setSaveState("idle");
+      setErrorMessage(null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  async function handleMoveNote(note: NoteSummary, directory: string) {
+    if (!settings.notebookPath || note.directory === directory) return;
+
+    try {
+      const moved = await moveLibraryNote(
+        settings.notebookPath,
+        note.id,
+        directory || undefined,
+      );
+      const { folders, notes } = await refreshNotebookIndex(settings.notebookPath);
+      setLibraryFolders(folders);
+      setLibraryNotes(notes);
+
+      if (selectedLibraryNoteId === note.id) {
+        setSelectedLibraryNoteId(moved.id);
+      }
+      if (currentNote?.id === note.id) {
+        setCurrentNote(moved);
+        setDraft(moved.content);
+      }
       setErrorMessage(null);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : String(error));
@@ -1102,6 +1146,7 @@ function App() {
           <SettingsView
             onChange={(patch) => setSettings((existing) => ({ ...existing, ...patch }))}
             onChooseFolder={chooseNotebookFolder}
+            onUseICloud={() => void useICloudNotebook()}
             onClose={() => {
               if (!goBack()) {
                 navigateTo("daily", {
@@ -1160,6 +1205,10 @@ function App() {
             onCreateNoteInFolder={(directory) => void handleCreateNoteInFolder(directory)}
             onDeleteFolder={requestDeleteFolder}
             onDeleteNote={requestDeleteNote}
+            onMoveNote={(noteId, directory) => {
+              const note = libraryNotes.find((candidate) => candidate.id === noteId);
+              if (note) void handleMoveNote(note, directory);
+            }}
             onSelectNote={handleLibrarySelectNote}
             selectedNoteId={selectedLibraryNoteId}
           />

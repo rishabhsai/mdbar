@@ -10,6 +10,7 @@ type LibraryViewProps = {
   onCreateNoteInFolder: (directory: string) => void;
   onDeleteFolder: (folder: FolderSummary) => void;
   onDeleteNote: (note: NoteSummary) => void;
+  onMoveNote: (noteId: string, directory: string) => void;
   onSelectNote: (noteId: string) => void;
   selectedNoteId: string | null;
 };
@@ -314,6 +315,8 @@ function FolderNode({
   onCreateNoteInFolder,
   onDeleteFolder,
   onDeleteNote,
+  onMoveNote,
+  moveTargets,
   tree,
   onSelectNote,
   selectedNoteId,
@@ -323,6 +326,8 @@ function FolderNode({
   onCreateNoteInFolder: (directory: string) => void;
   onDeleteFolder: (folder: FolderSummary) => void;
   onDeleteNote: (note: NoteSummary) => void;
+  onMoveNote: (noteId: string, directory: string) => void;
+  moveTargets: FolderSummary[];
   tree: FolderTree;
   onSelectNote: (noteId: string) => void;
   selectedNoteId: string | null;
@@ -337,7 +342,15 @@ function FolderNode({
 
   return (
     <div className="lib-folder" style={{ "--depth": depth } as CSSProperties}>
-      <div className={`lib-folder-row ${isOpen ? "is-open" : ""}`}>
+      <div
+        className={`lib-folder-row ${isOpen ? "is-open" : ""}`}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          const noteId = event.dataTransfer.getData("text/mdbar-note");
+          if (noteId) onMoveNote(noteId, folder.relativePath);
+        }}
+      >
         <button
           className={`lib-folder-toggle ${isOpen ? "is-open" : ""}`}
           onClick={() => setIsOpen((current) => !current)}
@@ -403,6 +416,8 @@ function FolderNode({
               onCreateNoteInFolder={onCreateNoteInFolder}
               onDeleteFolder={onDeleteFolder}
               onDeleteNote={onDeleteNote}
+              onMoveNote={onMoveNote}
+              moveTargets={moveTargets}
               onSelectNote={onSelectNote}
               selectedNoteId={selectedNoteId}
               tree={childTree}
@@ -412,7 +427,12 @@ function FolderNode({
           {sortedNotes.map((note) => (
             <div
               className={`lib-note-row${selectedNoteId === note.id ? " is-active" : ""}`}
+              draggable
               key={note.id}
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/mdbar-note", note.id);
+              }}
               style={{ "--depth": depth + 1 } as CSSProperties}
             >
               <button
@@ -428,15 +448,29 @@ function FolderNode({
                   <span className="lib-note-meta">{formatTimestamp(note.updatedAtMs)}</span>
                 </span>
               </button>
-              <button
-                aria-label={`Delete ${note.title}`}
-                className="lib-note-delete"
-                onClick={() => onDeleteNote(note)}
-                title={`Delete ${note.title}`}
-                type="button"
+              <select
+                aria-label={`Actions for ${note.title}`}
+                className="lib-note-actions"
+                defaultValue=""
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
+                  if (value === "__delete__") onDeleteNote(note);
+                  else if (value === "__root__") onMoveNote(note.id, "");
+                  else if (value) onMoveNote(note.id, value);
+                  event.currentTarget.value = "";
+                }}
               >
-                <TrashGlyph />
-              </button>
+                <option value="">•••</option>
+                {note.directory ? <option value="__root__">Move to Notes</option> : null}
+                {moveTargets
+                  .filter((target) => target.relativePath !== note.directory)
+                  .map((target) => (
+                    <option key={target.id} value={target.relativePath}>
+                      Move to {target.name}
+                    </option>
+                  ))}
+                <option value="__delete__">Delete…</option>
+              </select>
             </div>
           ))}
         </div>
@@ -453,6 +487,7 @@ export function LibraryView({
   onCreateNoteInFolder,
   onDeleteFolder,
   onDeleteNote,
+  onMoveNote,
   onSelectNote,
   selectedNoteId,
 }: LibraryViewProps) {
@@ -528,24 +563,26 @@ export function LibraryView({
   return (
     <section className="library-view">
       <div className="lib-header">
-        <div className="lib-header-row">
-          <span className="lib-header-label">Notes</span>
-          <span className="lib-header-count">
-            {isSearching
-              ? `${pluralize(visibleResultCount, "result")} found`
-              : headerCount}
-          </span>
-        </div>
-        <div className="lib-header-actions">
-          <button className="lib-action-button" onClick={onCreateNote} type="button">
-            <NewNoteGlyph />
-            Note
-          </button>
-          <button className="lib-action-button" onClick={onCreateFolder} type="button">
-            <NewFolderGlyph />
-            Folder
-          </button>
-        </div>
+        <span className="lib-header-count">
+          {isSearching
+            ? `${pluralize(visibleResultCount, "result")} found`
+            : headerCount}
+        </span>
+        <details className="lib-create-menu">
+          <summary aria-label="Create note or folder" title="Create">
+            <AddGlyph />
+          </summary>
+          <div className="lib-create-popover">
+            <button onClick={onCreateNote} type="button">
+              <NewNoteGlyph />
+              New note
+            </button>
+            <button onClick={onCreateFolder} type="button">
+              <NewFolderGlyph />
+              New folder
+            </button>
+          </div>
+        </details>
       </div>
 
       {!isEmpty ? (
@@ -604,6 +641,8 @@ export function LibraryView({
               onCreateNoteInFolder={onCreateNoteInFolder}
               onDeleteFolder={onDeleteFolder}
               onDeleteNote={onDeleteNote}
+              onMoveNote={onMoveNote}
+              moveTargets={libraryFolders}
               onSelectNote={onSelectNote}
               selectedNoteId={selectedNoteId}
               tree={folderTree}
@@ -613,7 +652,12 @@ export function LibraryView({
           {rootNotes.map((note) => (
             <div
               className={`lib-note-row${selectedNoteId === note.id ? " is-active" : ""}`}
+              draggable
               key={note.id}
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/mdbar-note", note.id);
+              }}
               style={{ "--depth": 0 } as CSSProperties}
             >
               <button
@@ -629,15 +673,25 @@ export function LibraryView({
                   <span className="lib-note-meta">{formatTimestamp(note.updatedAtMs)}</span>
                 </span>
               </button>
-              <button
-                aria-label={`Delete ${note.title}`}
-                className="lib-note-delete"
-                onClick={() => onDeleteNote(note)}
-                title={`Delete ${note.title}`}
-                type="button"
+              <select
+                aria-label={`Actions for ${note.title}`}
+                className="lib-note-actions"
+                defaultValue=""
+                onChange={(event) => {
+                  const value = event.currentTarget.value;
+                  if (value === "__delete__") onDeleteNote(note);
+                  else if (value) onMoveNote(note.id, value);
+                  event.currentTarget.value = "";
+                }}
               >
-                <TrashGlyph />
-              </button>
+                <option value="">•••</option>
+                {libraryFolders.map((target) => (
+                  <option key={target.id} value={target.relativePath}>
+                    Move to {target.name}
+                  </option>
+                ))}
+                <option value="__delete__">Delete…</option>
+              </select>
             </div>
           ))}
         </div>

@@ -29,6 +29,27 @@ Memory usage:
 - Opens to today’s note and focuses the editor from a global shortcut
 - Uses a live rendered markdown editor instead of a raw textarea
 - Supports dark mode, font selection, font size, line height, images, links, and autosave
+- Includes a native dark-first iOS app with Today and Notes tabs
+- Includes interactive Home Screen and Lock Screen widgets
+- Syncs the Apple-platform notebook through iCloud Drive
+
+## Tasks, reminders, and rollover
+
+Tasks stay readable as Markdown checkboxes. Add an optional directive when a task needs behavior:
+
+```markdown
+- [ ] Review the launch checklist #carry
+- [ ] Morning pages #reuse
+- [ ] Call Alex @remind(10:30)
+```
+
+- `#carry`: move the task to tomorrow while it remains unfinished
+- `#reuse`: add a fresh copy tomorrow even when today’s task is completed
+- `@remind(HH:mm)`: schedule a local notification on the daily note’s date
+
+The iOS editor has a Markdown accessory bar above the keyboard for checklists,
+headings, emphasis, links, code, quotes, and lists. See
+[`docs/NOTEBOOK_FORMAT.md`](./docs/NOTEBOOK_FORMAT.md) for the complete contract.
 
 ## Keyboard shortcuts
 
@@ -101,10 +122,27 @@ Publish a signed and notarized macOS release:
 The release script refuses to publish unless a Developer ID Application
 certificate and Apple notarization credentials are available.
 
+Generate and build the native iOS project:
+
+```bash
+brew install xcodegen
+cd ios
+xcodegen generate
+xcodebuild -project mdbar.xcodeproj -scheme mdbar \
+  -sdk iphonesimulator \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro' \
+  CODE_SIGNING_ALLOWED=NO build
+```
+
+For a physical device, open `ios/mdbar.xcodeproj`, select your Apple Developer
+Team for the app and widget targets, and create the iCloud container
+`iCloud.run.mdbar.app` plus App Group `group.run.mdbar.app`.
+
 ## Project structure
 
 - `src/`: React app for the mdbar panel UI
 - `src-tauri/`: Tauri and Rust backend
+- `ios/`: native SwiftUI app, WidgetKit extension, and tests
 - `site/`: static landing page for Vercel or any static host
 
 ## Shipping the landing page

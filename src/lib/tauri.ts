@@ -65,6 +65,18 @@ export function renameLibraryNote(
   });
 }
 
+export function moveLibraryNote(
+  folderPath: string,
+  noteId: string,
+  directory?: string,
+) {
+  return invoke<NoteDocument>("move_library_note", {
+    directory,
+    folderPath,
+    noteId,
+  });
+}
+
 export function deleteLibraryFolder(folderPath: string, directory: string) {
   return invoke("delete_library_folder", {
     directory,
@@ -131,4 +143,8 @@ export function setPanelAutoHide(enabled: boolean) {
 
 export function listSystemFonts() {
   return invoke<string[]>("list_system_fonts");
+}
+
+export function iCloudNotebookPath() {
+  return invoke<string>("icloud_notebook_path");
 }
