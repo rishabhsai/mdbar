@@ -792,6 +792,36 @@ code {
   gap: 12px;
 }
 
+.cat-shot {
+  width: min(100% - 48px, 520px);
+  margin: 12px auto 96px;
+}
+
+.cat-shot a,
+.cat-shot img {
+  display: block;
+}
+
+.cat-shot img {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+}
+
+.cat-shot figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding-top: 12px;
+  color: rgba(232, 227, 219, 0.38);
+  font-size: 11px;
+}
+
+.cat-shot figcaption span:last-child {
+  text-align: right;
+}
+
 .site-footer {
   display: flex;
   align-items: center;
@@ -888,6 +918,11 @@ code {
 
   .closing {
     padding: 40px 20px 60px;
+  }
+
+  .cat-shot {
+    width: min(100% - 32px, 520px);
+    margin-bottom: 68px;
   }
 
   .site-footer {
