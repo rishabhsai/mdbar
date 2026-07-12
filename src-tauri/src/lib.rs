@@ -1,3 +1,4 @@
+mod cloud_sync;
 mod notes;
 
 use std::{
@@ -273,6 +274,9 @@ pub fn run() {
             set_panel_auto_hide,
             list_system_fonts,
             icloud_notebook_path,
+            cloud_sync::configure_cloud_sync,
+            cloud_sync::disconnect_cloud_sync,
+            cloud_sync::sync_cloud_notebook,
             notes::open_daily_note,
             notes::list_library_notes,
             notes::list_library_folders,

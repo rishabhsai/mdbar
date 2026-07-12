@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>MDBARSyncBaseURL</key>
+	<string>$(MDBAR_SYNC_BASE_URL)</string>
+	<key>MDBARSyncSpaceID</key>
+	<string>$(MDBAR_SYNC_SPACE_ID)</string>
+	<key>MDBARSyncToken</key>
+	<string>$(MDBAR_SYNC_TOKEN)</string>
   <key>CFBundleDisplayName</key>
   <string>mdbar Widgets</string>
   <key>CFBundleExecutable</key>

@@ -14,4 +14,4 @@ mdbar keeps user-authored content in ordinary Markdown files. Richer task behavi
 
 Directives are case-insensitive. Copied tasks are de-duplicated by their visible text and directives. Daily notes live at `daily/YYYY-MM-DD.md`; library notes live anywhere below `notes/`.
 
-On Apple platforms the canonical notebook is the app's iCloud Documents container. Widgets use an App Group JSON snapshot only as a fast read-through cache; Markdown remains the source of truth.
+Markdown on each device remains the source of truth. Optional cloud sync mirrors files by path and revision; widgets use the cloud copy when configured and an App Group JSON snapshot as a fast local fallback.

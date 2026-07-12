@@ -1,0 +1,5 @@
+// Copy this file to Sync.local.xcconfig after deploying the Worker.
+// $() preserves the // because Xcode otherwise treats it as a comment.
+MDBAR_SYNC_BASE_URL = https:/$()/mdbar-sync.YOUR-SUBDOMAIN.workers.dev
+MDBAR_SYNC_SPACE_ID = paste-space-id-here
+MDBAR_SYNC_TOKEN = paste-device-token-here

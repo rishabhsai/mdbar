@@ -8,13 +8,22 @@ final class NotebookStore: ObservableObject {
     @Published var notes: [NoteRecord] = []
     @Published var isLoading = true
     @Published var errorMessage: String?
+    @Published var syncStatus = "Local only"
+    @Published var isSyncing = false
 
     let root: URL
     private let fileManager: FileManager
+    private let syncService: CloudSyncService
+    private var pendingSync: Task<Void, Never>?
 
     init(fileManager: FileManager = .default) {
         self.fileManager = fileManager
-        root = NotebookPaths.root(fileManager: fileManager)
+        let resolvedRoot = NotebookPaths.root(fileManager: fileManager)
+        root = resolvedRoot
+        syncService = CloudSyncService(root: resolvedRoot)
+        if SyncConfiguration.current() != nil {
+            syncStatus = "Ready to sync"
+        }
     }
 
     var todayTasks: [MarkdownTask] {
@@ -26,6 +35,7 @@ final class NotebookStore: ObservableObject {
         do {
             try prepareFolders()
             try rolloverIntoToday()
+            await syncNow(reloadAfter: false)
             today = try readNote(at: NotebookPaths.dailyURL(date: .now, root: root), isDaily: true)
             notes = try loadLibraryNotes()
             refreshSnapshot()
@@ -44,6 +54,7 @@ final class NotebookStore: ObservableObject {
         today = note
         save(note)
         refreshSnapshot()
+        scheduleSync()
         Task { await ReminderScheduler.sync(tasks: todayTasks) }
     }
 
@@ -57,6 +68,7 @@ final class NotebookStore: ObservableObject {
                 notes[index] = note
             }
             errorMessage = nil
+            scheduleSync()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -84,6 +96,7 @@ final class NotebookStore: ObservableObject {
             try "".write(to: url, atomically: true, encoding: .utf8)
             let note = try readNote(at: url, isDaily: false)
             notes.insert(note, at: 0)
+            scheduleSync()
             return note
         } catch {
             errorMessage = error.localizedDescription
@@ -97,8 +110,40 @@ final class NotebookStore: ObservableObject {
             withAnimation(.easeOut(duration: 0.18)) {
                 notes.removeAll { $0.id == note.id }
             }
+            scheduleSync()
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    func syncNow(reloadAfter: Bool = true) async {
+        guard SyncConfiguration.current() != nil else {
+            syncStatus = "Local only"
+            return
+        }
+        isSyncing = true
+        syncStatus = "Syncing…"
+        do {
+            let changed = try await syncService.synchronize()
+            if reloadAfter && changed {
+                today = try readNote(at: NotebookPaths.dailyURL(date: .now, root: root), isDaily: true)
+                notes = try loadLibraryNotes()
+                refreshSnapshot()
+            }
+            syncStatus = "Up to date"
+        } catch {
+            syncStatus = "Offline — changes queued"
+        }
+        isSyncing = false
+    }
+
+    private func scheduleSync() {
+        guard SyncConfiguration.current() != nil else { return }
+        pendingSync?.cancel()
+        pendingSync = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(700))
+            guard !Task.isCancelled else { return }
+            await self?.syncNow()
         }
     }
 

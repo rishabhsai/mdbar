@@ -2,15 +2,32 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var store: NotebookStore
 
     var body: some View {
         NavigationStack {
             List {
                 Section("Sync") {
-                    Label("iCloud Drive", systemImage: "icloud")
-                    Text("Your Markdown notebook syncs through iCloud. Widgets keep a lightweight App Group snapshot for fast updates.")
+                    HStack {
+                        Label(SyncConfiguration.current() == nil ? "Local Markdown" : "mdbar Cloud", systemImage: SyncConfiguration.current() == nil ? "iphone" : "cloud")
+                        Spacer()
+                        if store.isSyncing {
+                            ProgressView().controlSize(.small)
+                        }
+                    }
+                    Text(store.syncStatus)
                         .font(.footnote)
                         .foregroundStyle(MDTheme.secondary)
+                    if SyncConfiguration.current() != nil {
+                        Button("Sync now") {
+                            Task { await store.syncNow() }
+                        }
+                        .disabled(store.isSyncing)
+                    } else {
+                        Text("Cloud sync is optional. Your notes continue working offline as normal Markdown files.")
+                            .font(.footnote)
+                            .foregroundStyle(MDTheme.secondary)
+                    }
                 }
                 Section("Task syntax") {
                     syntax("#reuse", "Repeat every day")

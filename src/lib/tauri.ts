@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type {
   FolderSummary,
+  CloudSyncResult,
   NoteDocument,
   NoteSummary,
   SavedImageAsset,
@@ -147,4 +148,24 @@ export function listSystemFonts() {
 
 export function iCloudNotebookPath() {
   return invoke<string>("icloud_notebook_path");
+}
+
+export function configureCloudSync(spaceId: string, token: string) {
+  return invoke("configure_cloud_sync", { spaceId, token });
+}
+
+export function disconnectCloudSync(spaceId: string) {
+  return invoke("disconnect_cloud_sync", { spaceId });
+}
+
+export function syncCloudNotebook(
+  folderPath: string,
+  baseUrl: string,
+  spaceId: string,
+) {
+  return invoke<CloudSyncResult>("sync_cloud_notebook", {
+    folderPath,
+    baseUrl,
+    spaceId,
+  });
 }

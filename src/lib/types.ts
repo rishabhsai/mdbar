@@ -28,6 +28,13 @@ export type SaveNoteResult = {
   updatedAtMs: number;
 };
 
+export type CloudSyncResult = {
+  changedLocalFiles: boolean;
+  uploadedFiles: number;
+  downloadedFiles: number;
+  conflicts: number;
+};
+
 export type SavedImageAsset = {
   filePath: string;
   markdownPath: string;
@@ -41,6 +48,9 @@ export type AppSettings = {
   lineHeight: number;
   shortcut: string;
   lastLibraryNoteId: string | null;
+  cloudSyncEnabled: boolean;
+  syncBaseURL: string;
+  syncSpaceID: string;
 };
 
 export const defaultSettings: AppSettings = {
@@ -51,4 +61,7 @@ export const defaultSettings: AppSettings = {
   lineHeight: 1.6,
   shortcut: "CmdOrControl+Shift+M",
   lastLibraryNoteId: null,
+  cloudSyncEnabled: false,
+  syncBaseURL: "",
+  syncSpaceID: "",
 };

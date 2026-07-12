@@ -31,7 +31,7 @@ Memory usage:
 - Supports dark mode, font selection, font size, line height, images, links, and autosave
 - Includes a native dark-first iOS app with Today and Notes tabs
 - Includes interactive Home Screen and Lock Screen widgets
-- Syncs the Apple-platform notebook through iCloud Drive
+- Syncs macOS, iOS, and widgets through an optional local-first Cloudflare service
 
 ## Tasks, reminders, and rollover
 
@@ -77,7 +77,7 @@ your-notebook/
       roadmap.md
 ```
 
-There is no database. Your notes stay as plain `.md` files.
+Your notes stay as plain `.md` files. Optional cloud sync is a revisioned mirror, not the primary editor database; see [`docs/CLOUD_SYNC.md`](./docs/CLOUD_SYNC.md).
 
 ## Download
 
@@ -134,15 +134,17 @@ xcodebuild -project mdbar.xcodeproj -scheme mdbar \
   CODE_SIGNING_ALLOWED=NO build
 ```
 
-For a physical device, open `ios/mdbar.xcodeproj`, select your Apple Developer
-Team for the app and widget targets, and create the iCloud container
-`iCloud.run.mdbar.app` plus App Group `group.run.mdbar.app`.
+For a physical device, open `ios/mdbar.xcodeproj` and select your Apple Developer
+Team for the app and widget targets. Cloud sync does not require an iCloud container.
+See [`cloudflare/README.md`](./cloudflare/README.md) to deploy the sync Worker and
+create `ios/Config/Sync.local.xcconfig`.
 
 ## Project structure
 
 - `src/`: React app for the mdbar panel UI
 - `src-tauri/`: Tauri and Rust backend
 - `ios/`: native SwiftUI app, WidgetKit extension, and tests
+- `cloudflare/`: authenticated Worker and Durable Object sync service
 - `site/`: static landing page for Vercel or any static host
 
 ## Shipping the landing page

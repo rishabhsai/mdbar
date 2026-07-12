@@ -18,6 +18,14 @@ struct ToggleTaskIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult {
+        if SyncConfiguration.current() != nil {
+            if let snapshot = try await CloudWidgetSupport.toggle(notePath: notePath, lineIndex: lineIndex) {
+                SnapshotStore.save(snapshot)
+            }
+            WidgetCenter.shared.reloadAllTimelines()
+            return .result()
+        }
+
         let root = NotebookPaths.root()
         let url = root.appendingPathComponent(notePath)
         let content = try String(contentsOf: url, encoding: .utf8)
@@ -28,7 +36,7 @@ struct ToggleTaskIntent: AppIntent {
         let updated = MarkdownTasks.toggle(task: task, in: content)
         try updated.write(to: url, atomically: true, encoding: .utf8)
         if notePath == relativeTodayPath() {
-            SnapshotStore.save(makeSnapshot(content: updated, path: notePath))
+            SnapshotStore.save(CloudWidgetSupport.snapshot(content: updated, path: notePath))
         }
         WidgetCenter.shared.reloadAllTimelines()
         return .result()
@@ -38,17 +46,4 @@ struct ToggleTaskIntent: AppIntent {
         "daily/" + NotebookPaths.dailyURL(date: .now).lastPathComponent
     }
 
-    private func makeSnapshot(content: String, path: String) -> WidgetSnapshot {
-        let prose = content.components(separatedBy: "\n")
-            .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("- [") }
-            .joined(separator: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return WidgetSnapshot(
-            generatedAt: .now,
-            dateLabel: Date.now.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()),
-            noteExcerpt: prose.isEmpty ? "A quiet place for today's thoughts." : prose,
-            wordCount: content.split(whereSeparator: { $0.isWhitespace }).count,
-            tasks: MarkdownTasks.parse(content, notePath: path)
-        )
-    }
 }

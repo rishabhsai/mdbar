@@ -9,15 +9,19 @@
 /* Begin PBXBuildFile section */
 		06D9CF368ACA840402798639 /* mdbarWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 80E2570A1DEDA45CF67D31D8 /* mdbarWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		0BE2DFFCB9473A22A4D773FA /* NotebookStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680568C13B9F91C27954777D /* NotebookStore.swift */; };
+		14BBA76A377D682CAD75E137 /* CloudSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D7276EAFBA29A0F13A203E7 /* CloudSyncTests.swift */; };
 		190C6BDB650B35137A5FFD62 /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76799255A6E41062A40DD08D /* SnapshotStore.swift */; };
+		197CE8F9326969D70F19EE4C /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF82E49C8E2DBD83D1560E6 /* CloudSync.swift */; };
 		2449A397AD0031A20C47D7C7 /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CCD7A5FEB0F22254A410D96 /* ReminderScheduler.swift */; };
 		2EB9474783CC83885C532E56 /* NotebookPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA32EB2168AF02D2532D88B /* NotebookPaths.swift */; };
 		2F3E4D7E0AF2194068780560 /* MDTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9CAA432DB8AAB3B0988F426 /* MDTheme.swift */; };
+		314D692C5E84782C7AF3E371 /* CloudWidgetSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814357DBCD616FE2CB3F621D /* CloudWidgetSupport.swift */; };
 		39F669F7EAFED000BB1C4C9C /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2389A7DF472C73AF1C9896C /* SettingsView.swift */; };
 		3EFCE75BECCAF55A397B4E62 /* MarkdownEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5D12E8D9045B393B6FFEFB /* MarkdownEditor.swift */; };
 		40AF583602D69B32C6059791 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D2C53BC7464B5FA5D0C68261 /* Assets.xcassets */; };
 		486EF391849BD87940E6CD31 /* NextTaskWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 184A2EF3A2EE6FB4F994FA78 /* NextTaskWidget.swift */; };
 		4BABD56B770379115697AFC1 /* ToggleTaskIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73F3A5679CDE0A003BCF27 /* ToggleTaskIntent.swift */; };
+		553DAF426A0B9534AC4D68E3 /* CloudSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8A845E0ACA63C0B9EFA9E6B /* CloudSyncService.swift */; };
 		570859A83285BAC1338AB4C5 /* MarkdownTasks.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE71038A8AE0522DDD04CB /* MarkdownTasks.swift */; };
 		5EF35B042C8DC91AB256EBDC /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76799255A6E41062A40DD08D /* SnapshotStore.swift */; };
 		627630A66727634D44C661C6 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4EAB233372807E0B32E2F5A /* Models.swift */; };
@@ -28,6 +32,8 @@
 		7F034559DE484848AF2C46AB /* WidgetSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8F262C8C6AB8DE927A2726 /* WidgetSupport.swift */; };
 		8B3C88DA37D33B653F6FF002 /* DailyNoteWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE83675C866BC3C4A8F33E7D /* DailyNoteWidget.swift */; };
 		8BA792F1E67AEBBDF9EC2630 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA47C71F687B1FB50BF51667 /* RootView.swift */; };
+		8E826A16B8B47D4C97019919 /* CloudWidgetSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814357DBCD616FE2CB3F621D /* CloudWidgetSupport.swift */; };
+		95C3D880FCADA4D171A8BC1F /* CloudWidgetSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 814357DBCD616FE2CB3F621D /* CloudWidgetSupport.swift */; };
 		9AFE94B99F0FB60E8541AD3C /* MarkdownTasks.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE71038A8AE0522DDD04CB /* MarkdownTasks.swift */; };
 		9D83233D6FB960BB5CE7253F /* NotebookPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA32EB2168AF02D2532D88B /* NotebookPaths.swift */; };
 		9F6FCAC57FD12D62705CC82E /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76799255A6E41062A40DD08D /* SnapshotStore.swift */; };
@@ -36,12 +42,14 @@
 		A84BD93E6262630FB4E39DC8 /* MarkdownTasks.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFBE71038A8AE0522DDD04CB /* MarkdownTasks.swift */; };
 		AB9F8FFD013CF020B0574AD1 /* ToggleTaskIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73F3A5679CDE0A003BCF27 /* ToggleTaskIntent.swift */; };
 		AF2349833BBAFC04A1A9A021 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4EAB233372807E0B32E2F5A /* Models.swift */; };
+		B2091FCAA458A6B22DC846D1 /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF82E49C8E2DBD83D1560E6 /* CloudSync.swift */; };
 		B2AD8ECFBF1A45D9C5622830 /* ToggleTaskIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A73F3A5679CDE0A003BCF27 /* ToggleTaskIntent.swift */; };
 		B402399B242ED7EF94131867 /* NotebookPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA32EB2168AF02D2532D88B /* NotebookPaths.swift */; };
 		C100DDE7073261CCD0C6D5C7 /* MarkdownTasksTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A69E7C17C15AC766FB073C6 /* MarkdownTasksTests.swift */; };
 		D695A271254F57317334CB9E /* NoteEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E841D7E52782E3414440910 /* NoteEditorView.swift */; };
 		DCA390D1AC9F6FB4493DD28A /* MDTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9CAA432DB8AAB3B0988F426 /* MDTheme.swift */; };
 		DF3B90B5F9EF456ACEA1758B /* MDTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9CAA432DB8AAB3B0988F426 /* MDTheme.swift */; };
+		E46B3BCA612D869131AED9F1 /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF82E49C8E2DBD83D1560E6 /* CloudSync.swift */; };
 		F2216A56B1C564D1BE68CE86 /* mdbarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D5D94D60886F835EE40655 /* mdbarApp.swift */; };
 /* End PBXBuildFile section */
 
@@ -81,10 +89,13 @@
 		0F3F69D8E680A987F015A985 /* mdbarCoreTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = mdbarCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		184A2EF3A2EE6FB4F994FA78 /* NextTaskWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextTaskWidget.swift; sourceTree = "<group>"; };
 		1D123B13A756FA0CD118FAD5 /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
+		2D7276EAFBA29A0F13A203E7 /* CloudSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncTests.swift; sourceTree = "<group>"; };
 		4CCD7A5FEB0F22254A410D96 /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
 		4DE0E8B5180254679AC05A68 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
 		5A73F3A5679CDE0A003BCF27 /* ToggleTaskIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleTaskIntent.swift; sourceTree = "<group>"; };
 		5E841D7E52782E3414440910 /* NoteEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditorView.swift; sourceTree = "<group>"; };
+		5FF82E49C8E2DBD83D1560E6 /* CloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSync.swift; sourceTree = "<group>"; };
+		6266AD721EBBA59BF25153FD /* Sync.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Sync.xcconfig; sourceTree = "<group>"; };
 		64FA65F4315148680D1F8936 /* mdbarWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mdbarWidgetBundle.swift; sourceTree = "<group>"; };
 		680568C13B9F91C27954777D /* NotebookStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotebookStore.swift; sourceTree = "<group>"; };
 		715180180EA954174D249F9A /* TaskRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRow.swift; sourceTree = "<group>"; };
@@ -92,6 +103,7 @@
 		76799255A6E41062A40DD08D /* SnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotStore.swift; sourceTree = "<group>"; };
 		7D5D12E8D9045B393B6FFEFB /* MarkdownEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownEditor.swift; sourceTree = "<group>"; };
 		80E2570A1DEDA45CF67D31D8 /* mdbarWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = mdbarWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		814357DBCD616FE2CB3F621D /* CloudWidgetSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudWidgetSupport.swift; sourceTree = "<group>"; };
 		A2389A7DF472C73AF1C9896C /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		A4EAB233372807E0B32E2F5A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		AA47C71F687B1FB50BF51667 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -101,14 +113,25 @@
 		C6C4C42348D5C34B9CB2B2F2 /* mdbar.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = mdbar.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9CAA432DB8AAB3B0988F426 /* MDTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MDTheme.swift; sourceTree = "<group>"; };
 		D2C53BC7464B5FA5D0C68261 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D8A845E0ACA63C0B9EFA9E6B /* CloudSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncService.swift; sourceTree = "<group>"; };
 		DFBE71038A8AE0522DDD04CB /* MarkdownTasks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownTasks.swift; sourceTree = "<group>"; };
 		FF8F262C8C6AB8DE927A2726 /* WidgetSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSupport.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		111A8763EC48B3C6CA0D7457 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				6266AD721EBBA59BF25153FD /* Sync.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		1680BE7F869175D6C31BD006 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				5FF82E49C8E2DBD83D1560E6 /* CloudSync.swift */,
+				814357DBCD616FE2CB3F621D /* CloudWidgetSupport.swift */,
 				DFBE71038A8AE0522DDD04CB /* MarkdownTasks.swift */,
 				C9CAA432DB8AAB3B0988F426 /* MDTheme.swift */,
 				A4EAB233372807E0B32E2F5A /* Models.swift */,
@@ -134,6 +157,7 @@
 		508A82469C7B034AAE82AB18 /* mdbarCoreTests */ = {
 			isa = PBXGroup;
 			children = (
+				2D7276EAFBA29A0F13A203E7 /* CloudSyncTests.swift */,
 				0A69E7C17C15AC766FB073C6 /* MarkdownTasksTests.swift */,
 			);
 			path = mdbarCoreTests;
@@ -142,6 +166,7 @@
 		7DDA7094BD30E8017342CA21 = {
 			isa = PBXGroup;
 			children = (
+				111A8763EC48B3C6CA0D7457 /* Config */,
 				C455779741EDE64713344B93 /* mdbar */,
 				508A82469C7B034AAE82AB18 /* mdbarCoreTests */,
 				321B74630B2801132A29BABA /* mdbarWidgets */,
@@ -164,6 +189,7 @@
 			isa = PBXGroup;
 			children = (
 				D2C53BC7464B5FA5D0C68261 /* Assets.xcassets */,
+				D8A845E0ACA63C0B9EFA9E6B /* CloudSyncService.swift */,
 				7D5D12E8D9045B393B6FFEFB /* MarkdownEditor.swift */,
 				C1D5D94D60886F835EE40655 /* mdbarApp.swift */,
 				680568C13B9F91C27954777D /* NotebookStore.swift */,
@@ -246,15 +272,12 @@
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					07E8B159D59AE543EE5A9986 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					3EBDAFDC821B3A662C93A46C = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 					D6E506A4976DA8AD1A4CB4BF = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -296,6 +319,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2091FCAA458A6B22DC846D1 /* CloudSync.swift in Sources */,
+				553DAF426A0B9534AC4D68E3 /* CloudSyncService.swift in Sources */,
+				314D692C5E84782C7AF3E371 /* CloudWidgetSupport.swift in Sources */,
 				DF3B90B5F9EF456ACEA1758B /* MDTheme.swift in Sources */,
 				3EFCE75BECCAF55A397B4E62 /* MarkdownEditor.swift in Sources */,
 				570859A83285BAC1338AB4C5 /* MarkdownTasks.swift in Sources */,
@@ -319,6 +345,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				197CE8F9326969D70F19EE4C /* CloudSync.swift in Sources */,
+				8E826A16B8B47D4C97019919 /* CloudWidgetSupport.swift in Sources */,
 				8B3C88DA37D33B653F6FF002 /* DailyNoteWidget.swift in Sources */,
 				2F3E4D7E0AF2194068780560 /* MDTheme.swift in Sources */,
 				A84BD93E6262630FB4E39DC8 /* MarkdownTasks.swift in Sources */,
@@ -337,6 +365,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E46B3BCA612D869131AED9F1 /* CloudSync.swift in Sources */,
+				14BBA76A377D682CAD75E137 /* CloudSyncTests.swift in Sources */,
+				95C3D880FCADA4D171A8BC1F /* CloudWidgetSupport.swift in Sources */,
 				DCA390D1AC9F6FB4493DD28A /* MDTheme.swift in Sources */,
 				9AFE94B99F0FB60E8541AD3C /* MarkdownTasks.swift in Sources */,
 				C100DDE7073261CCD0C6D5C7 /* MarkdownTasksTests.swift in Sources */,
@@ -403,12 +434,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/mdbar.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = mdbar;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/mdbar-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -421,6 +448,7 @@
 		};
 		92A269F5B5425171C80E7087 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6266AD721EBBA59BF25153FD /* Sync.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -456,7 +484,6 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -499,6 +526,7 @@
 		};
 		D3BE84C411189719D788FC92 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 6266AD721EBBA59BF25153FD /* Sync.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -534,7 +562,6 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -572,12 +599,8 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/mdbar.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = mdbar;
-				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "Config/mdbar-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

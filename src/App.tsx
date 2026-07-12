@@ -9,6 +9,7 @@ import { formatDateLabel, shiftDateKey, todayKey } from "./lib/dates";
 import { loadSettings, saveSettings } from "./lib/settings";
 import {
   deleteNote,
+  configureCloudSync,
   createLibraryFolder,
   createLibraryNote,
   deleteLibraryFolder,
@@ -21,8 +22,10 @@ import {
   openLibraryNote,
   renameLibraryNote,
   saveNote,
+  disconnectCloudSync,
   setPanelAutoHide,
   syncGlobalShortcut,
+  syncCloudNotebook,
 } from "./lib/tauri";
 import type {
   AppSettings,
@@ -104,6 +107,10 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [shortcutStatus, setShortcutStatus] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState(() =>
+    loadSettings().cloudSyncEnabled ? "Ready to sync" : "Local only",
+  );
+  const [cloudSyncRevision, setCloudSyncRevision] = useState(0);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerKind, setComposerKind] = useState<ComposerKind>("note");
   const [newItemName, setNewItemName] = useState("");
@@ -118,6 +125,7 @@ function App() {
   const [isLoadingNote, setIsLoadingNote] = useState(false);
   const [editorFocusToken, setEditorFocusToken] = useState(0);
   const saveTimerRef = useRef<number | null>(null);
+  const cloudSyncInFlightRef = useRef(false);
   const titleInputRef = useRef<HTMLInputElement | null>(null);
   const titleRenameInFlightRef = useRef(false);
 
@@ -219,6 +227,66 @@ function App() {
     return { folders, notes };
   }
 
+  async function runCloudSync(refreshOnChange = true) {
+    if (
+      cloudSyncInFlightRef.current ||
+      !settings.cloudSyncEnabled ||
+      !settings.notebookPath ||
+      !settings.syncBaseURL.trim() ||
+      !settings.syncSpaceID.trim()
+    ) {
+      return;
+    }
+
+    cloudSyncInFlightRef.current = true;
+    setSyncStatus("Syncing…");
+    try {
+      const result = await syncCloudNotebook(
+        settings.notebookPath,
+        settings.syncBaseURL,
+        settings.syncSpaceID,
+      );
+      const activity = result.uploadedFiles + result.downloadedFiles;
+      setSyncStatus(
+        result.conflicts > 0
+          ? `${result.conflicts} conflict ${result.conflicts === 1 ? "copy" : "copies"} preserved`
+          : activity > 0
+            ? `Up to date · ${activity} ${activity === 1 ? "change" : "changes"}`
+            : "Up to date",
+      );
+      if (refreshOnChange && result.changedLocalFiles) {
+        setCloudSyncRevision((revision) => revision + 1);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setSyncStatus(/offline|connect|timeout/i.test(message) ? "Offline · changes queued" : message);
+    } finally {
+      cloudSyncInFlightRef.current = false;
+    }
+  }
+
+  async function connectCloudSync(token: string) {
+    try {
+      await configureCloudSync(settings.syncSpaceID, token);
+      setSettings((existing) => ({ ...existing, cloudSyncEnabled: true }));
+      setSyncStatus("Connected · syncing next");
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  async function disconnectFromCloud() {
+    try {
+      if (settings.syncSpaceID) {
+        await disconnectCloudSync(settings.syncSpaceID);
+      }
+      setSettings((existing) => ({ ...existing, cloudSyncEnabled: false }));
+      setSyncStatus("Local only");
+    } catch (error) {
+      setSyncStatus(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   useEffect(() => {
     saveSettings(settings);
   }, [settings]);
@@ -296,12 +364,19 @@ function App() {
   useEffect(() => {
     const unlistenPromise = listen("mdbar://panel-opened", () => {
       resetToTodayNote();
+      void runCloudSync();
     });
 
     return () => {
       void unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [dailyDateKey, screen, selectedLibraryNoteId]);
+  }, [dailyDateKey, screen, selectedLibraryNoteId, settings.cloudSyncEnabled, settings.notebookPath, settings.syncBaseURL, settings.syncSpaceID]);
+
+  useEffect(() => {
+    if (!settings.cloudSyncEnabled) return;
+    const interval = window.setInterval(() => void runCloudSync(), 60_000);
+    return () => window.clearInterval(interval);
+  }, [settings.cloudSyncEnabled, settings.notebookPath, settings.syncBaseURL, settings.syncSpaceID]);
 
   // Persist the last selected library note
   useEffect(() => {
@@ -356,6 +431,9 @@ function App() {
       setErrorMessage(null);
 
       try {
+        if (settings.cloudSyncEnabled) {
+          await runCloudSync(false);
+        }
         const { folders, notes } = await refreshNotebookIndex(settings.notebookPath!);
         if (cancelled) return;
 
@@ -409,7 +487,7 @@ function App() {
     void syncNotebook();
 
     return () => { cancelled = true; };
-  }, [dailyDateKey, screen, selectedLibraryNoteId, settings.notebookPath]);
+  }, [cloudSyncRevision, dailyDateKey, screen, selectedLibraryNoteId, settings.cloudSyncEnabled, settings.notebookPath, settings.syncBaseURL, settings.syncSpaceID]);
 
   // Auto-save
   useEffect(() => {
@@ -436,6 +514,7 @@ function App() {
         );
         setSaveState(result.persisted ? "saved" : "idle");
         setErrorMessage(null);
+        void runCloudSync();
       } catch (error) {
         setSaveState("idle");
         setErrorMessage(error instanceof Error ? error.message : String(error));
@@ -1157,8 +1236,12 @@ function App() {
                 });
               }
             }}
+            onConnectCloud={(token) => void connectCloudSync(token)}
+            onDisconnectCloud={() => void disconnectFromCloud()}
+            onSyncNow={() => void runCloudSync()}
             settings={settings}
             shortcutStatus={shortcutStatus}
+            syncStatus={syncStatus}
           />
         ) : !settings.notebookPath ? (
           <section className="empty-state onboarding-state">

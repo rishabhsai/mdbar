@@ -8,8 +8,12 @@ type SettingsViewProps = {
   onChooseFolder: () => void;
   onUseICloud: () => void;
   onClose: () => void;
+  onConnectCloud: (token: string) => void;
+  onDisconnectCloud: () => void;
+  onSyncNow: () => void;
   settings: AppSettings;
   shortcutStatus: string | null;
+  syncStatus: string;
 };
 
 type SettingsIconProps = {
@@ -177,11 +181,16 @@ export function SettingsView({
   onChooseFolder,
   onUseICloud,
   onClose,
+  onConnectCloud,
+  onDisconnectCloud,
+  onSyncNow,
   settings,
   shortcutStatus,
+  syncStatus,
 }: SettingsViewProps) {
   const [availableFonts, setAvailableFonts] = useState<string[]>(fallbackFonts);
   const [isRecording, setIsRecording] = useState(false);
+  const [syncToken, setSyncToken] = useState("");
 
   const handleRecordingToggle = useCallback(() => {
     setIsRecording((recording) => !recording);
@@ -241,8 +250,8 @@ export function SettingsView({
           <div>
             <p className="settings-eyebrow">Make mdbar yours</p>
             <p className="settings-intro-copy">
-              Your notebook stays local. These preferences only change how mdbar
-              looks and opens.
+              Your notebook stays local first. Choose how mdbar looks, opens, and
+              syncs.
             </p>
           </div>
           <span className="settings-version">v0.1.2</span>
@@ -276,13 +285,94 @@ export function SettingsView({
           <button className="icloud-notebook-button" onClick={onUseICloud} type="button">
             <span>
               <strong>Use iCloud</strong>
-              <small>Sync this notebook with mdbar on iPhone and widgets.</small>
+              <small>Optional Apple-managed folder for paid-team builds.</small>
             </span>
             <span aria-hidden="true">→</span>
           </button>
           <p className="settings-hint settings-card-hint">
             Daily notes go in <code>daily/</code>; everything else goes in{" "}
             <code>notes/</code>.
+          </p>
+        </div>
+
+        <div className="settings-card">
+          <div className="settings-card-heading">
+            <SettingsIcon>
+              <svg aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M7.5 18.5h9a4 4 0 0 0 .5-8 5.5 5.5 0 0 0-10.6-1.7A4.8 4.8 0 0 0 7.5 18.5Z" />
+                <path d="m9.5 13 2.5-2.5 2.5 2.5M12 10.5v5" />
+              </svg>
+            </SettingsIcon>
+            <div>
+              <h2>Cloud sync</h2>
+              <p>Keep local Markdown, with encrypted transport between your devices.</p>
+            </div>
+          </div>
+
+          <div className="cloud-sync-fields">
+            <div className="settings-control-group">
+              <label className="settings-sublabel" htmlFor="sync-url">Worker URL</label>
+              <input
+                autoCapitalize="none"
+                autoCorrect="off"
+                id="sync-url"
+                onChange={(event) => onChange({ syncBaseURL: event.currentTarget.value })}
+                placeholder="https://mdbar-sync.example.workers.dev"
+                type="text"
+                value={settings.syncBaseURL}
+              />
+            </div>
+            <div className="settings-control-group">
+              <label className="settings-sublabel" htmlFor="sync-space">Space ID</label>
+              <input
+                autoCapitalize="none"
+                autoCorrect="off"
+                id="sync-space"
+                onChange={(event) => onChange({ syncSpaceID: event.currentTarget.value })}
+                placeholder="64-character space ID"
+                type="text"
+                value={settings.syncSpaceID}
+              />
+            </div>
+            {!settings.cloudSyncEnabled ? (
+              <div className="settings-control-group">
+                <label className="settings-sublabel" htmlFor="sync-token">Device token</label>
+                <input
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  id="sync-token"
+                  onChange={(event) => setSyncToken(event.currentTarget.value)}
+                  placeholder="Stored in macOS Keychain"
+                  type="password"
+                  value={syncToken}
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="cloud-sync-actions">
+            {settings.cloudSyncEnabled ? (
+              <>
+                <button className="secondary-button" onClick={onSyncNow} type="button">Sync now</button>
+                <button className="secondary-button" onClick={onDisconnectCloud} type="button">Disconnect</button>
+              </>
+            ) : (
+              <button
+                className="secondary-button"
+                disabled={!settings.syncBaseURL.trim() || settings.syncSpaceID.trim().length !== 64 || syncToken.trim().length < 32}
+                onClick={() => {
+                  onConnectCloud(syncToken.trim());
+                  setSyncToken("");
+                }}
+                type="button"
+              >
+                Connect
+              </button>
+            )}
+            <span className="field-status" role="status">{syncStatus}</span>
+          </div>
+          <p className="settings-hint settings-card-hint">
+            Your token stays in macOS Keychain. Offline edits remain local and retry automatically.
           </p>
         </div>
 

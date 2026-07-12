@@ -1,0 +1,5 @@
+// Safe defaults. Put real values in Sync.local.xcconfig, which Git ignores.
+MDBAR_SYNC_BASE_URL =
+MDBAR_SYNC_SPACE_ID =
+MDBAR_SYNC_TOKEN =
+#include? "Sync.local.xcconfig"

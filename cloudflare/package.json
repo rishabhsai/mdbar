@@ -1,0 +1,20 @@
+{
+  "name": "mdbar-sync",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "create-space": "node scripts/create-space.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "@cloudflare/workers-types": "^5.20260712.1",
+    "typescript": "~5.8.3",
+    "vitest": "^4.1.0",
+    "wrangler": "^4.110.0"
+  }
+}

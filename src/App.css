@@ -1094,7 +1094,8 @@ code {
 .primary-button,
 .ghost-button,
 .composer-modal input,
-.settings-view input[type="text"] {
+.settings-view input[type="text"],
+.settings-view input[type="password"] {
   border: 1px solid var(--panel-border);
   border-radius: 11px;
   background: color-mix(in srgb, var(--panel) 92%, white 8%);
@@ -1102,7 +1103,8 @@ code {
 }
 
 .composer-modal input,
-.settings-view input[type="text"] {
+.settings-view input[type="text"],
+.settings-view input[type="password"] {
   width: 100%;
   min-height: 34px;
   padding: 0 12px;
@@ -1110,7 +1112,8 @@ code {
 }
 
 .composer-modal input:focus,
-.settings-view input[type="text"]:focus {
+.settings-view input[type="text"]:focus,
+.settings-view input[type="password"]:focus {
   border-color: color-mix(in srgb, var(--ink) 18%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 8%, transparent);
 }
@@ -1816,6 +1819,28 @@ code {
   background: var(--panel);
   box-shadow: 0 3px 9px rgba(24, 20, 17, 0.16);
   appearance: none;
+}
+
+.cloud-sync-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.cloud-sync-fields input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.cloud-sync-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.cloud-sync-actions .field-status {
+  margin-left: auto;
+  text-align: right;
 }
 
 .shortcut-recorder {

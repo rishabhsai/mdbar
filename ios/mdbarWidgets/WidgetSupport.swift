@@ -1,6 +1,18 @@
 import SwiftUI
 import WidgetKit
 
+private final class TimelineCompletion<Value>: @unchecked Sendable {
+    private let action: (Value) -> Void
+
+    init(_ action: @escaping (Value) -> Void) {
+        self.action = action
+    }
+
+    func callAsFunction(_ value: Value) {
+        action(value)
+    }
+}
+
 struct SnapshotEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot
@@ -12,12 +24,24 @@ struct SnapshotProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (SnapshotEntry) -> Void) {
-        completion(SnapshotEntry(date: .now, snapshot: context.isPreview ? previewSnapshot : SnapshotStore.load()))
+        if context.isPreview {
+            completion(SnapshotEntry(date: .now, snapshot: previewSnapshot))
+            return
+        }
+        let finish = TimelineCompletion(completion)
+        Task {
+            let snapshot = await CloudWidgetSupport.todaySnapshot() ?? SnapshotStore.load()
+            finish(SnapshotEntry(date: .now, snapshot: snapshot))
+        }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<SnapshotEntry>) -> Void) {
-        let entry = SnapshotEntry(date: .now, snapshot: SnapshotStore.load())
-        completion(Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60))))
+        let finish = TimelineCompletion(completion)
+        Task {
+            let snapshot = await CloudWidgetSupport.todaySnapshot() ?? SnapshotStore.load()
+            let entry = SnapshotEntry(date: .now, snapshot: snapshot)
+            finish(Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(15 * 60))))
+        }
     }
 
     private var previewSnapshot: WidgetSnapshot {
