@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mdbar — Menu bar markdown for macOS</title>
+    <title>mdbar | Local-first notes for Mac and iPhone</title>
     <meta
       name="description"
-      content="mdbar is a fast macOS menu bar markdown notebook with a live rendered editor, daily notes, recursive note folders, and a global Cmd+Shift+M shortcut. Plain .md files on disk. Open source."
+      content="mdbar is a local-first Markdown notebook for Mac, iPhone, and widgets. Daily notes, recurring tasks, safe sync, and plain .md files you control."
     />
     <meta
       name="keywords"
-      content="mdbar, markdown, macOS, menu bar app, notes, daily notes, plain text, tiptap, tauri"
+      content="mdbar, markdown, macOS, iOS, widgets, menu bar app, tasks, daily notes, local first, plain text"
     />
     <meta name="theme-color" content="#0c0b0a" />
     <meta name="apple-mobile-web-app-title" content="mdbar" />
@@ -19,10 +19,10 @@
     <meta property="og:url" content="https://mdbar.run/" />
     <meta property="og:site_name" content="mdbar" />
     <meta property="og:locale" content="en_US" />
-    <meta property="og:title" content="mdbar — Menu bar markdown for macOS" />
+    <meta property="og:title" content="mdbar | Local-first notes for Mac and iPhone" />
     <meta
       property="og:description"
-      content="A fast macOS menu bar markdown notebook with live rendering, daily notes, note folders, and a global Cmd+Shift+M shortcut. Plain .md files, no lock-in."
+      content="A quiet Markdown notebook across Mac, iPhone, and widgets. Local files first, optional safe sync, no lock-in."
     />
     <meta property="og:image" content="https://i.imgur.com/bRB0KrG.png" />
     <meta property="og:image:secure_url" content="https://i.imgur.com/bRB0KrG.png" />
@@ -31,10 +31,10 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@rishabhsaiv" />
     <meta name="twitter:creator" content="@rishabhsaiv" />
-    <meta name="twitter:title" content="mdbar — Menu bar markdown for macOS" />
+    <meta name="twitter:title" content="mdbar | Local-first notes for Mac and iPhone" />
     <meta
       name="twitter:description"
-      content="Live rendered markdown in your macOS menu bar. Daily notes, note folders, plain .md files, and a global Cmd+Shift+M shortcut."
+      content="Daily notes, reusable tasks, and widgets across Mac and iPhone. Your Markdown stays yours."
     />
     <meta name="twitter:image" content="https://i.imgur.com/bRB0KrG.png" />
     <meta name="twitter:image:alt" content="mdbar menu bar markdown notebook screenshot" />
@@ -57,6 +57,7 @@
       </a>
       <div class="nav-links">
         <a href="#features">Features</a>
+        <a href="#everywhere">iPhone</a>
         <a href="https://x.com/rishabhsaiv">@rishabhsaiv</a>
         <a href="https://github.com/rishabhsai/mdbar">GitHub</a>
         <a
@@ -72,24 +73,24 @@
         <img src="./logo.svg" alt="mdbar app icon" class="hero-logo" />
       </div>
       <h1 class="hero-title">
-        Your daily<br />
-        markdown<br />
-        notebook
+        One quiet place<br />
+        for notes<br />
+        and today
       </h1>
       <p class="hero-sub">
-        Plain files. Live rendered editor. Press <strong>Cmd+Shift+M</strong> and start writing.
+        Plain Markdown on your Mac. Today, tasks, and widgets on your iPhone. Optional sync keeps both in step without taking ownership of your notes.
       </p>
       <div class="hero-actions">
         <a
           href="https://github.com/rishabhsai/mdbar/releases"
           class="btn btn-primary"
-          >Download from GitHub</a
+          >Download for Mac</a
         >
         <a href="https://github.com/rishabhsai/mdbar" class="btn btn-ghost"
           >View source</a
         >
       </div>
-      <p class="hero-footnote">macOS downloads and release notes live on GitHub. Default launcher: Cmd+Shift+M.</p>
+      <p class="hero-footnote">macOS release available now. iOS builds from source while TestFlight is in preparation.</p>
     </section>
 
     <section class="preview">
@@ -130,6 +131,57 @@
       </div>
     </section>
 
+    <section class="everywhere" id="everywhere">
+      <div class="everywhere-copy">
+        <p class="section-kicker">The same day, everywhere</p>
+        <h2>Write on your Mac.<br />Finish from the widget.</h2>
+        <p>
+          mdbar keeps daily prose and checkboxes together. The iPhone app has full Today and Notes tabs, while widgets surface the next useful action without opening anything.
+        </p>
+        <div class="syntax-line" aria-label="Example reusable task syntax">
+          <code>- [ ] Morning pages #reuse</code>
+          <span>returns tomorrow</span>
+        </div>
+        <div class="syntax-line" aria-label="Example carry-forward task syntax">
+          <code>- [ ] Review launch #carry</code>
+          <span>moves if unfinished</span>
+        </div>
+        <a href="https://github.com/rishabhsai/mdbar#development" class="text-link">Build the iOS app from source →</a>
+      </div>
+
+      <div class="device-stage" aria-label="Preview of mdbar on iPhone and a Home Screen widget">
+        <div class="phone-shell">
+          <div class="phone-speaker"></div>
+          <div class="phone-screen">
+            <p class="phone-date">Saturday, July 11</p>
+            <h3>Good evening.</h3>
+            <div class="phone-section-row"><strong>Tasks</strong><span>1 of 3</span></div>
+            <ul class="phone-tasks">
+              <li><span class="task-ring checked">✓</span><s>Morning pages</s><small>↻</small></li>
+              <li><span class="task-ring"></span><span>Review launch</span><small>→</small></li>
+              <li><span class="task-ring"></span><span>Walk outside</span></li>
+            </ul>
+            <div class="phone-note">
+              <strong>Daily note</strong>
+              <p>Slow morning. Coffee outside and a clear plan for the day.</p>
+            </div>
+            <div class="phone-tabs"><span class="active">Today</span><span>Notes</span></div>
+          </div>
+        </div>
+
+        <div class="widget-card">
+          <div class="widget-heading"><strong>Today</strong><span>1/3</span></div>
+          <p>Saturday, July 11</p>
+          <ul>
+            <li><span class="task-ring checked">✓</span><s>Morning pages</s></li>
+            <li><span class="task-ring"></span><span>Review launch</span></li>
+            <li><span class="task-ring"></span><span>Walk outside</span></li>
+          </ul>
+          <small>mdbar</small>
+        </div>
+      </div>
+    </section>
+
     <section class="features" id="features">
       <div class="feature-grid">
         <article class="feature-card">
@@ -137,24 +189,24 @@
           <p>Notes live as <code>.md</code> on disk. No database, no lock-in, no export ceremony.</p>
         </article>
         <article class="feature-card">
-          <h2>Live<br />rendering</h2>
-          <p>Headings, lists, and checkboxes render in place. Your cursor reveals the markdown.</p>
+          <h2>iPhone<br />and widgets</h2>
+          <p>Use full Today and Notes tabs, then check tasks off from the Home Screen.</p>
         </article>
         <article class="feature-card">
-          <h2>Daily<br />notes</h2>
-          <p>One file per day, auto-created. Navigate dates with arrows or the calendar picker.</p>
+          <h2>Tasks that<br />remember</h2>
+          <p><code>#reuse</code> repeats a task. <code>#carry</code> moves unfinished work forward.</p>
         </article>
         <article class="feature-card">
           <h2>Menu bar<br />native</h2>
           <p>Lives in the macOS menu bar. One global shortcut to open, one to close.</p>
         </article>
         <article class="feature-card">
-          <h2>Notes<br />library</h2>
-          <p>Organize notes into folders inside <code>notes/</code>. mdbar browses them recursively.</p>
+          <h2>Safe<br />sync</h2>
+          <p>Offline edits land locally first. Revisions and conflict copies prevent silent loss.</p>
         </article>
         <article class="feature-card">
-          <h2>Blazing<br />fast</h2>
-          <p>Tauri + Rust backend. Sub-second launch, instant autosave, tiny memory footprint.</p>
+          <h2>Progressive<br />power</h2>
+          <p>Reminders and recurrence stay readable inside ordinary Markdown syntax.</p>
         </article>
       </div>
     </section>
@@ -176,37 +228,6 @@
           >View the source</a
         >
       </div>
-    </section>
-
-    <section class="performance performance-last">
-      <div class="performance-grid">
-        <a href="https://imgur.com/DJ2pN4i" class="performance-card">
-          <img
-            src="https://i.imgur.com/DJ2pN4i.png"
-            alt="mdbar CPU usage in Activity Monitor"
-            class="performance-image"
-          />
-          <span class="performance-label">CPU usage</span>
-        </a>
-        <a href="https://imgur.com/NByPVNy" class="performance-card">
-          <img
-            src="https://i.imgur.com/NByPVNy.png"
-            alt="mdbar memory usage in Activity Monitor"
-            class="performance-image"
-          />
-          <span class="performance-label">Memory usage</span>
-        </a>
-      </div>
-    </section>
-
-    <section class="site-shot site-shot-last">
-      <a href="https://imgur.com/bRB0KrG" class="site-shot-link">
-        <img
-          src="https://i.imgur.com/bRB0KrG.png"
-          alt="mdbar screenshot"
-          class="site-shot-image"
-        />
-      </a>
     </section>
 
     <footer class="site-footer">

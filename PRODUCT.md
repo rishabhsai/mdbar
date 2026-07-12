@@ -10,7 +10,7 @@ mdbar begins as a personal tool for its creator and is intended to grow into a c
 
 ## Product Purpose
 
-mdbar is a local-first notebook built around readable Markdown files, with structured task metadata only where richer behavior requires it. It keeps daily notes, general notes, reminders, recurring tasks, and carry-forward tasks synchronized through iCloud. Success means the same notebook feels immediate and trustworthy on macOS and iOS, widgets remain useful without opening the app, and users retain access to durable files they can inspect or edit with other tools.
+mdbar is a local-first notebook built around readable Markdown files, with structured task metadata only where richer behavior requires it. It keeps daily notes, general notes, reminders, recurring tasks, and carry-forward tasks synchronized through an optional Cloudflare mirror. Success means the same notebook feels immediate and trustworthy on macOS and iOS, widgets remain useful without opening the app, and users retain access to durable files they can inspect or edit with other tools.
 
 ## Brand Personality
 
@@ -28,7 +28,7 @@ Quiet, tactile, and precise. mdbar should feel like the current menu-bar app ref
 
 1. **Today is the center.** Daily notes and today's unfinished work are always one short action away.
 2. **Progressive power.** Plain Markdown remains plain; lightweight directives such as `#reuse` add behavior without adding form-heavy UI.
-3. **Local first, synced everywhere.** Every edit is immediate offline, understandable on disk, and reconciled safely through iCloud.
+3. **Local first, synced everywhere.** Every edit is immediate offline, understandable on disk, and reconciled safely through revisioned cloud sync.
 4. **Actions appear at the moment of intent.** Keep notes visually quiet; reveal move, rename, delete, schedule, and recurrence controls contextually.
 5. **Undo beats anxiety.** Reversible operations and clear sync state replace unnecessary confirmation dialogs.
 
